@@ -28,20 +28,10 @@ export function SplashScreen({ onDone }: { onDone: () => void }) {
         <img
           src={logo}
           alt="IbadahPro"
-          className="relative w-44 h-44 object-contain drop-shadow-2xl"
+          className="relative w-56 h-56 object-contain drop-shadow-2xl"
         />
       </div>
-      <h1
-        className="mt-6 text-4xl font-bold tracking-wide animate-[fadeIn_1.2s_ease-out]"
-        style={{
-          background: "var(--gradient-gold)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        IbadahPro
-      </h1>
-      <p className="mt-2 text-xs tracking-[0.3em] text-primary/70 uppercase animate-[fadeIn_1.6s_ease-out]">
+      <p className="mt-4 text-xs tracking-[0.3em] text-primary/70 uppercase animate-[fadeIn_1.6s_ease-out]">
         بِسْمِ اللَّهِ
       </p>
 
