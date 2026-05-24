@@ -6,6 +6,9 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl, type Reciter } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
 
+const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
+const toKu = (n: number | string) => String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
+
 export const Route = createFileRoute("/")({
   component: AppRoot,
   head: () => ({
