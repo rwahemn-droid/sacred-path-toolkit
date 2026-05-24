@@ -87,7 +87,11 @@ type Surah = {
   revelationType: string;
 };
 
+type Ayah = { number: number; text: string; numberInSurah: number };
+type EditionData = { ayahs: Ayah[]; edition: { identifier: string; language: string; name: string } };
+
 function QuranView() {
+  const [selected, setSelected] = useState<Surah | null>(null);
   const { data: surahs, isLoading, isError } = useQuery({
     queryKey: ["surahs"],
     queryFn: async (): Promise<Surah[]> => {
@@ -98,6 +102,9 @@ function QuranView() {
     },
     staleTime: 1000 * 60 * 60,
   });
+
+  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} />;
+
   return (
     <div className="space-y-4">
       <Card>
@@ -106,17 +113,14 @@ function QuranView() {
         <p className="text-sm text-primary mt-1">سەرچاوە: alquran.cloud</p>
       </Card>
       <h3 className="text-sm text-muted-foreground px-1">سورەتەکان</h3>
-      {isLoading && (
-        <div className="text-center py-12 text-muted-foreground">بارکردن...</div>
-      )}
-      {isError && (
-        <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>
-      )}
+      {isLoading && <div className="text-center py-12 text-muted-foreground">بارکردن...</div>}
+      {isError && <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>}
       <div className="grid gap-3">
         {surahs?.map((s) => (
-          <div
+          <button
             key={s.number}
-            className="flex items-center justify-between rounded-2xl border p-4 backdrop-blur-xl transition hover:border-primary/40"
+            onClick={() => setSelected(s)}
+            className="w-full flex items-center justify-between rounded-2xl border p-4 backdrop-blur-xl transition hover:border-primary/40 text-right"
             style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
           >
             <div className="flex items-center gap-4">
@@ -134,7 +138,61 @@ function QuranView() {
               </div>
             </div>
             <p className="font-display text-2xl shrink-0">{s.name}</p>
-          </div>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
+  const { data, isLoading, isError } = useQuery({
+    queryKey: ["surah", surah.number],
+    queryFn: async (): Promise<EditionData[]> => {
+      const res = await fetch(
+        `https://api.alquran.cloud/v1/surah/${surah.number}/editions/quran-uthmani,ku.asan`,
+      );
+      if (!res.ok) throw new Error("Failed to load");
+      const json = await res.json();
+      return json.data;
+    },
+    staleTime: 1000 * 60 * 60,
+  });
+
+  const arabic = data?.[0]?.ayahs ?? [];
+  const kurdish = data?.[1]?.ayahs ?? [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <button onClick={onBack} className="text-sm text-primary hover:underline">← گەڕانەوە</button>
+        <div className="text-center">
+          <p className="font-display text-xl">{surah.name}</p>
+          <p className="text-xs text-muted-foreground">{surah.englishName} · {surah.numberOfAyahs} ئایەت</p>
+        </div>
+      </div>
+
+      {isLoading && <div className="text-center py-12 text-muted-foreground">بارکردن...</div>}
+      {isError && <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>}
+
+      <div className="space-y-3">
+        {arabic.map((a, i) => (
+          <Card key={a.number}>
+            <div className="flex items-center justify-between mb-3">
+              <div
+                className="h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold"
+                style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
+              >
+                {a.numberInSurah}
+              </div>
+            </div>
+            <p className="font-display text-2xl leading-loose text-right">{a.text}</p>
+            {kurdish[i] && (
+              <p className="mt-4 pt-4 border-t border-white/10 text-sm leading-relaxed text-muted-foreground text-right">
+                {kurdish[i].text}
+              </p>
+            )}
+          </Card>
         ))}
       </div>
     </div>
