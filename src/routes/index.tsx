@@ -77,15 +77,26 @@ function Card({ children }: { children: React.ReactNode }) {
   );
 }
 
+type Surah = {
+  number: number;
+  name: string;
+  englishName: string;
+  englishNameTranslation: string;
+  numberOfAyahs: number;
+  revelationType: string;
+};
+
 function QuranView() {
-  const surahs = [
-    { n: 1, name: "الفاتحة", meaning: "کردنەوە", verses: 7 },
-    { n: 2, name: "البقرة", meaning: "مانگا", verses: 286 },
-    { n: 36, name: "يس", meaning: "یاسین", verses: 83 },
-    { n: 55, name: "الرحمن", meaning: "بەخشندە", verses: 78 },
-    { n: 67, name: "الملك", meaning: "پاشایەتی", verses: 30 },
-    { n: 112, name: "الإخلاص", meaning: "دڵسۆزی", verses: 4 },
-  ];
+  const { data: surahs, isLoading, isError } = useQuery({
+    queryKey: ["surahs"],
+    queryFn: async (): Promise<Surah[]> => {
+      const res = await fetch("https://api.alquran.cloud/v1/surah");
+      if (!res.ok) throw new Error("Failed to load");
+      const json = await res.json();
+      return json.data;
+    },
+    staleTime: 1000 * 60 * 60,
+  });
   return (
     <div className="space-y-4">
       <Card>
