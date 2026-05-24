@@ -549,9 +549,9 @@ function PrayerView() {
 
   const to12 = (t: string) => {
     const [h, m] = t.split(":").map(Number);
-    const period = h >= 12 ? "PM" : "AM";
+    const period = h >= 12 ? "ع" : "ب";
     const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+    return `${toKu(h12)}:${toKu(String(m).padStart(2, "0"))} ${period}`;
   };
   const prayers = data
     ? [
