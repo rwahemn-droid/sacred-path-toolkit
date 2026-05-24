@@ -100,31 +100,39 @@ function QuranView() {
   return (
     <div className="space-y-4">
       <Card>
-        <p className="text-sm text-muted-foreground">دوایین خوێندنەوە</p>
-        <h2 className="mt-1 text-2xl font-semibold">سورەی البقرة</h2>
-        <p className="text-sm text-primary mt-1">ئایەت ٢٥٥ — ئایة الكرسي</p>
+        <p className="text-sm text-muted-foreground">قورئانی پیرۆز</p>
+        <h2 className="mt-1 text-2xl font-semibold">١١٤ سوورەت</h2>
+        <p className="text-sm text-primary mt-1">سەرچاوە: alquran.cloud</p>
       </Card>
       <h3 className="text-sm text-muted-foreground px-1">سورەتەکان</h3>
+      {isLoading && (
+        <div className="text-center py-12 text-muted-foreground">بارکردن...</div>
+      )}
+      {isError && (
+        <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>
+      )}
       <div className="grid gap-3">
-        {surahs.map((s) => (
+        {surahs?.map((s) => (
           <div
-            key={s.n}
+            key={s.number}
             className="flex items-center justify-between rounded-2xl border p-4 backdrop-blur-xl transition hover:border-primary/40"
             style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
           >
             <div className="flex items-center gap-4">
               <div
-                className="h-10 w-10 rounded-xl flex items-center justify-center text-sm font-semibold"
+                className="h-10 w-10 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0"
                 style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
               >
-                {s.n}
+                {s.number}
               </div>
-              <div>
-                <p className="font-medium">{s.meaning}</p>
-                <p className="text-xs text-muted-foreground">{s.verses} ئایەت</p>
+              <div className="min-w-0">
+                <p className="font-medium truncate">{s.englishName}</p>
+                <p className="text-xs text-muted-foreground truncate">
+                  {s.englishNameTranslation} · {s.numberOfAyahs} ئایەت
+                </p>
               </div>
             </div>
-            <p className="font-display text-2xl">{s.name}</p>
+            <p className="font-display text-2xl shrink-0">{s.name}</p>
           </div>
         ))}
       </div>
