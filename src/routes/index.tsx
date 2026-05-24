@@ -229,12 +229,12 @@ function SurahItem({
           className="h-10 w-10 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0"
           style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
         >
-          {s.number}
+          {toKu(s.number)}
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium truncate text-sm">{s.englishName}</p>
           <p className="text-[11px] text-muted-foreground truncate">
-            {s.englishNameTranslation} · {s.numberOfAyahs} ئایەت
+            {s.englishNameTranslation} · {toKu(s.numberOfAyahs)} ئایەت
           </p>
         </div>
         <p className="font-display text-xl shrink-0">{s.name}</p>
