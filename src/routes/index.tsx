@@ -383,7 +383,7 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
         <div className="text-center flex-1 min-w-0">
           <p className="font-display text-lg truncate">{surah.name}</p>
           <p className="text-[11px] text-muted-foreground truncate">
-            {surah.englishName} · {surah.numberOfAyahs} ئایەت
+            {surah.englishName} · {toKu(surah.numberOfAyahs)} ئایەت
           </p>
         </div>
       </div>
