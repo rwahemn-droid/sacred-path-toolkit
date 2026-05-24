@@ -547,6 +547,12 @@ function PrayerView() {
     staleTime: 1000 * 60 * 30,
   });
 
+  const to12 = (t: string) => {
+    const [h, m] = t.split(":").map(Number);
+    const period = h >= 12 ? "PM" : "AM";
+    const h12 = h % 12 === 0 ? 12 : h % 12;
+    return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+  };
   const prayers = data
     ? [
         { name: "بەیانی", time: data.timings.Fajr.slice(0, 5) },
@@ -554,7 +560,7 @@ function PrayerView() {
         { name: "نیوەڕۆ", time: data.timings.Dhuhr.slice(0, 5) },
         { name: "عەسر", time: data.timings.Asr.slice(0, 5) },
         { name: "ئێوارە", time: data.timings.Maghrib.slice(0, 5) },
-        { name: "خەفتنەوە", time: data.timings.Isha.slice(0, 5) },
+        { name: "خەوتنان", time: data.timings.Isha.slice(0, 5) },
       ]
     : [];
 
