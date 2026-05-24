@@ -624,7 +624,7 @@ function PrayerView() {
             style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
           >
             <span className="font-medium">{t.name}</span>
-            <span className="text-primary tabular-nums">{t.time}</span>
+            <span className="text-primary tabular-nums">{to12(t.time)}</span>
           </div>
         ))}
       </div>
