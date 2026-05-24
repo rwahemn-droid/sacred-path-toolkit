@@ -460,7 +460,7 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
                   className="h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold"
                   style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
                 >
-                  {a.numberInSurah}
+                  {toKu(a.numberInSurah)}
                 </div>
                 <button
                   onClick={() => (isActive ? stopAudio() : playAyah(i))}
