@@ -610,7 +610,7 @@ function PrayerView() {
           <>
             <div className="mt-2 flex items-baseline justify-between">
               <h2 className="text-3xl font-semibold">{next.name}</h2>
-              <p className="text-2xl text-primary tabular-nums">{next.time}</p>
+              <p className="text-2xl text-primary tabular-nums">{to12(next.time)}</p>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">{remaining} ماوە</p>
           </>
