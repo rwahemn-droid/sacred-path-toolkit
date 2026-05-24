@@ -6,6 +6,9 @@ import { SplashScreen } from "@/components/SplashScreen";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl, type Reciter } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
 
+const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
+const toKu = (n: number | string) => String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
+
 export const Route = createFileRoute("/")({
   component: AppRoot,
   head: () => ({
@@ -226,12 +229,12 @@ function SurahItem({
           className="h-10 w-10 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0"
           style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
         >
-          {s.number}
+          {toKu(s.number)}
         </div>
         <div className="min-w-0 flex-1">
           <p className="font-medium truncate text-sm">{s.englishName}</p>
           <p className="text-[11px] text-muted-foreground truncate">
-            {s.englishNameTranslation} · {s.numberOfAyahs} ئایەت
+            {s.englishNameTranslation} · {toKu(s.numberOfAyahs)} ئایەت
           </p>
         </div>
         <p className="font-display text-xl shrink-0">{s.name}</p>
@@ -380,7 +383,7 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
         <div className="text-center flex-1 min-w-0">
           <p className="font-display text-lg truncate">{surah.name}</p>
           <p className="text-[11px] text-muted-foreground truncate">
-            {surah.englishName} · {surah.numberOfAyahs} ئایەت
+            {surah.englishName} · {toKu(surah.numberOfAyahs)} ئایەت
           </p>
         </div>
       </div>
@@ -457,7 +460,7 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
                   className="h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold"
                   style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
                 >
-                  {a.numberInSurah}
+                  {toKu(a.numberInSurah)}
                 </div>
                 <button
                   onClick={() => (isActive ? stopAudio() : playAyah(i))}
@@ -549,9 +552,9 @@ function PrayerView() {
 
   const to12 = (t: string) => {
     const [h, m] = t.split(":").map(Number);
-    const period = h >= 12 ? "PM" : "AM";
+    const period = h >= 12 ? "ع" : "ب";
     const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${h12}:${String(m).padStart(2, "0")} ${period}`;
+    return `${toKu(h12)}:${toKu(String(m).padStart(2, "0"))} ${period}`;
   };
   const prayers = data
     ? [
