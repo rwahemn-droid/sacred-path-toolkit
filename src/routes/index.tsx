@@ -730,7 +730,22 @@ function DhikrCard({ dhikr, storageKey }: { dhikr: Dhikr; storageKey: string }) 
 
 // ============ TASBIH ============
 function TasbihView() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const v = localStorage.getItem("ibadah:tasbih");
+      return v ? parseInt(v, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ibadah:tasbih", String(count));
+    } catch {
+      /* ignore */
+    }
+  }, [count]);
   return (
     <div className="flex flex-col items-center gap-8 pt-8">
       <Card>
