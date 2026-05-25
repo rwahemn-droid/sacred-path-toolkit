@@ -190,7 +190,7 @@ function QuranView() {
         </div>
       )}
 
-      <h3 className="text-xs text-muted-foreground px-1">هەموو سوورەتەکان ({filtered.length})</h3>
+      <h3 className="text-xs text-muted-foreground px-1">هەموو سوورەتەکان ({toKu(filtered.length)})</h3>
       {isLoading && <div className="text-center py-12 text-muted-foreground">بارکردن...</div>}
       {isError && <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>}
       <div className="grid gap-2">
@@ -698,7 +698,7 @@ function DhikrCard({ dhikr }: { dhikr: Dhikr }) {
       >
         <span className="text-xs text-muted-foreground">{done ? "تەواوبوو ✓" : "کلیک بکە"}</span>
         <span className="font-semibold tabular-nums">
-          <span className="text-primary">{count}</span> / {dhikr.count}
+          <span className="text-primary">{toKu(count)}</span> / {toKu(dhikr.count)}
         </span>
       </button>
     </Card>
@@ -717,7 +717,7 @@ function TasbihView() {
         className="text-7xl font-bold tabular-nums"
         style={{ background: "var(--gradient-gold)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
       >
-        {count}
+        {toKu(count)}
       </div>
       <button
         onClick={() => setCount((c) => c + 1)}
