@@ -679,8 +679,29 @@ function DhikrView() {
   );
 }
 
-function DhikrCard({ dhikr }: { dhikr: Dhikr }) {
-  const [count, setCount] = useState(0);
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function DhikrCard({ dhikr, storageKey }: { dhikr: Dhikr; storageKey: string }) {
+  const fullKey = `${storageKey}:${todayKey()}`;
+  const [count, setCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const v = localStorage.getItem(fullKey);
+      return v ? parseInt(v, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(fullKey, String(count));
+    } catch {
+      /* ignore */
+    }
+  }, [count, fullKey]);
   const done = count >= dhikr.count;
   return (
     <Card>
