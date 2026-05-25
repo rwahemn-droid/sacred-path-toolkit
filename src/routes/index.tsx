@@ -672,7 +672,7 @@ function DhikrView() {
 
       <div className="space-y-3">
         {items.map((d, i) => (
-          <DhikrCard key={i} dhikr={d} />
+          <DhikrCard key={`${sub}-${i}`} dhikr={d} storageKey={`ibadah:dhikr:${sub}:${i}`} />
         ))}
       </div>
     </div>
