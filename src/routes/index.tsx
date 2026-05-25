@@ -540,16 +540,19 @@ function PrayerView() {
   // Default to Hawler (Erbil) if user hasn't shared location yet
   const effectiveCoords = coords ?? { lat: 36.1911, lon: 44.0093 };
 
+  const todayStr = new Date().toISOString().slice(0, 10);
   const { data, isLoading } = useQuery({
-    queryKey: ["prayer", effectiveCoords.lat, effectiveCoords.lon],
+    queryKey: ["prayer", effectiveCoords.lat, effectiveCoords.lon, todayStr],
     queryFn: async (): Promise<{ timings: PrayerTimings; city: string }> => {
+      const d = new Date();
+      const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=1`,
+        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=1`,
       );
       const json = await res.json();
       return { timings: json.data.timings, city: json.data.meta?.timezone || "" };
     },
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 60,
   });
 
   const to12 = (t: string) => {
@@ -672,15 +675,36 @@ function DhikrView() {
 
       <div className="space-y-3">
         {items.map((d, i) => (
-          <DhikrCard key={i} dhikr={d} />
+          <DhikrCard key={`${sub}-${i}`} dhikr={d} storageKey={`ibadah:dhikr:${sub}:${i}`} />
         ))}
       </div>
     </div>
   );
 }
 
-function DhikrCard({ dhikr }: { dhikr: Dhikr }) {
-  const [count, setCount] = useState(0);
+function todayKey() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+}
+
+function DhikrCard({ dhikr, storageKey }: { dhikr: Dhikr; storageKey: string }) {
+  const fullKey = `${storageKey}:${todayKey()}`;
+  const [count, setCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const v = localStorage.getItem(fullKey);
+      return v ? parseInt(v, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem(fullKey, String(count));
+    } catch {
+      /* ignore */
+    }
+  }, [count, fullKey]);
   const done = count >= dhikr.count;
   return (
     <Card>
@@ -709,7 +733,22 @@ function DhikrCard({ dhikr }: { dhikr: Dhikr }) {
 
 // ============ TASBIH ============
 function TasbihView() {
-  const [count, setCount] = useState(0);
+  const [count, setCount] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const v = localStorage.getItem("ibadah:tasbih");
+      return v ? parseInt(v, 10) || 0 : 0;
+    } catch {
+      return 0;
+    }
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ibadah:tasbih", String(count));
+    } catch {
+      /* ignore */
+    }
+  }, [count]);
   return (
     <div className="flex flex-col items-center gap-8 pt-8">
       <Card>
