@@ -537,12 +537,14 @@ function PrayerView() {
     if (!coords) requestLocation();
   }, []);
 
+  // Default to Hawler (Erbil) if user hasn't shared location yet
+  const effectiveCoords = coords ?? { lat: 36.1911, lon: 44.0093 };
+
   const { data, isLoading } = useQuery({
-    enabled: !!coords,
-    queryKey: ["prayer", coords?.lat, coords?.lon],
+    queryKey: ["prayer", effectiveCoords.lat, effectiveCoords.lon],
     queryFn: async (): Promise<{ timings: PrayerTimings; city: string }> => {
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings?latitude=${coords!.lat}&longitude=${coords!.lon}&method=2`,
+        `https://api.aladhan.com/v1/timings?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=1`,
       );
       const json = await res.json();
       return { timings: json.data.timings, city: json.data.meta?.timezone || "" };
