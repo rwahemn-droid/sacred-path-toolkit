@@ -540,16 +540,19 @@ function PrayerView() {
   // Default to Hawler (Erbil) if user hasn't shared location yet
   const effectiveCoords = coords ?? { lat: 36.1911, lon: 44.0093 };
 
+  const todayStr = new Date().toISOString().slice(0, 10);
   const { data, isLoading } = useQuery({
-    queryKey: ["prayer", effectiveCoords.lat, effectiveCoords.lon],
+    queryKey: ["prayer", effectiveCoords.lat, effectiveCoords.lon, todayStr],
     queryFn: async (): Promise<{ timings: PrayerTimings; city: string }> => {
+      const d = new Date();
+      const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=1`,
+        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=1`,
       );
       const json = await res.json();
       return { timings: json.data.timings, city: json.data.meta?.timezone || "" };
     },
-    staleTime: 1000 * 60 * 30,
+    staleTime: 1000 * 60 * 60,
   });
 
   const to12 = (t: string) => {
