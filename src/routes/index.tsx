@@ -190,7 +190,7 @@ function QuranView() {
         </div>
       )}
 
-      <h3 className="text-xs text-muted-foreground px-1">هەموو سوورەتەکان ({filtered.length})</h3>
+      <h3 className="text-xs text-muted-foreground px-1">هەموو سوورەتەکان ({toKu(filtered.length)})</h3>
       {isLoading && <div className="text-center py-12 text-muted-foreground">بارکردن...</div>}
       {isError && <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>}
       <div className="grid gap-2">
