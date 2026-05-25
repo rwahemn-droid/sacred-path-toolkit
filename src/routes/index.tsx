@@ -717,7 +717,7 @@ function TasbihView() {
         className="text-7xl font-bold tabular-nums"
         style={{ background: "var(--gradient-gold)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
       >
-        {count}
+        {toKu(count)}
       </div>
       <button
         onClick={() => setCount((c) => c + 1)}
