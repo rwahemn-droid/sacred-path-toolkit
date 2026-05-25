@@ -698,7 +698,7 @@ function DhikrCard({ dhikr }: { dhikr: Dhikr }) {
       >
         <span className="text-xs text-muted-foreground">{done ? "تەواوبوو ✓" : "کلیک بکە"}</span>
         <span className="font-semibold tabular-nums">
-          <span className="text-primary">{count}</span> / {dhikr.count}
+          <span className="text-primary">{toKu(count)}</span> / {toKu(dhikr.count)}
         </span>
       </button>
     </Card>
