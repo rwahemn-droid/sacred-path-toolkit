@@ -547,7 +547,7 @@ function PrayerView() {
       const d = new Date();
       const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=1`,
+        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=0&timezonestring=Asia/Baghdad`,
       );
       const json = await res.json();
       return { timings: json.data.timings, city: json.data.meta?.timezone || "" };
