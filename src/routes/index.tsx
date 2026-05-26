@@ -1,20 +1,36 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, Clock, Sun, Target, Search, Bookmark, BookmarkCheck, Play, Pause, ChevronDown, MapPin, Sunrise, Moon } from "lucide-react";
+import {
+  BookOpen, Clock, Sun, Target, Search, Bookmark, BookmarkCheck,
+  Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
+} from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
-import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl, type Reciter } from "@/lib/reciters";
+import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
+import { TASBIHAT, DEFAULT_TASBIH_ID, type Tasbih } from "@/lib/tasbihat";
+import { CITIES, findCity } from "@/lib/cities";
+import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
+import { useSettings } from "@/lib/settings";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
-const toKu = (n: number | string) => String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
+const toLocaleDigits = (n: number | string, lang: Lang) =>
+  lang === "en" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
+
+const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
+// Strip leading bismillah from first ayah for surahs other than Al-Fatiha (1) and At-Tawbah (9).
+function stripBismillah(text: string, surahNum: number, ayahInSurah: number) {
+  if (ayahInSurah !== 1 || surahNum === 1 || surahNum === 9) return text;
+  // Match either with normal alif (ا) or alif with hamzatul wasl (ٱ), plus optional trailing space
+  return text.replace(/^بِس[ـ]?مِ\s+[اٱ]للَّهِ\s+[اٱ]لرَّحْمَٰنِ\s+[اٱ]لرَّحِيمِ\s*/u, "");
+}
 
 export const Route = createFileRoute("/")({
   component: AppRoot,
   head: () => ({
     meta: [
-      { title: "IbadahPro — قورئان و عیبادە" },
-      { name: "description", content: "قورئان، کاتەکانی نوێژ، ویردی بەیانی و ئێوارە، تەسبیح" },
+      { title: "IbadahPro — Quran, Prayer, Dhikr" },
+      { name: "description", content: "Quran, prayer times, morning & evening adhkar, tasbih — Kurdish / Arabic / English." },
     ],
   }),
 });
@@ -29,51 +45,56 @@ function AppRoot() {
   );
 }
 
-type TabId = "quran" | "prayer" | "dhikr" | "tasbih";
-
-const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { id: "quran", label: "قورئان", icon: BookOpen },
-  { id: "prayer", label: "نوێژ", icon: Clock },
-  { id: "dhikr", label: "زیکر", icon: Sun },
-  { id: "tasbih", label: "تەسبیح", icon: Target },
-];
+type TabId = "quran" | "prayer" | "dhikr" | "tasbih" | "settings";
 
 function Dashboard() {
+  const [settings] = useSettings();
+  const t = DICTS[settings.lang];
+  const dir = DIRS[settings.lang];
   const [active, setActive] = useState<TabId>("quran");
 
+  const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+    { id: "quran", label: t.tabs.quran, icon: BookOpen },
+    { id: "prayer", label: t.tabs.prayer, icon: Clock },
+    { id: "dhikr", label: t.tabs.dhikr, icon: Sun },
+    { id: "tasbih", label: t.tabs.tasbih, icon: Target },
+    { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
+  ];
+
   return (
-    <div dir="rtl" className="min-h-screen flex flex-col pb-32">
+    <div dir={dir} lang={settings.lang} className="min-h-screen flex flex-col pb-32">
       <header className="px-6 pt-8 pb-4 text-center">
-        <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">IbadahPro</p>
-        <h1 className="mt-2 text-2xl font-semibold font-display">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</h1>
+        <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">{t.appTitle}</p>
+        <h1 className="mt-2 text-2xl font-semibold font-display">{t.bismillah}</h1>
       </header>
 
       <main className="flex-1 px-4">
-        {active === "quran" && <QuranView />}
-        {active === "prayer" && <PrayerView />}
-        {active === "dhikr" && <DhikrView />}
-        {active === "tasbih" && <TasbihView />}
+        {active === "quran" && <QuranView t={t} lang={settings.lang} />}
+        {active === "prayer" && <PrayerView t={t} lang={settings.lang} cityId={settings.cityId} madhab={settings.madhab} />}
+        {active === "dhikr" && <DhikrView t={t} lang={settings.lang} />}
+        {active === "tasbih" && <TasbihView t={t} lang={settings.lang} />}
+        {active === "settings" && <SettingsView t={t} lang={settings.lang} />}
       </main>
 
       <nav className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[min(94%,30rem)] z-50">
         <div
-          className="flex items-center justify-around rounded-full border px-2 py-2 backdrop-blur-xl"
+          className="flex items-center justify-around rounded-full border px-1.5 py-2 backdrop-blur-xl"
           style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)", boxShadow: "var(--shadow-glow)" }}
         >
-          {tabs.map((t) => {
-            const Icon = t.icon;
-            const isActive = active === t.id;
+          {tabs.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = active === tab.id;
             return (
               <button
-                key={t.id}
-                onClick={() => setActive(t.id)}
-                className={`flex flex-col items-center gap-1 px-4 py-2 rounded-full transition-all ${
+                key={tab.id}
+                onClick={() => setActive(tab.id)}
+                className={`flex flex-col items-center gap-0.5 px-2.5 py-1.5 rounded-full transition-all ${
                   isActive ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
                 style={isActive ? { background: "var(--gradient-gold)" } : undefined}
               >
-                <Icon className="h-5 w-5" />
-                <span className="text-[11px] font-medium">{t.label}</span>
+                <Icon className="h-4.5 w-4.5" />
+                <span className="text-[10px] font-medium">{tab.label}</span>
               </button>
             );
           })}
@@ -129,7 +150,7 @@ function useBookmarks() {
   return { bookmarks, toggle };
 }
 
-function QuranView() {
+function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
   const [selected, setSelected] = useState<Surah | null>(null);
   const [query, setQuery] = useState("");
   const { bookmarks, toggle } = useBookmarks();
@@ -141,7 +162,6 @@ function QuranView() {
       if (!res.ok) throw new Error("Failed");
       return (await res.json()).data;
     },
-    staleTime: 1000 * 60 * 60,
   });
 
   const filtered = useMemo(() => {
@@ -162,17 +182,17 @@ function QuranView() {
     [surahs, bookmarks],
   );
 
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} />;
+  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
 
   return (
     <div className="space-y-4">
       <div className="relative">
-        <Search className="absolute right-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Search className="absolute end-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="گەڕان لە سوورەتەکان..."
-          className="w-full rounded-2xl border bg-transparent backdrop-blur-xl pr-11 pl-4 py-3 text-sm text-right focus:outline-none focus:border-primary/50"
+          placeholder={t.quran.searchPlaceholder}
+          className="w-full rounded-2xl border bg-transparent backdrop-blur-xl pe-11 ps-4 py-3 text-sm focus:outline-none focus:border-primary/50"
           style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
         />
       </div>
@@ -180,19 +200,19 @@ function QuranView() {
       {bookmarked.length > 0 && !query && (
         <div className="space-y-2">
           <h3 className="text-xs text-primary px-1 flex items-center gap-1.5">
-            <BookmarkCheck className="h-3.5 w-3.5" /> سوورەتە بوکمارککراوەکان
+            <BookmarkCheck className="h-3.5 w-3.5" /> {t.quran.bookmarked}
           </h3>
           <div className="grid gap-2">
             {bookmarked.map((s) => (
-              <SurahItem key={s.number} s={s} onOpen={() => setSelected(s)} isBookmarked onToggleBookmark={() => toggle(s.number)} />
+              <SurahItem key={`bm-${s.number}`} s={s} onOpen={() => setSelected(s)} isBookmarked onToggleBookmark={() => toggle(s.number)} lang={lang} t={t} />
             ))}
           </div>
         </div>
       )}
 
-      <h3 className="text-xs text-muted-foreground px-1">هەموو سوورەتەکان ({toKu(filtered.length)})</h3>
-      {isLoading && <div className="text-center py-12 text-muted-foreground">بارکردن...</div>}
-      {isError && <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>}
+      <h3 className="text-xs text-muted-foreground px-1">{t.quran.allSurahs} ({toLocaleDigits(filtered.length, lang)})</h3>
+      {isLoading && <div className="text-center py-12 text-muted-foreground">{t.quran.loading}</div>}
+      {isError && <div className="text-center py-12 text-destructive">{t.quran.error}</div>}
       <div className="grid gap-2">
         {filtered.map((s) => (
           <SurahItem
@@ -201,6 +221,8 @@ function QuranView() {
             onOpen={() => setSelected(s)}
             isBookmarked={bookmarks.includes(s.number)}
             onToggleBookmark={() => toggle(s.number)}
+            lang={lang}
+            t={t}
           />
         ))}
       </div>
@@ -209,57 +231,42 @@ function QuranView() {
 }
 
 function SurahItem({
-  s,
-  onOpen,
-  isBookmarked,
-  onToggleBookmark,
+  s, onOpen, isBookmarked, onToggleBookmark, lang, t,
 }: {
-  s: Surah;
-  onOpen: () => void;
-  isBookmarked: boolean;
-  onToggleBookmark: () => void;
+  s: Surah; onOpen: () => void; isBookmarked: boolean; onToggleBookmark: () => void; lang: Lang; t: Dict;
 }) {
   return (
     <div
       className="flex items-center gap-2 rounded-2xl border p-3 backdrop-blur-xl transition hover:border-primary/40"
       style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
     >
-      <button onClick={onOpen} className="flex-1 flex items-center gap-3 text-right min-w-0">
+      <button onClick={onOpen} className="flex-1 flex items-center gap-3 min-w-0">
         <div
           className="h-10 w-10 rounded-xl flex items-center justify-center text-sm font-semibold shrink-0"
           style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
         >
-          {toKu(s.number)}
+          {toLocaleDigits(s.number, lang)}
         </div>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 text-start">
           <p className="font-medium truncate text-sm">{s.englishName}</p>
           <p className="text-[11px] text-muted-foreground truncate">
-            {s.englishNameTranslation} · {toKu(s.numberOfAyahs)} ئایەت
+            {s.englishNameTranslation} · {toLocaleDigits(s.numberOfAyahs, lang)} {t.quran.ayahs}
           </p>
         </div>
-        <p className="font-display text-xl shrink-0">{s.name}</p>
+        <p className="font-display text-xl shrink-0" dir="rtl">{s.name}</p>
       </button>
-      <button
-        onClick={onToggleBookmark}
-        className="p-2 rounded-lg hover:bg-white/5 transition"
-        aria-label="bookmark"
-      >
-        {isBookmarked ? (
-          <BookmarkCheck className="h-4 w-4 text-primary" />
-        ) : (
-          <Bookmark className="h-4 w-4 text-muted-foreground" />
-        )}
+      <button onClick={onToggleBookmark} className="p-2 rounded-lg hover:bg-white/5 transition" aria-label="bookmark">
+        {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4 text-muted-foreground" />}
       </button>
     </div>
   );
 }
 
-// ============ SURAH DETAIL with audio + sync ============
-type WordTiming = [number, number, number]; // [wordIndex, startMs, endMs]
+// ============ SURAH DETAIL ============
+type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
-type QCAudioFile = { audio_url: string; verse_timings: AyahTiming[] };
 
-function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
+function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
   const [reciterId, setReciterId] = useState<string>(() => {
     if (typeof window === "undefined") return DEFAULT_RECITER_ID;
     return localStorage.getItem(RECITER_KEY) || DEFAULT_RECITER_ID;
@@ -273,27 +280,27 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
 
+  // Translation edition by language
+  const translationEdition = lang === "en" ? "en.sahih" : lang === "ar" ? "ar.muyassar" : "ku.asan";
+
   const { data, isLoading, isError } = useQuery({
-    queryKey: ["surah", surah.number],
+    queryKey: ["surah", surah.number, translationEdition],
     queryFn: async (): Promise<EditionData[]> => {
       const res = await fetch(
-        `https://api.alquran.cloud/v1/surah/${surah.number}/editions/quran-uthmani,ku.asan`,
+        `https://api.alquran.cloud/v1/surah/${surah.number}/editions/quran-uthmani,${translationEdition}`,
       );
       if (!res.ok) throw new Error("Failed");
       return (await res.json()).data;
     },
-    staleTime: 1000 * 60 * 60,
   });
 
   const arabic = data?.[0]?.ayahs ?? [];
-  const kurdish = data?.[1]?.ayahs ?? [];
+  const translation = data?.[1]?.ayahs ?? [];
 
-  // Fetch word timings (only for reciters with quranComId)
   const { data: timings } = useQuery({
     enabled: !!reciter.quranComId && arabic.length > 0,
     queryKey: ["timings", reciter.quranComId, surah.number],
     queryFn: async (): Promise<Record<number, AyahTiming>> => {
-      // Single chapter fetch
       const res = await fetch(
         `https://api.quran.com/api/v4/recitations/${reciter.quranComId}/by_chapter/${surah.number}`,
       );
@@ -306,7 +313,6 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
       }
       return out;
     },
-    staleTime: 1000 * 60 * 60,
   });
 
   const chooseReciter = (id: string) => {
@@ -333,12 +339,10 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
     setPlayingIdx(idx);
     if (continueAll) setPlayAll(true);
 
-    // Scroll to ayah
     setTimeout(() => {
       ayahRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
 
-    // Word timing
     const ayahTiming = timings?.[ayah.numberInSurah];
     if (ayahTiming?.segments?.length) {
       const baseMs = ayahTiming.timestamp_from;
@@ -374,31 +378,32 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
 
   useEffect(() => () => stopAudio(), []);
 
+  const showBismillahBanner = surah.number !== 1 && surah.number !== 9;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-2">
         <button onClick={onBack} className="text-sm text-primary hover:underline shrink-0">
-          ← گەڕانەوە
+          {t.quran.back}
         </button>
         <div className="text-center flex-1 min-w-0">
-          <p className="font-display text-lg truncate">{surah.name}</p>
+          <p className="font-display text-lg truncate" dir="rtl">{surah.name}</p>
           <p className="text-[11px] text-muted-foreground truncate">
-            {surah.englishName} · {toKu(surah.numberOfAyahs)} ئایەت
+            {surah.englishName} · {toLocaleDigits(surah.numberOfAyahs, lang)} {t.quran.ayahs}
           </p>
         </div>
       </div>
 
-      {/* Reciter picker + play all */}
       <Card className="!p-3">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setPickerOpen((v) => !v)}
-            className="flex-1 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 text-right hover:border-primary/40 transition"
+            className="flex-1 flex items-center justify-between gap-2 rounded-xl border px-3 py-2.5 hover:border-primary/40 transition"
             style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
           >
             <ChevronDown className={`h-4 w-4 text-muted-foreground transition ${pickerOpen ? "rotate-180" : ""}`} />
-            <div className="flex-1 min-w-0">
-              <p className="text-[10px] text-muted-foreground">قاری</p>
+            <div className="flex-1 min-w-0 text-start">
+              <p className="text-[10px] text-muted-foreground">{t.quran.reciter}</p>
               <p className="text-sm font-medium truncate">{reciter.name}</p>
             </div>
           </button>
@@ -413,19 +418,17 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
         </div>
 
         {pickerOpen && (
-          <div className="mt-3 max-h-72 overflow-y-auto grid gap-1 pr-1">
+          <div className="mt-3 max-h-72 overflow-y-auto grid gap-1 pe-1">
             {RECITERS.map((r) => (
               <button
                 key={r.id}
                 onClick={() => chooseReciter(r.id)}
-                className={`flex items-center justify-between rounded-lg px-3 py-2 text-right text-sm transition ${
+                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition ${
                   r.id === reciterId ? "text-primary-foreground" : "hover:bg-white/5"
                 }`}
                 style={r.id === reciterId ? { background: "var(--gradient-gold)" } : undefined}
               >
-                <span className="text-[10px] opacity-70">
-                  {r.quranComId ? "✦ سینکی وشە" : ""}
-                </span>
+                <span className="text-[10px] opacity-70">{r.quranComId ? t.quran.wordSync : ""}</span>
                 <span className="truncate">{r.name}</span>
               </button>
             ))}
@@ -433,22 +436,25 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
         )}
       </Card>
 
-      {isLoading && <div className="text-center py-12 text-muted-foreground">بارکردن...</div>}
-      {isError && <div className="text-center py-12 text-destructive">هەڵە لە هێنانی داتا</div>}
+      {isLoading && <div className="text-center py-12 text-muted-foreground">{t.quran.loading}</div>}
+      {isError && <div className="text-center py-12 text-destructive">{t.quran.error}</div>}
+
+      {showBismillahBanner && arabic.length > 0 && (
+        <Card>
+          <p className="font-display text-2xl text-center" dir="rtl">{BISMILLAH}</p>
+        </Card>
+      )}
 
       <div className="space-y-3">
         {arabic.map((a, i) => {
           const isActive = playingIdx === i;
-          const words = a.text.split(/\s+/);
+          const cleanText = stripBismillah(a.text, surah.number, a.numberInSurah);
+          const words = cleanText.split(/\s+/).filter(Boolean);
           return (
             <div
               key={a.number}
-              ref={(el) => {
-                ayahRefs.current[i] = el;
-              }}
-              className={`rounded-3xl border p-5 backdrop-blur-xl transition-all ${
-                isActive ? "border-primary/60 shadow-lg" : ""
-              }`}
+              ref={(el) => { ayahRefs.current[i] = el; }}
+              className={`rounded-3xl border p-5 backdrop-blur-xl transition-all ${isActive ? "border-primary/60 shadow-lg" : ""}`}
               style={{
                 background: isActive ? "color-mix(in oklch, var(--primary) 8%, var(--glass-bg))" : "var(--glass-bg)",
                 borderColor: isActive ? "var(--primary)" : "var(--glass-border)",
@@ -460,7 +466,7 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
                   className="h-8 w-8 rounded-lg flex items-center justify-center text-xs font-semibold"
                   style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
                 >
-                  {toKu(a.numberInSurah)}
+                  {toLocaleDigits(a.numberInSurah, lang)}
                 </div>
                 <button
                   onClick={() => (isActive ? stopAudio() : playAyah(i))}
@@ -477,7 +483,7 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
                   const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
                   return (
                     <span
-                      key={wi}
+                      key={`${a.number}-w-${wi}`}
                       className="transition-colors"
                       style={highlight ? { color: "oklch(0.92 0.18 95)", textShadow: "0 0 12px oklch(0.92 0.18 95 / 0.5)" } : undefined}
                     >
@@ -487,9 +493,12 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
                 })}
               </p>
 
-              {kurdish[i] && (
-                <p className="mt-4 pt-4 border-t border-white/10 text-sm leading-relaxed text-muted-foreground text-right">
-                  {kurdish[i].text}
+              {translation[i] && (
+                <p
+                  className="mt-4 pt-4 border-t border-white/10 text-sm leading-relaxed text-muted-foreground"
+                  dir={lang === "en" ? "ltr" : "rtl"}
+                >
+                  {translation[i].text}
                 </p>
               )}
             </div>
@@ -501,74 +510,42 @@ function SurahDetail({ surah, onBack }: { surah: Surah; onBack: () => void }) {
 }
 
 // ============ PRAYER TIMES ============
-type PrayerTimings = {
-  Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string;
-};
+type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string };
 
-function PrayerView() {
-  const [coords, setCoords] = useState<{ lat: number; lon: number } | null>(() => {
-    if (typeof window === "undefined") return null;
-    try {
-      const s = localStorage.getItem("ibadah:coords");
-      return s ? JSON.parse(s) : null;
-    } catch {
-      return null;
-    }
-  });
-  const [locError, setLocError] = useState<string | null>(null);
-
-  const requestLocation = () => {
-    if (!navigator.geolocation) {
-      setLocError("ئامێرەکەت پشتیوانی Geolocation ناکات");
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const c = { lat: pos.coords.latitude, lon: pos.coords.longitude };
-        setCoords(c);
-        localStorage.setItem("ibadah:coords", JSON.stringify(c));
-        setLocError(null);
-      },
-      () => setLocError("ڕێگەی پێ نەدا بۆ شوێن"),
-    );
-  };
-
-  useEffect(() => {
-    if (!coords) requestLocation();
-  }, []);
-
-  // Default to Hawler (Erbil) if user hasn't shared location yet
-  const effectiveCoords = coords ?? { lat: 36.1911, lon: 44.0093 };
+function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: string; madhab: "shafi" | "hanafi" }) {
+  const city = findCity(cityId);
+  const school = madhab === "hanafi" ? 1 : 0;
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const { data, isLoading } = useQuery({
-    queryKey: ["prayer", effectiveCoords.lat, effectiveCoords.lon, todayStr],
-    queryFn: async (): Promise<{ timings: PrayerTimings; city: string }> => {
+    queryKey: ["prayer", city.id, school, todayStr],
+    queryFn: async (): Promise<{ timings: PrayerTimings }> => {
       const d = new Date();
       const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${effectiveCoords.lat}&longitude=${effectiveCoords.lon}&method=3&school=0&timezonestring=Asia/Baghdad`,
+        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${city.lat}&longitude=${city.lon}&method=3&school=${school}&timezonestring=${encodeURIComponent(city.tz)}`,
       );
       const json = await res.json();
-      return { timings: json.data.timings, city: json.data.meta?.timezone || "" };
+      return { timings: json.data.timings };
     },
-    staleTime: 1000 * 60 * 60,
+    staleTime: 1000 * 60 * 60 * 6,
+    gcTime: 1000 * 60 * 60 * 24,
   });
 
-  const to12 = (t: string) => {
-    const [h, m] = t.split(":").map(Number);
-    const period = h >= 12 ? "ع" : "ب";
+  const to12 = (time: string) => {
+    const [h, m] = time.split(":").map(Number);
+    const period = h >= 12 ? t.prayer.pm : t.prayer.am;
     const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${toKu(h12)}:${toKu(String(m).padStart(2, "0"))} ${period}`;
+    return `${toLocaleDigits(h12, lang)}:${toLocaleDigits(String(m).padStart(2, "0"), lang)} ${period}`;
   };
   const prayers = data
     ? [
-        { name: "بەیانی", time: data.timings.Fajr.slice(0, 5) },
-        { name: "خۆرهەڵات", time: data.timings.Sunrise.slice(0, 5) },
-        { name: "نیوەڕۆ", time: data.timings.Dhuhr.slice(0, 5) },
-        { name: "عەسر", time: data.timings.Asr.slice(0, 5) },
-        { name: "ئێوارە", time: data.timings.Maghrib.slice(0, 5) },
-        { name: "خەوتنان", time: data.timings.Isha.slice(0, 5) },
+        { name: t.prayer.names.fajr, time: data.timings.Fajr.slice(0, 5) },
+        { name: t.prayer.names.sunrise, time: data.timings.Sunrise.slice(0, 5) },
+        { name: t.prayer.names.dhuhr, time: data.timings.Dhuhr.slice(0, 5) },
+        { name: t.prayer.names.asr, time: data.timings.Asr.slice(0, 5) },
+        { name: t.prayer.names.maghrib, time: data.timings.Maghrib.slice(0, 5) },
+        { name: t.prayer.names.isha, time: data.timings.Isha.slice(0, 5) },
       ]
     : [];
 
@@ -583,56 +560,42 @@ function PrayerView() {
         const [h, m] = next.time.split(":").map(Number);
         let diff = h * 60 + m - nowMin;
         if (diff < 0) diff += 24 * 60;
-        return `${Math.floor(diff / 60)} کاتژمێر و ${diff % 60} خولەک`;
+        return `${toLocaleDigits(Math.floor(diff / 60), lang)} ${t.prayer.hours} ${toLocaleDigits(diff % 60, lang)} ${t.prayer.minutes}`;
       })()
     : "";
 
-  if (!coords) {
-    return (
-      <div className="space-y-4">
-        <Card>
-          <div className="flex flex-col items-center text-center gap-3 py-4">
-            <MapPin className="h-10 w-10 text-primary" />
-            <p className="font-medium">شوێنەکەت پێویستە بۆ کاتە ڕاستەقینەکانی نوێژ</p>
-            {locError && <p className="text-xs text-destructive">{locError}</p>}
-            <button
-              onClick={requestLocation}
-              className="px-5 py-2.5 rounded-xl font-medium"
-              style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
-            >
-              ڕێگە بدە بە شوێن
-            </button>
-          </div>
-        </Card>
-      </div>
-    );
-  }
+  const cityName = lang === "ar" ? city.ar : lang === "en" ? city.en : city.ku;
 
   return (
     <div className="space-y-4">
       <Card>
-        <p className="text-sm text-muted-foreground">نوێژی داهاتوو</p>
+        <div className="flex items-center justify-between mb-1">
+          <p className="text-sm text-muted-foreground">{t.prayer.nextPrayer}</p>
+          <span className="flex items-center gap-1 text-xs text-primary">
+            <MapPin className="h-3 w-3" /> {cityName}
+          </span>
+        </div>
         {isLoading ? (
-          <p className="mt-2 text-muted-foreground">بارکردن...</p>
+          <p className="mt-2 text-muted-foreground">{t.quran.loading}</p>
         ) : next ? (
           <>
             <div className="mt-2 flex items-baseline justify-between">
               <h2 className="text-3xl font-semibold">{next.name}</h2>
               <p className="text-2xl text-primary tabular-nums">{to12(next.time)}</p>
             </div>
-            <p className="mt-2 text-xs text-muted-foreground">{remaining} ماوە</p>
+            <p className="mt-2 text-xs text-muted-foreground">{remaining} {t.prayer.remaining}</p>
           </>
         ) : null}
       </Card>
       <div className="grid gap-2">
-        {prayers.map((t) => (
+        {prayers.map((p) => (
           <div
-            key={t.name}
+            key={p.name}
             className="flex items-center justify-between rounded-2xl border px-5 py-4 backdrop-blur-xl"
             style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
           >
-            <span className="font-medium">{t.name}</span>
-            <span className="text-primary tabular-nums">{to12(t.time)}</span>
+            <span className="font-medium">{p.name}</span>
+            <span className="text-primary tabular-nums">{to12(p.time)}</span>
           </div>
         ))}
       </div>
@@ -640,11 +603,9 @@ function PrayerView() {
   );
 }
 
-// ============ DHIKR (Morning/Evening Adhkar) ============
-function DhikrView() {
-  const [sub, setSub] = useState<"morning" | "evening">(
-    new Date().getHours() < 14 ? "morning" : "evening",
-  );
+// ============ DHIKR ============
+function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
+  const [sub, setSub] = useState<"morning" | "evening">(new Date().getHours() < 14 ? "morning" : "evening");
   const items = sub === "morning" ? MORNING_ADHKAR : EVENING_ADHKAR;
 
   return (
@@ -660,7 +621,7 @@ function DhikrView() {
           }`}
           style={sub === "morning" ? { background: "var(--gradient-gold)" } : undefined}
         >
-          <Sunrise className="h-4 w-4" /> ویردی بەیانی
+          <Sunrise className="h-4 w-4" /> {t.dhikr.morning}
         </button>
         <button
           onClick={() => setSub("evening")}
@@ -669,13 +630,13 @@ function DhikrView() {
           }`}
           style={sub === "evening" ? { background: "var(--gradient-gold)" } : undefined}
         >
-          <Moon className="h-4 w-4" /> ویردی ئێوارە
+          <Moon className="h-4 w-4" /> {t.dhikr.evening}
         </button>
       </div>
 
       <div className="space-y-3">
         {items.map((d, i) => (
-          <DhikrCard key={`${sub}-${i}`} dhikr={d} storageKey={`ibadah:dhikr:${sub}:${i}`} />
+          <DhikrCard key={`${sub}-${i}`} dhikr={d} storageKey={`ibadah:dhikr:${sub}:${i}`} t={t} lang={lang} />
         ))}
       </div>
     </div>
@@ -687,44 +648,34 @@ function todayKey() {
   return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
 }
 
-function DhikrCard({ dhikr, storageKey }: { dhikr: Dhikr; storageKey: string }) {
+function DhikrCard({ dhikr, storageKey, t, lang }: { dhikr: Dhikr; storageKey: string; t: Dict; lang: Lang }) {
   const fullKey = `${storageKey}:${todayKey()}`;
   const [count, setCount] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
     try {
       const v = localStorage.getItem(fullKey);
       return v ? parseInt(v, 10) || 0 : 0;
-    } catch {
-      return 0;
-    }
+    } catch { return 0; }
   });
   useEffect(() => {
-    try {
-      localStorage.setItem(fullKey, String(count));
-    } catch {
-      /* ignore */
-    }
+    try { localStorage.setItem(fullKey, String(count)); } catch { /* */ }
   }, [count, fullKey]);
   const done = count >= dhikr.count;
   return (
     <Card>
-      <p className="font-display text-xl leading-relaxed text-right" dir="rtl">
-        {dhikr.ar}
-      </p>
-      <p className="mt-3 text-xs text-muted-foreground text-right">{dhikr.ku}</p>
+      <p className="font-display text-xl leading-relaxed text-right" dir="rtl">{dhikr.ar}</p>
+      <p className="mt-3 text-xs text-muted-foreground text-right" dir="rtl">{dhikr.ku}</p>
       <button
         onClick={() => setCount((c) => (c >= dhikr.count ? 0 : c + 1))}
-        className={`mt-4 w-full flex items-center justify-between rounded-xl border px-4 py-3 transition ${
-          done ? "border-primary/60" : ""
-        }`}
+        className={`mt-4 w-full flex items-center justify-between rounded-xl border px-4 py-3 transition ${done ? "border-primary/60" : ""}`}
         style={{
           background: done ? "color-mix(in oklch, var(--primary) 12%, transparent)" : "var(--glass-bg)",
           borderColor: done ? "var(--primary)" : "var(--glass-border)",
         }}
       >
-        <span className="text-xs text-muted-foreground">{done ? "تەواوبوو ✓" : "کلیک بکە"}</span>
+        <span className="text-xs text-muted-foreground">{done ? t.dhikr.done : t.dhikr.tap}</span>
         <span className="font-semibold tabular-nums">
-          <span className="text-primary">{toKu(count)}</span> / {toKu(dhikr.count)}
+          <span className="text-primary">{toLocaleDigits(count, lang)}</span> / {toLocaleDigits(dhikr.count, lang)}
         </span>
       </button>
     </Card>
@@ -732,44 +683,172 @@ function DhikrCard({ dhikr, storageKey }: { dhikr: Dhikr; storageKey: string }) 
 }
 
 // ============ TASBIH ============
-function TasbihView() {
+const TASBIH_KEY = "ibadah:tasbih:selected";
+
+function TasbihView({ t, lang }: { t: Dict; lang: Lang }) {
+  const [selectedId, setSelectedId] = useState<string>(() => {
+    if (typeof window === "undefined") return DEFAULT_TASBIH_ID;
+    return localStorage.getItem(TASBIH_KEY) || DEFAULT_TASBIH_ID;
+  });
+  const selected = TASBIHAT.find((x) => x.id === selectedId) || TASBIHAT[0];
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  useEffect(() => {
+    try { localStorage.setItem(TASBIH_KEY, selectedId); } catch { /* */ }
+  }, [selectedId]);
+
+  const countKey = `ibadah:tasbih:count:${selected.id}`;
   const [count, setCount] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
-    try {
-      const v = localStorage.getItem("ibadah:tasbih");
-      return v ? parseInt(v, 10) || 0 : 0;
-    } catch {
-      return 0;
-    }
+    try { const v = localStorage.getItem(countKey); return v ? parseInt(v, 10) || 0 : 0; } catch { return 0; }
   });
   useEffect(() => {
-    try {
-      localStorage.setItem("ibadah:tasbih", String(count));
-    } catch {
-      /* ignore */
-    }
-  }, [count]);
+    try { setCount(parseInt(localStorage.getItem(countKey) || "0", 10) || 0); } catch { /* */ }
+  }, [countKey]);
+  useEffect(() => {
+    try { localStorage.setItem(countKey, String(count)); } catch { /* */ }
+  }, [count, countKey]);
+
+  const label = lang === "ku" ? selected.ku : lang === "en" ? selected.en : selected.ar_meaning;
+
   return (
-    <div className="flex flex-col items-center gap-8 pt-8">
-      <Card>
-        <p className="font-display text-3xl text-center">سُبْحَانَ اللَّهِ</p>
+    <div className="flex flex-col items-center gap-6 pt-4">
+      <Card className="w-full">
+        <button onClick={() => setPickerOpen((v) => !v)} className="w-full flex items-center justify-between gap-2">
+          <ChevronDown className={`h-4 w-4 text-muted-foreground transition ${pickerOpen ? "rotate-180" : ""}`} />
+          <div className="flex-1 min-w-0 text-center">
+            <p className="text-[10px] text-muted-foreground">{t.tasbih.choose}</p>
+            <p className="font-display text-2xl mt-1" dir="rtl">{selected.ar}</p>
+            <p className="text-xs text-muted-foreground mt-1">{label}</p>
+          </div>
+          <BookMarked className="h-4 w-4 text-primary" />
+        </button>
+        {pickerOpen && (
+          <div className="mt-4 grid gap-1 max-h-72 overflow-y-auto">
+            {TASBIHAT.map((x) => (
+              <button
+                key={x.id}
+                onClick={() => { setSelectedId(x.id); setPickerOpen(false); }}
+                className={`flex items-center justify-between rounded-lg px-3 py-2 text-sm transition gap-3 ${
+                  x.id === selectedId ? "text-primary-foreground" : "hover:bg-white/5"
+                }`}
+                style={x.id === selectedId ? { background: "var(--gradient-gold)" } : undefined}
+              >
+                <span className="text-[10px] opacity-70 shrink-0">×{toLocaleDigits(x.target, lang)}</span>
+                <span className="truncate font-display text-base" dir="rtl">{x.ar}</span>
+              </button>
+            ))}
+          </div>
+        )}
       </Card>
+
       <div
         className="text-7xl font-bold tabular-nums"
         style={{ background: "var(--gradient-gold)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}
       >
-        {toKu(count)}
+        {toLocaleDigits(count, lang)}
+        <span className="text-2xl text-muted-foreground"> / {toLocaleDigits(selected.target, lang)}</span>
       </div>
       <button
         onClick={() => setCount((c) => c + 1)}
         className="h-40 w-40 rounded-full text-xl font-semibold transition-all active:scale-95"
         style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)", boxShadow: "var(--shadow-glow)" }}
       >
-        تەسبیح
+        +1
       </button>
       <button onClick={() => setCount(0)} className="text-sm text-muted-foreground hover:text-foreground">
-        سفر کردنەوە
+        {t.tasbih.reset}
       </button>
+    </div>
+  );
+}
+
+// ============ SETTINGS ============
+function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
+  const [settings, update] = useSettings();
+  const tzLocal = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const langs: Lang[] = ["ku", "ar", "en"];
+
+  const cityLabel = (id: string) => {
+    const c = findCity(id);
+    return lang === "ar" ? c.ar : lang === "en" ? c.en : c.ku;
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Globe className="h-4 w-4 text-primary" />
+          <h3 className="font-medium">{t.settings.language}</h3>
+        </div>
+        <div className="grid grid-cols-3 gap-2">
+          {langs.map((L) => (
+            <button
+              key={L}
+              onClick={() => update({ lang: L })}
+              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
+                settings.lang === L ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
+              }`}
+              style={{
+                background: settings.lang === L ? "var(--gradient-gold)" : "var(--glass-bg)",
+                borderColor: settings.lang === L ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {LANG_LABELS[L]}
+            </button>
+          ))}
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <MapPin className="h-4 w-4 text-primary" />
+          <h3 className="font-medium">{t.settings.city}</h3>
+        </div>
+        <select
+          value={settings.cityId}
+          onChange={(e) => update({ cityId: e.target.value })}
+          className="w-full rounded-xl border px-3 py-3 text-sm bg-transparent focus:outline-none focus:border-primary/50"
+          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+        >
+          {CITIES.map((c) => (
+            <option key={c.id} value={c.id} className="bg-background text-foreground">
+              {cityLabel(c.id)}
+            </option>
+          ))}
+        </select>
+        <p className="mt-2 text-[11px] text-muted-foreground">
+          {findCity(settings.cityId).tz} · {tzLocal}
+        </p>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-1">
+          <BookMarked className="h-4 w-4 text-primary" />
+          <h3 className="font-medium">{t.settings.madhab}</h3>
+        </div>
+        <p className="text-[11px] text-muted-foreground mb-3">{t.settings.asrNote}</p>
+        <div className="grid grid-cols-2 gap-2">
+          {([
+            { id: "shafi", label: t.settings.shafi },
+            { id: "hanafi", label: t.settings.hanafi },
+          ] as const).map((m) => (
+            <button
+              key={m.id}
+              onClick={() => update({ madhab: m.id })}
+              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
+                settings.madhab === m.id ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
+              }`}
+              style={{
+                background: settings.madhab === m.id ? "var(--gradient-gold)" : "var(--glass-bg)",
+                borderColor: settings.madhab === m.id ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {m.label}
+            </button>
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
