@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BookOpen, Clock, Sun, Target, Search, Bookmark, BookmarkCheck,
+  BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
+  BookText, X, Calendar,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
-import { TASBIHAT, DEFAULT_TASBIH_ID, type Tasbih } from "@/lib/tasbihat";
+import { TASBIHAT, DEFAULT_TASBIH_ID } from "@/lib/tasbihat";
 import { CITIES, findCity } from "@/lib/cities";
 import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
@@ -18,12 +19,37 @@ const toLocaleDigits = (n: number | string, lang: Lang) =>
   lang === "en" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
 
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
-// Strip leading bismillah from first ayah for surahs other than Al-Fatiha (1) and At-Tawbah (9).
+
+// Robust bismillah stripper — normalize diacritics & alif variants, then check first 4 words.
+const stripArabicDiacritics = (s: string) =>
+  s.replace(/[\u064B-\u0652\u0670\u0653\u0654\u0655\u0656\u0657\u0658\u0640]/g, "").replace(/ٱ/g, "ا");
+
 function stripBismillah(text: string, surahNum: number, ayahInSurah: number) {
   if (ayahInSurah !== 1 || surahNum === 1 || surahNum === 9) return text;
-  // Match either with normal alif (ا) or alif with hamzatul wasl (ٱ), plus optional trailing space
-  return text.replace(/^بِس[ـ]?مِ\s+[اٱ]للَّهِ\s+[اٱ]لرَّحْمَٰنِ\s+[اٱ]لرَّحِيمِ\s*/u, "");
+  const words = text.trim().split(/\s+/);
+  if (words.length < 4) return text;
+  const head = stripArabicDiacritics(words.slice(0, 4).join(" "));
+  if (head === "بسم الله الرحمن الرحيم") {
+    return words.slice(4).join(" ").trim();
+  }
+  return text;
 }
+
+// Beads (tasbih) icon — lucide doesn't include one.
+function BeadsIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 13c0 4 3.5 7 8 7s8-3 8-7" />
+      <circle cx="6" cy="11" r="1.6" fill="currentColor" />
+      <circle cx="10" cy="13" r="1.6" fill="currentColor" />
+      <circle cx="14" cy="13" r="1.6" fill="currentColor" />
+      <circle cx="18" cy="11" r="1.6" fill="currentColor" />
+      <path d="M12 4v3" />
+      <path d="M10.5 7h3l-0.5 2h-2z" fill="currentColor" />
+    </svg>
+  );
+}
+
 
 export const Route = createFileRoute("/")({
   component: AppRoot,
@@ -56,8 +82,8 @@ function Dashboard() {
   const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "quran", label: t.tabs.quran, icon: BookOpen },
     { id: "prayer", label: t.tabs.prayer, icon: Clock },
-    { id: "dhikr", label: t.tabs.dhikr, icon: Sun },
-    { id: "tasbih", label: t.tabs.tasbih, icon: Target },
+    { id: "dhikr", label: t.tabs.dhikr, icon: BookText },
+    { id: "tasbih", label: t.tabs.tasbih, icon: BeadsIcon },
     { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
   ];
 
@@ -235,6 +261,13 @@ function SurahItem({
 }: {
   s: Surah; onOpen: () => void; isBookmarked: boolean; onToggleBookmark: () => void; lang: Lang; t: Dict;
 }) {
+  // Localized subtitle: en -> English name + translation; ar -> Arabic short name; ku -> ayah-count only
+  const subtitle =
+    lang === "en"
+      ? `${s.englishName} · ${s.englishNameTranslation} · ${s.numberOfAyahs} ${t.quran.ayahs}`
+      : lang === "ar"
+        ? `${toLocaleDigits(s.numberOfAyahs, lang)} ${t.quran.ayahs}`
+        : `${toLocaleDigits(s.numberOfAyahs, lang)} ${t.quran.ayahs}`;
   return (
     <div
       className="flex items-center gap-2 rounded-2xl border p-3 backdrop-blur-xl transition hover:border-primary/40"
@@ -248,12 +281,9 @@ function SurahItem({
           {toLocaleDigits(s.number, lang)}
         </div>
         <div className="min-w-0 flex-1 text-start">
-          <p className="font-medium truncate text-sm">{s.englishName}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
-            {s.englishNameTranslation} · {toLocaleDigits(s.numberOfAyahs, lang)} {t.quran.ayahs}
-          </p>
+          <p className="font-display text-lg truncate" dir="rtl">{s.name}</p>
+          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
         </div>
-        <p className="font-display text-xl shrink-0" dir="rtl">{s.name}</p>
       </button>
       <button onClick={onToggleBookmark} className="p-2 rounded-lg hover:bg-white/5 transition" aria-label="bookmark">
         {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4 text-muted-foreground" />}
@@ -515,6 +545,7 @@ type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string
 function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: string; madhab: "shafi" | "hanafi" }) {
   const city = findCity(cityId);
   const school = madhab === "hanafi" ? 1 : 0;
+  const [monthlyOpen, setMonthlyOpen] = useState(false);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const { data, isLoading } = useQuery({
@@ -599,6 +630,121 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
           </div>
         ))}
       </div>
+
+      <button
+        onClick={() => setMonthlyOpen(true)}
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border px-5 py-4 font-medium transition"
+        style={{ background: "var(--gradient-teal)", borderColor: "transparent", color: "oklch(0.12 0.04 250)", boxShadow: "var(--shadow-teal)" }}
+      >
+        <Calendar className="h-4 w-4" /> {t.prayer.monthly}
+      </button>
+
+      {monthlyOpen && (
+        <MonthlyTimes
+          t={t}
+          lang={lang}
+          city={city}
+          school={school}
+          onClose={() => setMonthlyOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MonthlyTimes({
+  t, lang, city, school, onClose,
+}: { t: Dict; lang: Lang; city: ReturnType<typeof findCity>; school: 0 | 1; onClose: () => void }) {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1); // 1-12
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["calendar", city.id, school, year, month],
+    queryFn: async () => {
+      const res = await fetch(
+        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=3&school=${school}&timezonestring=${encodeURIComponent(city.tz)}`,
+      );
+      const json = await res.json();
+      return json.data as Array<{ timings: Record<string, string>; date: { gregorian: { date: string; day: string } } }>;
+    },
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+
+  const trim = (s?: string) => (s ? s.split(" ")[0].slice(0, 5) : "—");
+
+  const prev = () => {
+    if (month === 1) { setYear((y) => y - 1); setMonth(12); } else setMonth((m) => m - 1);
+  };
+  const next = () => {
+    if (month === 12) { setYear((y) => y + 1); setMonth(1); } else setMonth((m) => m + 1);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={onClose}>
+      <div
+        className="w-full max-w-2xl max-h-[88vh] rounded-3xl border overflow-hidden flex flex-col"
+        style={{ background: "var(--background)", borderColor: "var(--glass-border)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--glass-border)" }}>
+          <button onClick={onClose} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-white/5" aria-label={t.prayer.close}>
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={prev} className="px-2.5 py-1 rounded-lg hover:bg-white/5">‹</button>
+            <p className="text-sm font-medium tabular-nums">
+              {t.prayer.monthlyTitle} {toLocaleDigits(month, lang)} / {toLocaleDigits(year, lang)}
+            </p>
+            <button onClick={next} className="px-2.5 py-1 rounded-lg hover:bg-white/5">›</button>
+          </div>
+        </div>
+
+        <div className="overflow-auto flex-1">
+          {isLoading || !data ? (
+            <p className="text-center py-12 text-muted-foreground">{t.quran.loading}</p>
+          ) : (
+            <table className="w-full text-xs tabular-nums">
+              <thead className="sticky top-0" style={{ background: "var(--background)" }}>
+                <tr className="text-primary">
+                  <th className="py-2 px-2 font-medium">{t.prayer.date}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.fajr}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.sunrise}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.dhuhr}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.asr}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.maghrib}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.isha}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((d, i) => {
+                  const todayDay = new Date().getDate();
+                  const dayNum = parseInt(d.date.gregorian.day, 10);
+                  const isToday = dayNum === todayDay && year === new Date().getFullYear() && month === new Date().getMonth() + 1;
+                  return (
+                    <tr
+                      key={i}
+                      className="border-t"
+                      style={{
+                        borderColor: "var(--glass-border)",
+                        background: isToday ? "color-mix(in oklch, var(--primary) 10%, transparent)" : undefined,
+                      }}
+                    >
+                      <td className="py-2 px-2 text-primary font-medium">{toLocaleDigits(String(month).padStart(2, "0"), lang)}-{toLocaleDigits(d.date.gregorian.day, lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Fajr), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Sunrise), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Dhuhr), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Asr), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Maghrib), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Isha), lang)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -619,7 +765,7 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
           className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${
             sub === "morning" ? "text-primary-foreground" : "text-muted-foreground"
           }`}
-          style={sub === "morning" ? { background: "var(--gradient-gold)" } : undefined}
+          style={sub === "morning" ? { background: "var(--gradient-gold)", boxShadow: "var(--shadow-glow)" } : undefined}
         >
           <Sunrise className="h-4 w-4" /> {t.dhikr.morning}
         </button>
@@ -628,7 +774,7 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
           className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${
             sub === "evening" ? "text-primary-foreground" : "text-muted-foreground"
           }`}
-          style={sub === "evening" ? { background: "var(--gradient-gold)" } : undefined}
+          style={sub === "evening" ? { background: "var(--gradient-teal)", boxShadow: "var(--shadow-teal)" } : undefined}
         >
           <Moon className="h-4 w-4" /> {t.dhikr.evening}
         </button>
@@ -805,18 +951,28 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           <MapPin className="h-4 w-4 text-primary" />
           <h3 className="font-medium">{t.settings.city}</h3>
         </div>
-        <select
-          value={settings.cityId}
-          onChange={(e) => update({ cityId: e.target.value })}
-          className="w-full rounded-xl border px-3 py-3 text-sm bg-transparent focus:outline-none focus:border-primary/50"
-          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
-        >
-          {CITIES.map((c) => (
-            <option key={c.id} value={c.id} className="bg-background text-foreground">
-              {cityLabel(c.id)}
-            </option>
-          ))}
-        </select>
+        <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pe-1">
+          {CITIES.map((c) => {
+            const isActive = settings.cityId === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => update({ cityId: c.id })}
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition ${
+                  isActive ? "text-primary-foreground" : "hover:border-primary/40"
+                }`}
+                style={{
+                  background: isActive ? "var(--gradient-gold)" : "var(--glass-bg)",
+                  borderColor: isActive ? "transparent" : "var(--glass-border)",
+                  boxShadow: isActive ? "var(--shadow-glow)" : undefined,
+                }}
+              >
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{cityLabel(c.id)}</span>
+              </button>
+            );
+          })}
+        </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
           {findCity(settings.cityId).tz} · {tzLocal}
         </p>

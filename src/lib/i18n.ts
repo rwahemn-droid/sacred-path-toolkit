@@ -26,6 +26,10 @@ export type Dict = {
     names: { fajr: string; sunrise: string; dhuhr: string; asr: string; maghrib: string; isha: string };
     am: string;
     pm: string;
+    monthly: string;
+    monthlyTitle: string;
+    date: string;
+    close: string;
   };
   dhikr: { morning: string; evening: string; done: string; tap: string };
   tasbih: { reset: string; choose: string };
@@ -65,6 +69,10 @@ const ku: Dict = {
     names: { fajr: "بەیانی", sunrise: "خۆرهەڵات", dhuhr: "نیوەڕۆ", asr: "عەسر", maghrib: "ئێوارە", isha: "خەوتنان" },
     am: "ب.ن",
     pm: "د.ن",
+    monthly: "کاتەکانی مانگانە",
+    monthlyTitle: "کاتەکانی بانگ لە مانگی",
+    date: "بەروار",
+    close: "داخستن",
   },
   dhikr: { morning: "ویردی بەیانی", evening: "ویردی ئێوارە", done: "تەواوبوو ✓", tap: "کلیک بکە" },
   tasbih: { reset: "سفر کردنەوە", choose: "هەڵبژاردنی زیکر" },
@@ -104,6 +112,10 @@ const ar: Dict = {
     names: { fajr: "الفجر", sunrise: "الشروق", dhuhr: "الظهر", asr: "العصر", maghrib: "المغرب", isha: "العشاء" },
     am: "ص",
     pm: "م",
+    monthly: "مواقيت الشهر",
+    monthlyTitle: "مواقيت الصلاة لشهر",
+    date: "التاريخ",
+    close: "إغلاق",
   },
   dhikr: { morning: "أذكار الصباح", evening: "أذكار المساء", done: "اكتمل ✓", tap: "اضغط" },
   tasbih: { reset: "إعادة تعيين", choose: "اختر الذكر" },
@@ -143,6 +155,10 @@ const en: Dict = {
     names: { fajr: "Fajr", sunrise: "Sunrise", dhuhr: "Dhuhr", asr: "Asr", maghrib: "Maghrib", isha: "Isha" },
     am: "AM",
     pm: "PM",
+    monthly: "Monthly times",
+    monthlyTitle: "Prayer times for month",
+    date: "Date",
+    close: "Close",
   },
   dhikr: { morning: "Morning adhkar", evening: "Evening adhkar", done: "Done ✓", tap: "Tap" },
   tasbih: { reset: "Reset", choose: "Choose dhikr" },
