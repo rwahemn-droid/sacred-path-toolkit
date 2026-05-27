@@ -26,6 +26,10 @@ export type Dict = {
     names: { fajr: string; sunrise: string; dhuhr: string; asr: string; maghrib: string; isha: string };
     am: string;
     pm: string;
+    monthly: string;
+    monthlyTitle: string;
+    date: string;
+    close: string;
   };
   dhikr: { morning: string; evening: string; done: string; tap: string };
   tasbih: { reset: string; choose: string };
