@@ -649,7 +649,7 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
           className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${
             sub === "morning" ? "text-primary-foreground" : "text-muted-foreground"
           }`}
-          style={sub === "morning" ? { background: "var(--gradient-gold)" } : undefined}
+          style={sub === "morning" ? { background: "var(--gradient-gold)", boxShadow: "var(--shadow-glow)" } : undefined}
         >
           <Sunrise className="h-4 w-4" /> {t.dhikr.morning}
         </button>
@@ -658,7 +658,7 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
           className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${
             sub === "evening" ? "text-primary-foreground" : "text-muted-foreground"
           }`}
-          style={sub === "evening" ? { background: "var(--gradient-gold)" } : undefined}
+          style={sub === "evening" ? { background: "var(--gradient-teal)", boxShadow: "var(--shadow-teal)" } : undefined}
         >
           <Moon className="h-4 w-4" /> {t.dhikr.evening}
         </button>
