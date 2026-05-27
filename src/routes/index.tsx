@@ -261,6 +261,13 @@ function SurahItem({
 }: {
   s: Surah; onOpen: () => void; isBookmarked: boolean; onToggleBookmark: () => void; lang: Lang; t: Dict;
 }) {
+  // Localized subtitle: en -> English name + translation; ar -> Arabic short name; ku -> ayah-count only
+  const subtitle =
+    lang === "en"
+      ? `${s.englishName} · ${s.englishNameTranslation} · ${s.numberOfAyahs} ${t.quran.ayahs}`
+      : lang === "ar"
+        ? `${toLocaleDigits(s.numberOfAyahs, lang)} ${t.quran.ayahs}`
+        : `${toLocaleDigits(s.numberOfAyahs, lang)} ${t.quran.ayahs}`;
   return (
     <div
       className="flex items-center gap-2 rounded-2xl border p-3 backdrop-blur-xl transition hover:border-primary/40"
@@ -274,12 +281,9 @@ function SurahItem({
           {toLocaleDigits(s.number, lang)}
         </div>
         <div className="min-w-0 flex-1 text-start">
-          <p className="font-medium truncate text-sm">{s.englishName}</p>
-          <p className="text-[11px] text-muted-foreground truncate">
-            {s.englishNameTranslation} · {toLocaleDigits(s.numberOfAyahs, lang)} {t.quran.ayahs}
-          </p>
+          <p className="font-display text-lg truncate" dir="rtl">{s.name}</p>
+          <p className="text-[11px] text-muted-foreground truncate">{subtitle}</p>
         </div>
-        <p className="font-display text-xl shrink-0" dir="rtl">{s.name}</p>
       </button>
       <button onClick={onToggleBookmark} className="p-2 rounded-lg hover:bg-white/5 transition" aria-label="bookmark">
         {isBookmarked ? <BookmarkCheck className="h-4 w-4 text-primary" /> : <Bookmark className="h-4 w-4 text-muted-foreground" />}
