@@ -545,6 +545,7 @@ type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string
 function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: string; madhab: "shafi" | "hanafi" }) {
   const city = findCity(cityId);
   const school = madhab === "hanafi" ? 1 : 0;
+  const [monthlyOpen, setMonthlyOpen] = useState(false);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const { data, isLoading } = useQuery({
@@ -628,6 +629,121 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
             <span className="text-primary tabular-nums">{to12(p.time)}</span>
           </div>
         ))}
+      </div>
+
+      <button
+        onClick={() => setMonthlyOpen(true)}
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border px-5 py-4 font-medium transition"
+        style={{ background: "var(--gradient-teal)", borderColor: "transparent", color: "oklch(0.12 0.04 250)", boxShadow: "var(--shadow-teal)" }}
+      >
+        <Calendar className="h-4 w-4" /> {t.prayer.monthly}
+      </button>
+
+      {monthlyOpen && (
+        <MonthlyTimes
+          t={t}
+          lang={lang}
+          city={city}
+          school={school}
+          onClose={() => setMonthlyOpen(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function MonthlyTimes({
+  t, lang, city, school, onClose,
+}: { t: Dict; lang: Lang; city: ReturnType<typeof findCity>; school: 0 | 1; onClose: () => void }) {
+  const now = new Date();
+  const [year, setYear] = useState(now.getFullYear());
+  const [month, setMonth] = useState(now.getMonth() + 1); // 1-12
+
+  const { data, isLoading } = useQuery({
+    queryKey: ["calendar", city.id, school, year, month],
+    queryFn: async () => {
+      const res = await fetch(
+        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=3&school=${school}&timezonestring=${encodeURIComponent(city.tz)}`,
+      );
+      const json = await res.json();
+      return json.data as Array<{ timings: Record<string, string>; date: { gregorian: { date: string; day: string } } }>;
+    },
+    staleTime: 1000 * 60 * 60 * 24,
+  });
+
+  const trim = (s?: string) => (s ? s.split(" ")[0].slice(0, 5) : "—");
+
+  const prev = () => {
+    if (month === 1) { setYear((y) => y - 1); setMonth(12); } else setMonth((m) => m - 1);
+  };
+  const next = () => {
+    if (month === 12) { setYear((y) => y + 1); setMonth(1); } else setMonth((m) => m + 1);
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-3" onClick={onClose}>
+      <div
+        className="w-full max-w-2xl max-h-[88vh] rounded-3xl border overflow-hidden flex flex-col"
+        style={{ background: "var(--background)", borderColor: "var(--glass-border)" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between px-4 py-3 border-b" style={{ borderColor: "var(--glass-border)" }}>
+          <button onClick={onClose} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-white/5" aria-label={t.prayer.close}>
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex items-center gap-2">
+            <button onClick={prev} className="px-2.5 py-1 rounded-lg hover:bg-white/5">‹</button>
+            <p className="text-sm font-medium tabular-nums">
+              {t.prayer.monthlyTitle} {toLocaleDigits(month, lang)} / {toLocaleDigits(year, lang)}
+            </p>
+            <button onClick={next} className="px-2.5 py-1 rounded-lg hover:bg-white/5">›</button>
+          </div>
+        </div>
+
+        <div className="overflow-auto flex-1">
+          {isLoading || !data ? (
+            <p className="text-center py-12 text-muted-foreground">{t.quran.loading}</p>
+          ) : (
+            <table className="w-full text-xs tabular-nums">
+              <thead className="sticky top-0" style={{ background: "var(--background)" }}>
+                <tr className="text-primary">
+                  <th className="py-2 px-2 font-medium">{t.prayer.date}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.fajr}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.sunrise}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.dhuhr}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.asr}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.maghrib}</th>
+                  <th className="py-2 px-2 font-medium">{t.prayer.names.isha}</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.map((d, i) => {
+                  const todayDay = new Date().getDate();
+                  const dayNum = parseInt(d.date.gregorian.day, 10);
+                  const isToday = dayNum === todayDay && year === new Date().getFullYear() && month === new Date().getMonth() + 1;
+                  return (
+                    <tr
+                      key={i}
+                      className="border-t"
+                      style={{
+                        borderColor: "var(--glass-border)",
+                        background: isToday ? "color-mix(in oklch, var(--primary) 10%, transparent)" : undefined,
+                      }}
+                    >
+                      <td className="py-2 px-2 text-primary font-medium">{toLocaleDigits(String(month).padStart(2, "0"), lang)}-{toLocaleDigits(d.date.gregorian.day, lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Fajr), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Sunrise), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Dhuhr), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Asr), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Maghrib), lang)}</td>
+                      <td className="py-2 px-2 text-center">{toLocaleDigits(trim(d.timings.Isha), lang)}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );
