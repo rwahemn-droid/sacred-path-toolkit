@@ -2,13 +2,14 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
-  BookOpen, Clock, Sun, Target, Search, Bookmark, BookmarkCheck,
+  BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
+  BookText, X, Calendar,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
-import { TASBIHAT, DEFAULT_TASBIH_ID, type Tasbih } from "@/lib/tasbihat";
+import { TASBIHAT, DEFAULT_TASBIH_ID } from "@/lib/tasbihat";
 import { CITIES, findCity } from "@/lib/cities";
 import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
 import { useSettings } from "@/lib/settings";
@@ -18,12 +19,37 @@ const toLocaleDigits = (n: number | string, lang: Lang) =>
   lang === "en" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
 
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
-// Strip leading bismillah from first ayah for surahs other than Al-Fatiha (1) and At-Tawbah (9).
+
+// Robust bismillah stripper — normalize diacritics & alif variants, then check first 4 words.
+const stripArabicDiacritics = (s: string) =>
+  s.replace(/[\u064B-\u0652\u0670\u0653\u0654\u0655\u0656\u0657\u0658\u0640]/g, "").replace(/ٱ/g, "ا");
+
 function stripBismillah(text: string, surahNum: number, ayahInSurah: number) {
   if (ayahInSurah !== 1 || surahNum === 1 || surahNum === 9) return text;
-  // Match either with normal alif (ا) or alif with hamzatul wasl (ٱ), plus optional trailing space
-  return text.replace(/^بِس[ـ]?مِ\s+[اٱ]للَّهِ\s+[اٱ]لرَّحْمَٰنِ\s+[اٱ]لرَّحِيمِ\s*/u, "");
+  const words = text.trim().split(/\s+/);
+  if (words.length < 4) return text;
+  const head = stripArabicDiacritics(words.slice(0, 4).join(" "));
+  if (head === "بسم الله الرحمن الرحيم") {
+    return words.slice(4).join(" ").trim();
+  }
+  return text;
 }
+
+// Beads (tasbih) icon — lucide doesn't include one.
+function BeadsIcon({ className = "" }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 13c0 4 3.5 7 8 7s8-3 8-7" />
+      <circle cx="6" cy="11" r="1.6" fill="currentColor" />
+      <circle cx="10" cy="13" r="1.6" fill="currentColor" />
+      <circle cx="14" cy="13" r="1.6" fill="currentColor" />
+      <circle cx="18" cy="11" r="1.6" fill="currentColor" />
+      <path d="M12 4v3" />
+      <path d="M10.5 7h3l-0.5 2h-2z" fill="currentColor" />
+    </svg>
+  );
+}
+
 
 export const Route = createFileRoute("/")({
   component: AppRoot,
