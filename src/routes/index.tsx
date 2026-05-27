@@ -951,18 +951,28 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           <MapPin className="h-4 w-4 text-primary" />
           <h3 className="font-medium">{t.settings.city}</h3>
         </div>
-        <select
-          value={settings.cityId}
-          onChange={(e) => update({ cityId: e.target.value })}
-          className="w-full rounded-xl border px-3 py-3 text-sm bg-transparent focus:outline-none focus:border-primary/50"
-          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
-        >
-          {CITIES.map((c) => (
-            <option key={c.id} value={c.id} className="bg-background text-foreground">
-              {cityLabel(c.id)}
-            </option>
-          ))}
-        </select>
+        <div className="grid grid-cols-2 gap-2 max-h-72 overflow-y-auto pe-1">
+          {CITIES.map((c) => {
+            const isActive = settings.cityId === c.id;
+            return (
+              <button
+                key={c.id}
+                onClick={() => update({ cityId: c.id })}
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition ${
+                  isActive ? "text-primary-foreground" : "hover:border-primary/40"
+                }`}
+                style={{
+                  background: isActive ? "var(--gradient-gold)" : "var(--glass-bg)",
+                  borderColor: isActive ? "transparent" : "var(--glass-border)",
+                  boxShadow: isActive ? "var(--shadow-glow)" : undefined,
+                }}
+              >
+                <MapPin className="h-3.5 w-3.5 shrink-0" />
+                <span className="truncate">{cityLabel(c.id)}</span>
+              </button>
+            );
+          })}
+        </div>
         <p className="mt-2 text-[11px] text-muted-foreground">
           {findCity(settings.cityId).tz} · {tzLocal}
         </p>
