@@ -82,8 +82,8 @@ function Dashboard() {
   const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "quran", label: t.tabs.quran, icon: BookOpen },
     { id: "prayer", label: t.tabs.prayer, icon: Clock },
-    { id: "dhikr", label: t.tabs.dhikr, icon: Sun },
-    { id: "tasbih", label: t.tabs.tasbih, icon: Target },
+    { id: "dhikr", label: t.tabs.dhikr, icon: BookText },
+    { id: "tasbih", label: t.tabs.tasbih, icon: BeadsIcon },
     { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
   ];
 
