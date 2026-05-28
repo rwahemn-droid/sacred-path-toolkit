@@ -134,7 +134,7 @@ const ar: Dict = {
 const en: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Dhikr", tasbih: "Tasbih", settings: "Settings" },
+  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Wird", tasbih: "Tasbih", settings: "Settings" },
   quran: {
     searchPlaceholder: "Search surahs...",
     bookmarked: "Bookmarked surahs",
