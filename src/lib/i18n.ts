@@ -91,7 +91,7 @@ const ku: Dict = {
 const ar: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الأذكار", tasbih: "التسبيح", settings: "الإعدادات" },
+  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الورد", tasbih: "التسبيح", settings: "الإعدادات" },
   quran: {
     searchPlaceholder: "ابحث في السور...",
     bookmarked: "السور المحفوظة",
