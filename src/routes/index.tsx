@@ -35,17 +35,26 @@ function stripBismillah(text: string, surahNum: number, ayahInSurah: number) {
   return text;
 }
 
-// Beads (tasbih) icon — lucide doesn't include one.
+// Beads (tasbih) icon — lucide doesn't include one. Realistic prayer-beads loop.
 function BeadsIcon({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 13c0 4 3.5 7 8 7s8-3 8-7" />
-      <circle cx="6" cy="11" r="1.6" fill="currentColor" />
-      <circle cx="10" cy="13" r="1.6" fill="currentColor" />
-      <circle cx="14" cy="13" r="1.6" fill="currentColor" />
-      <circle cx="18" cy="11" r="1.6" fill="currentColor" />
-      <path d="M12 4v3" />
-      <path d="M10.5 7h3l-0.5 2h-2z" fill="currentColor" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {/* Tassel */}
+      <path d="M12 3v2.2" />
+      <path d="M10.6 5.2h2.8l-.5 2.3h-1.8z" fill="currentColor" stroke="none" />
+      <path d="M11.4 7.6v1.6M12 7.6v1.8M12.6 7.6v1.6" />
+      {/* Bead loop */}
+      <ellipse cx="12" cy="14.5" rx="7.5" ry="5.5" />
+      <circle cx="12" cy="9" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="6.2" cy="12.2" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4.8" cy="15" r="1" fill="currentColor" stroke="none" />
+      <circle cx="6.2" cy="17.8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="19.7" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="20.2" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="19.7" r="1" fill="currentColor" stroke="none" />
+      <circle cx="17.8" cy="17.8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="19.2" cy="15" r="1" fill="currentColor" stroke="none" />
+      <circle cx="17.8" cy="12.2" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
