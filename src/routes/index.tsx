@@ -35,17 +35,26 @@ function stripBismillah(text: string, surahNum: number, ayahInSurah: number) {
   return text;
 }
 
-// Beads (tasbih) icon — lucide doesn't include one.
+// Beads (tasbih) icon — lucide doesn't include one. Realistic prayer-beads loop.
 function BeadsIcon({ className = "" }: { className?: string }) {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M4 13c0 4 3.5 7 8 7s8-3 8-7" />
-      <circle cx="6" cy="11" r="1.6" fill="currentColor" />
-      <circle cx="10" cy="13" r="1.6" fill="currentColor" />
-      <circle cx="14" cy="13" r="1.6" fill="currentColor" />
-      <circle cx="18" cy="11" r="1.6" fill="currentColor" />
-      <path d="M12 4v3" />
-      <path d="M10.5 7h3l-0.5 2h-2z" fill="currentColor" />
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      {/* Tassel */}
+      <path d="M12 3v2.2" />
+      <path d="M10.6 5.2h2.8l-.5 2.3h-1.8z" fill="currentColor" stroke="none" />
+      <path d="M11.4 7.6v1.6M12 7.6v1.8M12.6 7.6v1.6" />
+      {/* Bead loop */}
+      <ellipse cx="12" cy="14.5" rx="7.5" ry="5.5" />
+      <circle cx="12" cy="9" r="1.1" fill="currentColor" stroke="none" />
+      <circle cx="6.2" cy="12.2" r="1" fill="currentColor" stroke="none" />
+      <circle cx="4.8" cy="15" r="1" fill="currentColor" stroke="none" />
+      <circle cx="6.2" cy="17.8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="9" cy="19.7" r="1" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="20.2" r="1" fill="currentColor" stroke="none" />
+      <circle cx="15" cy="19.7" r="1" fill="currentColor" stroke="none" />
+      <circle cx="17.8" cy="17.8" r="1" fill="currentColor" stroke="none" />
+      <circle cx="19.2" cy="15" r="1" fill="currentColor" stroke="none" />
+      <circle cx="17.8" cy="12.2" r="1" fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -542,6 +551,18 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 // ============ PRAYER TIMES ============
 type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string };
 
+// Hewler local correction — push every prayer 5 minutes later to match local schedule.
+const PRAYER_OFFSET_MIN = 5;
+function adjustTime(hhmm: string, offset = PRAYER_OFFSET_MIN) {
+  if (!hhmm || hhmm.length < 4) return hhmm;
+  const [hStr, mStr] = hhmm.split(":");
+  let total = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0) + offset;
+  total = ((total % 1440) + 1440) % 1440;
+  const h = Math.floor(total / 60);
+  const m = total % 60;
+  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+}
+
 function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: string; madhab: "shafi" | "hanafi" }) {
   const city = findCity(cityId);
   const school = madhab === "hanafi" ? 1 : 0;
@@ -571,12 +592,12 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   };
   const prayers = data
     ? [
-        { name: t.prayer.names.fajr, time: data.timings.Fajr.slice(0, 5) },
-        { name: t.prayer.names.sunrise, time: data.timings.Sunrise.slice(0, 5) },
-        { name: t.prayer.names.dhuhr, time: data.timings.Dhuhr.slice(0, 5) },
-        { name: t.prayer.names.asr, time: data.timings.Asr.slice(0, 5) },
-        { name: t.prayer.names.maghrib, time: data.timings.Maghrib.slice(0, 5) },
-        { name: t.prayer.names.isha, time: data.timings.Isha.slice(0, 5) },
+        { name: t.prayer.names.fajr, time: adjustTime(data.timings.Fajr.slice(0, 5)) },
+        { name: t.prayer.names.sunrise, time: adjustTime(data.timings.Sunrise.slice(0, 5)) },
+        { name: t.prayer.names.dhuhr, time: adjustTime(data.timings.Dhuhr.slice(0, 5)) },
+        { name: t.prayer.names.asr, time: adjustTime(data.timings.Asr.slice(0, 5)) },
+        { name: t.prayer.names.maghrib, time: adjustTime(data.timings.Maghrib.slice(0, 5)) },
+        { name: t.prayer.names.isha, time: adjustTime(data.timings.Isha.slice(0, 5)) },
       ]
     : [];
 
@@ -671,7 +692,7 @@ function MonthlyTimes({
     staleTime: 1000 * 60 * 60 * 24,
   });
 
-  const trim = (s?: string) => (s ? s.split(" ")[0].slice(0, 5) : "—");
+  const trim = (s?: string) => (s ? adjustTime(s.split(" ")[0].slice(0, 5)) : "—");
 
   const prev = () => {
     if (month === 1) { setYear((y) => y - 1); setMonth(12); } else setMonth((m) => m - 1);
@@ -809,8 +830,14 @@ function DhikrCard({ dhikr, storageKey, t, lang }: { dhikr: Dhikr; storageKey: s
   const done = count >= dhikr.count;
   return (
     <Card>
-      <p className="font-display text-xl leading-relaxed text-right" dir="rtl">{dhikr.ar}</p>
-      <p className="mt-3 text-xs text-muted-foreground text-right" dir="rtl">{dhikr.ku}</p>
+      <p
+        className="font-display text-2xl text-right"
+        dir="rtl"
+        style={{ lineHeight: 2.2, wordSpacing: "0.15em", letterSpacing: "0.01em" }}
+      >
+        {dhikr.ar}
+      </p>
+      <p className="mt-4 text-[13px] text-muted-foreground text-right leading-relaxed" dir="rtl">{dhikr.ku}</p>
       <button
         onClick={() => setCount((c) => (c >= dhikr.count ? 0 : c + 1))}
         className={`mt-4 w-full flex items-center justify-between rounded-xl border px-4 py-3 transition ${done ? "border-primary/60" : ""}`}

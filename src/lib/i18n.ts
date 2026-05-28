@@ -48,7 +48,7 @@ export type Dict = {
 const ku: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "زیکر", tasbih: "تەسبیح", settings: "ڕێکخستن" },
+  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "ویرد", tasbih: "تەسبیح", settings: "ڕێکخستن" },
   quran: {
     searchPlaceholder: "گەڕان لە سوورەتەکان...",
     bookmarked: "سوورەتە بوکمارککراوەکان",
@@ -91,7 +91,7 @@ const ku: Dict = {
 const ar: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الأذكار", tasbih: "التسبيح", settings: "الإعدادات" },
+  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الورد", tasbih: "التسبيح", settings: "الإعدادات" },
   quran: {
     searchPlaceholder: "ابحث في السور...",
     bookmarked: "السور المحفوظة",
@@ -134,7 +134,7 @@ const ar: Dict = {
 const en: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Dhikr", tasbih: "Tasbih", settings: "Settings" },
+  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Wird", tasbih: "Tasbih", settings: "Settings" },
   quran: {
     searchPlaceholder: "Search surahs...",
     bookmarked: "Bookmarked surahs",
