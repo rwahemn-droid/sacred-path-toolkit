@@ -48,7 +48,7 @@ export type Dict = {
 const ku: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "زیکر", tasbih: "تەسبیح", settings: "ڕێکخستن" },
+  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "ویرد", tasbih: "تەسبیح", settings: "ڕێکخستن" },
   quran: {
     searchPlaceholder: "گەڕان لە سوورەتەکان...",
     bookmarked: "سوورەتە بوکمارککراوەکان",
