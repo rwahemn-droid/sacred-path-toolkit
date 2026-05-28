@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
-  BookText, X, Calendar,
+  BookText, X, Calendar, Volume2, VolumeX,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
