@@ -692,7 +692,7 @@ function MonthlyTimes({
     staleTime: 1000 * 60 * 60 * 24,
   });
 
-  const trim = (s?: string) => (s ? s.split(" ")[0].slice(0, 5) : "—");
+  const trim = (s?: string) => (s ? adjustTime(s.split(" ")[0].slice(0, 5)) : "—");
 
   const prev = () => {
     if (month === 1) { setYear((y) => y - 1); setMonth(12); } else setMonth((m) => m - 1);
