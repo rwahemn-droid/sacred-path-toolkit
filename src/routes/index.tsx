@@ -830,8 +830,14 @@ function DhikrCard({ dhikr, storageKey, t, lang }: { dhikr: Dhikr; storageKey: s
   const done = count >= dhikr.count;
   return (
     <Card>
-      <p className="font-display text-xl leading-relaxed text-right" dir="rtl">{dhikr.ar}</p>
-      <p className="mt-3 text-xs text-muted-foreground text-right" dir="rtl">{dhikr.ku}</p>
+      <p
+        className="font-display text-2xl text-right"
+        dir="rtl"
+        style={{ lineHeight: 2.2, wordSpacing: "0.15em", letterSpacing: "0.01em" }}
+      >
+        {dhikr.ar}
+      </p>
+      <p className="mt-4 text-[13px] text-muted-foreground text-right leading-relaxed" dir="rtl">{dhikr.ku}</p>
       <button
         onClick={() => setCount((c) => (c >= dhikr.count ? 0 : c + 1))}
         className={`mt-4 w-full flex items-center justify-between rounded-xl border px-4 py-3 transition ${done ? "border-primary/60" : ""}`}
