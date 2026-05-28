@@ -592,12 +592,12 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   };
   const prayers = data
     ? [
-        { name: t.prayer.names.fajr, time: data.timings.Fajr.slice(0, 5) },
-        { name: t.prayer.names.sunrise, time: data.timings.Sunrise.slice(0, 5) },
-        { name: t.prayer.names.dhuhr, time: data.timings.Dhuhr.slice(0, 5) },
-        { name: t.prayer.names.asr, time: data.timings.Asr.slice(0, 5) },
-        { name: t.prayer.names.maghrib, time: data.timings.Maghrib.slice(0, 5) },
-        { name: t.prayer.names.isha, time: data.timings.Isha.slice(0, 5) },
+        { name: t.prayer.names.fajr, time: adjustTime(data.timings.Fajr.slice(0, 5)) },
+        { name: t.prayer.names.sunrise, time: adjustTime(data.timings.Sunrise.slice(0, 5)) },
+        { name: t.prayer.names.dhuhr, time: adjustTime(data.timings.Dhuhr.slice(0, 5)) },
+        { name: t.prayer.names.asr, time: adjustTime(data.timings.Asr.slice(0, 5)) },
+        { name: t.prayer.names.maghrib, time: adjustTime(data.timings.Maghrib.slice(0, 5)) },
+        { name: t.prayer.names.isha, time: adjustTime(data.timings.Isha.slice(0, 5)) },
       ]
     : [];
 
