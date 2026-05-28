@@ -550,6 +550,7 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 
 // ============ PRAYER TIMES ============
 type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string };
+type HijriDate = { day: string; month: { ar: string; en: string; number: number }; year: string };
 
 // Hewler local correction — push every prayer 5 minutes later to match local schedule.
 const PRAYER_OFFSET_MIN = 5;
@@ -563,99 +564,186 @@ function adjustTime(hhmm: string, offset = PRAYER_OFFSET_MIN) {
   return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
 }
 
+// Tick every second for live clock + countdown.
+function useNow(intervalMs = 1000) {
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), intervalMs);
+    return () => clearInterval(id);
+  }, [intervalMs]);
+  return now;
+}
+
+const WEEKDAYS_KU = ["یەکشەممە", "دووشەممە", "سێشەممە", "چوارشەممە", "پێنجشەممە", "هەینی", "شەممە"];
+const WEEKDAYS_AR = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"];
+const WEEKDAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+const NOTIFY_KEY = "ibadah:prayer:notify";
+
+function readNotify(): Record<string, boolean> {
+  if (typeof window === "undefined") return {};
+  try { return JSON.parse(localStorage.getItem(NOTIFY_KEY) || "{}"); } catch { return {}; }
+}
+
 function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: string; madhab: "shafi" | "hanafi" }) {
   const city = findCity(cityId);
   const school = madhab === "hanafi" ? 1 : 0;
   const [monthlyOpen, setMonthlyOpen] = useState(false);
+  const [notify, setNotify] = useState<Record<string, boolean>>(() => readNotify());
+  const now = useNow(1000);
 
   const todayStr = new Date().toISOString().slice(0, 10);
   const { data, isLoading } = useQuery({
     queryKey: ["prayer", city.id, school, todayStr],
-    queryFn: async (): Promise<{ timings: PrayerTimings }> => {
+    queryFn: async (): Promise<{ timings: PrayerTimings; hijri: HijriDate; weekdayIdx: number }> => {
       const d = new Date();
       const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
       const res = await fetch(
         `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${city.lat}&longitude=${city.lon}&method=3&school=${school}&timezonestring=${encodeURIComponent(city.tz)}`,
       );
       const json = await res.json();
-      return { timings: json.data.timings };
+      return {
+        timings: json.data.timings,
+        hijri: json.data.date.hijri,
+        weekdayIdx: d.getDay(),
+      };
     },
     staleTime: 1000 * 60 * 60 * 6,
     gcTime: 1000 * 60 * 60 * 24,
   });
 
-  const to12 = (time: string) => {
-    const [h, m] = time.split(":").map(Number);
-    const period = h >= 12 ? t.prayer.pm : t.prayer.am;
-    const h12 = h % 12 === 0 ? 12 : h % 12;
-    return `${toLocaleDigits(h12, lang)}:${toLocaleDigits(String(m).padStart(2, "0"), lang)} ${period}`;
+  const toggleNotify = (id: string) => {
+    setNotify((prev) => {
+      const next = { ...prev, [id]: !prev[id] };
+      try { localStorage.setItem(NOTIFY_KEY, JSON.stringify(next)); } catch { /* */ }
+      return next;
+    });
   };
+
   const prayers = data
     ? [
-        { name: t.prayer.names.fajr, time: adjustTime(data.timings.Fajr.slice(0, 5)) },
-        { name: t.prayer.names.sunrise, time: adjustTime(data.timings.Sunrise.slice(0, 5)) },
-        { name: t.prayer.names.dhuhr, time: adjustTime(data.timings.Dhuhr.slice(0, 5)) },
-        { name: t.prayer.names.asr, time: adjustTime(data.timings.Asr.slice(0, 5)) },
-        { name: t.prayer.names.maghrib, time: adjustTime(data.timings.Maghrib.slice(0, 5)) },
-        { name: t.prayer.names.isha, time: adjustTime(data.timings.Isha.slice(0, 5)) },
+        { id: "fajr",    name: t.prayer.names.fajr,    time: adjustTime(data.timings.Fajr.slice(0, 5)) },
+        { id: "sunrise", name: t.prayer.names.sunrise, time: adjustTime(data.timings.Sunrise.slice(0, 5)) },
+        { id: "dhuhr",   name: t.prayer.names.dhuhr,   time: adjustTime(data.timings.Dhuhr.slice(0, 5)) },
+        { id: "asr",     name: t.prayer.names.asr,     time: adjustTime(data.timings.Asr.slice(0, 5)) },
+        { id: "maghrib", name: t.prayer.names.maghrib, time: adjustTime(data.timings.Maghrib.slice(0, 5)) },
+        { id: "isha",    name: t.prayer.names.isha,    time: adjustTime(data.timings.Isha.slice(0, 5)) },
       ]
     : [];
 
-  const now = new Date();
-  const nowMin = now.getHours() * 60 + now.getMinutes();
-  const next = prayers.find((p) => {
+  const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
+  // Find next prayer + previous prayer for the progress bar.
+  let nextIdx = prayers.findIndex((p) => {
     const [h, m] = p.time.split(":").map(Number);
-    return h * 60 + m > nowMin;
-  }) || prayers[0];
-  const remaining = next
-    ? (() => {
-        const [h, m] = next.time.split(":").map(Number);
-        let diff = h * 60 + m - nowMin;
-        if (diff < 0) diff += 24 * 60;
-        return `${toLocaleDigits(Math.floor(diff / 60), lang)} ${t.prayer.hours} ${toLocaleDigits(diff % 60, lang)} ${t.prayer.minutes}`;
-      })()
-    : "";
+    return h * 60 + m > now.getHours() * 60 + now.getMinutes();
+  });
+  if (nextIdx === -1) nextIdx = 0;
+  const next = prayers[nextIdx];
+  const prev = prayers[(nextIdx - 1 + prayers.length) % prayers.length];
+
+  const toSec = (hhmm?: string) => {
+    if (!hhmm) return 0;
+    const [h, m] = hhmm.split(":").map(Number);
+    return h * 3600 + m * 60;
+  };
+  const nextSec = toSec(next?.time);
+  const prevSec = toSec(prev?.time);
+  let total = nextSec - prevSec;
+  if (total <= 0) total += 24 * 3600;
+  let elapsed = nowSec - prevSec;
+  if (elapsed < 0) elapsed += 24 * 3600;
+  const progress = next ? Math.min(100, Math.max(0, (elapsed / total) * 100)) : 0;
+
+  let remainingSec = nextSec - nowSec;
+  if (remainingSec < 0) remainingSec += 24 * 3600;
+  const rH = Math.floor(remainingSec / 3600);
+  const rM = Math.floor((remainingSec % 3600) / 60);
+  const remainingHHMM = `${String(rH).padStart(2, "0")}:${String(rM).padStart(2, "0")}`;
 
   const cityName = lang === "ar" ? city.ar : lang === "en" ? city.en : city.ku;
+  const headerTitle =
+    lang === "ku" ? `کاتەکانی بانگ لە ${cityName}`
+    : lang === "ar" ? `مواقيت الصلاة في ${cityName}`
+    : `Prayer times in ${cityName}`;
+
+  const weekdays = lang === "ar" ? WEEKDAYS_AR : lang === "en" ? WEEKDAYS_EN : WEEKDAYS_KU;
+  const weekday = data ? weekdays[data.weekdayIdx] : "";
+  const gDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  const hijriStr = data ? `${toLocaleDigits(data.hijri.day, lang)} - ${data.hijri.month.ar} - ${toLocaleDigits(data.hijri.year, lang)}` : "";
+
+  const clockStr = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}:${String(now.getSeconds()).padStart(2, "0")}`;
 
   return (
-    <div className="space-y-4">
-      <Card>
-        <div className="flex items-center justify-between mb-1">
-          <p className="text-sm text-muted-foreground">{t.prayer.nextPrayer}</p>
-          <span className="flex items-center gap-1 text-xs text-primary">
-            <MapPin className="h-3 w-3" /> {cityName}
-          </span>
+    <div className="space-y-5">
+      <div className="text-center pt-2">
+        <p className="text-base font-semibold" style={{ color: "oklch(0.78 0.13 180)" }}>{headerTitle}</p>
+        <p className="mt-3 text-6xl font-bold tracking-wider tabular-nums text-foreground">
+          {toLocaleDigits(clockStr, lang)}
+        </p>
+        <div className="mt-5 space-y-1">
+          <p className="text-sm">
+            <span className="text-primary font-medium">{weekday}</span>
+            <span className="text-foreground tabular-nums">  {toLocaleDigits(gDate, lang)}</span>
+          </p>
+          <p className="text-xs text-muted-foreground" dir="rtl">{hijriStr}</p>
         </div>
-        {isLoading ? (
-          <p className="mt-2 text-muted-foreground">{t.quran.loading}</p>
-        ) : next ? (
-          <>
-            <div className="mt-2 flex items-baseline justify-between">
-              <h2 className="text-3xl font-semibold">{next.name}</h2>
-              <p className="text-2xl text-primary tabular-nums">{to12(next.time)}</p>
-            </div>
-            <p className="mt-2 text-xs text-muted-foreground">{remaining} {t.prayer.remaining}</p>
-          </>
-        ) : null}
-      </Card>
-      <div className="grid gap-2">
-        {prayers.map((p) => (
-          <div
-            key={p.name}
-            className="flex items-center justify-between rounded-2xl border px-5 py-4 backdrop-blur-xl"
-            style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
-          >
-            <span className="font-medium">{p.name}</span>
-            <span className="text-primary tabular-nums">{to12(p.time)}</span>
-          </div>
-        ))}
       </div>
+
+      {/* Progress bar */}
+      <div className="px-1">
+        <div className="h-2 rounded-full overflow-hidden" style={{ background: "color-mix(in oklch, var(--foreground) 12%, transparent)" }}>
+          <div
+            className="h-full rounded-full transition-all duration-1000"
+            style={{ width: `${progress}%`, background: "var(--gradient-teal)" }}
+          />
+        </div>
+        {next && (
+          <p className="mt-2 text-xs text-muted-foreground text-right" dir="rtl">
+            {next.name} ({toLocaleDigits(remainingHHMM, lang)})
+          </p>
+        )}
+      </div>
+
+      {isLoading && !data ? (
+        <p className="text-center text-muted-foreground py-8">{t.quran.loading}</p>
+      ) : (
+        <div className="space-y-2">
+          {prayers.map((p) => {
+            const isNext = next && p.id === next.id;
+            const on = !!notify[p.id];
+            return (
+              <div
+                key={p.id}
+                className="flex items-center justify-between gap-3 px-1 py-3"
+                style={isNext ? { } : undefined}
+              >
+                <span className={`text-3xl font-bold tabular-nums ${isNext ? "text-primary" : "text-primary/90"}`}>
+                  {toLocaleDigits(p.time, lang)}
+                </span>
+                <button
+                  onClick={() => toggleNotify(p.id)}
+                  className="h-11 w-11 rounded-xl flex items-center justify-center transition active:scale-95"
+                  style={{
+                    background: on ? "var(--gradient-gold)" : "color-mix(in oklch, var(--foreground) 8%, transparent)",
+                    color: on ? "var(--primary-foreground)" : "oklch(0.78 0.13 180)",
+                  }}
+                  aria-label="notify"
+                >
+                  {on ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
+                </button>
+                <span className={`flex-1 text-right font-display text-2xl ${isNext ? "text-primary" : "text-foreground"}`} dir="rtl">
+                  {p.name}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      )}
 
       <button
         onClick={() => setMonthlyOpen(true)}
         className="w-full flex items-center justify-center gap-2 rounded-2xl border px-5 py-4 font-medium transition"
-        style={{ background: "var(--gradient-teal)", borderColor: "transparent", color: "oklch(0.12 0.04 250)", boxShadow: "var(--shadow-teal)" }}
+        style={{ background: "var(--gradient-gold)", borderColor: "transparent", color: "var(--primary-foreground)", boxShadow: "var(--shadow-glow)" }}
       >
         <Calendar className="h-4 w-4" /> {t.prayer.monthly}
       </button>
