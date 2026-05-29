@@ -773,31 +773,58 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
       {isLoading && !data ? (
         <p className="text-center text-muted-foreground py-8">{t.quran.loading}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {prayers.map((p) => {
             const isNext = next && p.id === next.id;
             const on = !!notify[p.id];
+            const playing = previewing === p.id;
+            const { time: t12, suffix } = to12h(p.time, t);
             return (
               <div
                 key={p.id}
-                className="flex items-center justify-between gap-3 px-1 py-3"
-                style={isNext ? { } : undefined}
+                className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 backdrop-blur-xl transition"
+                style={{
+                  background: isNext
+                    ? "var(--gradient-gold)"
+                    : "var(--glass-bg)",
+                  borderColor: isNext ? "transparent" : "var(--glass-border)",
+                  boxShadow: isNext ? "var(--shadow-glow)" : undefined,
+                  color: isNext ? "var(--primary-foreground)" : undefined,
+                }}
               >
-                <span className={`text-3xl font-bold tabular-nums ${isNext ? "text-primary" : "text-primary/90"}`}>
-                  {toLocaleDigits(p.time, lang)}
-                </span>
-                <button
-                  onClick={() => toggleNotify(p.id)}
-                  className="h-11 w-11 rounded-xl flex items-center justify-center transition active:scale-95"
-                  style={{
-                    background: on ? "var(--gradient-gold)" : "color-mix(in oklch, var(--foreground) 8%, transparent)",
-                    color: on ? "var(--primary-foreground)" : "oklch(0.78 0.13 180)",
-                  }}
-                  aria-label="notify"
-                >
-                  {on ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-                </button>
-                <span className={`flex-1 text-right font-display text-2xl ${isNext ? "text-primary" : "text-foreground"}`} dir="rtl">
+                <div className="flex items-baseline gap-1.5 tabular-nums">
+                  <span className={`text-2xl font-bold ${isNext ? "" : "text-primary"}`}>
+                    {toLocaleDigits(t12, lang)}
+                  </span>
+                  <span className={`text-[10px] font-semibold uppercase ${isNext ? "opacity-90" : "text-muted-foreground"}`}>
+                    {suffix}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => previewAdhan(p.id)}
+                    className="h-9 w-9 rounded-xl flex items-center justify-center transition active:scale-95"
+                    style={{
+                      background: isNext ? "rgba(0,0,0,0.18)" : "color-mix(in oklch, var(--foreground) 8%, transparent)",
+                      color: isNext ? "var(--primary-foreground)" : "oklch(0.78 0.13 180)",
+                    }}
+                    aria-label="preview adhan"
+                  >
+                    {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </button>
+                  <button
+                    onClick={() => toggleNotify(p.id)}
+                    className="h-9 w-9 rounded-xl flex items-center justify-center transition active:scale-95"
+                    style={{
+                      background: isNext ? "rgba(0,0,0,0.18)" : "color-mix(in oklch, var(--foreground) 8%, transparent)",
+                      color: isNext ? "var(--primary-foreground)" : (on ? "oklch(0.78 0.13 180)" : "var(--muted-foreground)"),
+                    }}
+                    aria-label="notify"
+                  >
+                    {on ? <Bell className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                  </button>
+                </div>
+                <span className={`flex-1 text-right font-display text-2xl ${isNext ? "" : "text-foreground"}`} dir="rtl">
                   {p.name}
                 </span>
               </div>
