@@ -579,10 +579,22 @@ const WEEKDAYS_AR = ["الأحد", "الإثنين", "الثلاثاء", "الأ
 const WEEKDAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const NOTIFY_KEY = "ibadah:prayer:notify";
+const ADHAN_URL = "https://www.islamcan.com/audio/adhan/azan2.mp3";
 
 function readNotify(): Record<string, boolean> {
   if (typeof window === "undefined") return {};
   try { return JSON.parse(localStorage.getItem(NOTIFY_KEY) || "{}"); } catch { return {}; }
+}
+
+// Convert "HH:MM" (24h) to localized 12h "h:MM AM/PM".
+function to12h(hhmm: string, t: Dict): { time: string; suffix: string } {
+  if (!hhmm || hhmm.length < 4) return { time: hhmm, suffix: "" };
+  const [hStr, mStr] = hhmm.split(":");
+  const h24 = parseInt(hStr, 10) || 0;
+  const m = parseInt(mStr, 10) || 0;
+  const suffix = h24 < 12 ? t.prayer.am : t.prayer.pm;
+  let h = h24 % 12; if (h === 0) h = 12;
+  return { time: `${h}:${String(m).padStart(2, "0")}`, suffix };
 }
 
 function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: string; madhab: "shafi" | "hanafi" }) {
@@ -590,6 +602,8 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   const school = madhab === "hanafi" ? 1 : 0;
   const [monthlyOpen, setMonthlyOpen] = useState(false);
   const [notify, setNotify] = useState<Record<string, boolean>>(() => readNotify());
+  const [previewing, setPreviewing] = useState<string | null>(null);
+  const adhanRef = useRef<HTMLAudioElement | null>(null);
   const now = useNow(1000);
 
   const todayStr = new Date().toISOString().slice(0, 10);
