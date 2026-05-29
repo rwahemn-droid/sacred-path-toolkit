@@ -626,13 +626,37 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
     gcTime: 1000 * 60 * 60 * 24,
   });
 
-  const toggleNotify = (id: string) => {
+  const toggleNotify = async (id: string) => {
+    const turningOn = !notify[id];
+    if (turningOn && typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        try { await Notification.requestPermission(); } catch { /* */ }
+      }
+    }
     setNotify((prev) => {
       const next = { ...prev, [id]: !prev[id] };
       try { localStorage.setItem(NOTIFY_KEY, JSON.stringify(next)); } catch { /* */ }
       return next;
     });
   };
+
+  const previewAdhan = (id: string) => {
+    if (previewing === id) {
+      adhanRef.current?.pause();
+      adhanRef.current = null;
+      setPreviewing(null);
+      return;
+    }
+    adhanRef.current?.pause();
+    const a = new Audio(ADHAN_URL);
+    adhanRef.current = a;
+    setPreviewing(id);
+    a.addEventListener("ended", () => setPreviewing(null));
+    a.addEventListener("error", () => setPreviewing(null));
+    a.play().catch(() => setPreviewing(null));
+  };
+
+  useEffect(() => () => { adhanRef.current?.pause(); }, []);
 
   const prayers = data
     ? [
@@ -644,6 +668,34 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
         { id: "isha",    name: t.prayer.names.isha,    time: adjustTime(data.timings.Isha.slice(0, 5)) },
       ]
     : [];
+
+  // Schedule real browser notifications for today's enabled prayers.
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+    if (!prayers.length) return;
+    const timers: number[] = [];
+    const nowMs = Date.now();
+    for (const p of prayers) {
+      if (!notify[p.id]) continue;
+      const [h, m] = p.time.split(":").map(Number);
+      const target = new Date();
+      target.setHours(h, m, 0, 0);
+      const delay = target.getTime() - nowMs;
+      if (delay > 0 && delay < 24 * 3600 * 1000) {
+        const id = window.setTimeout(() => {
+          try {
+            new Notification(t.appTitle, { body: `${p.name} — ${p.time}`, silent: false });
+            const a = new Audio(ADHAN_URL);
+            a.play().catch(() => {});
+          } catch { /* */ }
+        }, delay);
+        timers.push(id);
+      }
+    }
+    return () => { timers.forEach((id) => clearTimeout(id)); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notify, data?.timings.Fajr]);
 
   const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   // Find next prayer + previous prayer for the progress bar.
