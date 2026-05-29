@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
-  BookText, X, Calendar, Volume2, VolumeX,
+  BookText, X, Calendar, VolumeX, Bell,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
@@ -579,10 +579,22 @@ const WEEKDAYS_AR = ["الأحد", "الإثنين", "الثلاثاء", "الأ
 const WEEKDAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
 const NOTIFY_KEY = "ibadah:prayer:notify";
+const ADHAN_URL = "https://www.islamcan.com/audio/adhan/azan2.mp3";
 
 function readNotify(): Record<string, boolean> {
   if (typeof window === "undefined") return {};
   try { return JSON.parse(localStorage.getItem(NOTIFY_KEY) || "{}"); } catch { return {}; }
+}
+
+// Convert "HH:MM" (24h) to localized 12h "h:MM AM/PM".
+function to12h(hhmm: string, t: Dict): { time: string; suffix: string } {
+  if (!hhmm || hhmm.length < 4) return { time: hhmm, suffix: "" };
+  const [hStr, mStr] = hhmm.split(":");
+  const h24 = parseInt(hStr, 10) || 0;
+  const m = parseInt(mStr, 10) || 0;
+  const suffix = h24 < 12 ? t.prayer.am : t.prayer.pm;
+  let h = h24 % 12; if (h === 0) h = 12;
+  return { time: `${h}:${String(m).padStart(2, "0")}`, suffix };
 }
 
 function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: string; madhab: "shafi" | "hanafi" }) {
@@ -590,6 +602,8 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   const school = madhab === "hanafi" ? 1 : 0;
   const [monthlyOpen, setMonthlyOpen] = useState(false);
   const [notify, setNotify] = useState<Record<string, boolean>>(() => readNotify());
+  const [previewing, setPreviewing] = useState<string | null>(null);
+  const adhanRef = useRef<HTMLAudioElement | null>(null);
   const now = useNow(1000);
 
   const todayStr = new Date().toISOString().slice(0, 10);
@@ -612,13 +626,37 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
     gcTime: 1000 * 60 * 60 * 24,
   });
 
-  const toggleNotify = (id: string) => {
+  const toggleNotify = async (id: string) => {
+    const turningOn = !notify[id];
+    if (turningOn && typeof window !== "undefined" && "Notification" in window) {
+      if (Notification.permission === "default") {
+        try { await Notification.requestPermission(); } catch { /* */ }
+      }
+    }
     setNotify((prev) => {
       const next = { ...prev, [id]: !prev[id] };
       try { localStorage.setItem(NOTIFY_KEY, JSON.stringify(next)); } catch { /* */ }
       return next;
     });
   };
+
+  const previewAdhan = (id: string) => {
+    if (previewing === id) {
+      adhanRef.current?.pause();
+      adhanRef.current = null;
+      setPreviewing(null);
+      return;
+    }
+    adhanRef.current?.pause();
+    const a = new Audio(ADHAN_URL);
+    adhanRef.current = a;
+    setPreviewing(id);
+    a.addEventListener("ended", () => setPreviewing(null));
+    a.addEventListener("error", () => setPreviewing(null));
+    a.play().catch(() => setPreviewing(null));
+  };
+
+  useEffect(() => () => { adhanRef.current?.pause(); }, []);
 
   const prayers = data
     ? [
@@ -630,6 +668,34 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
         { id: "isha",    name: t.prayer.names.isha,    time: adjustTime(data.timings.Isha.slice(0, 5)) },
       ]
     : [];
+
+  // Schedule real browser notifications for today's enabled prayers.
+  useEffect(() => {
+    if (typeof window === "undefined" || !("Notification" in window)) return;
+    if (Notification.permission !== "granted") return;
+    if (!prayers.length) return;
+    const timers: number[] = [];
+    const nowMs = Date.now();
+    for (const p of prayers) {
+      if (!notify[p.id]) continue;
+      const [h, m] = p.time.split(":").map(Number);
+      const target = new Date();
+      target.setHours(h, m, 0, 0);
+      const delay = target.getTime() - nowMs;
+      if (delay > 0 && delay < 24 * 3600 * 1000) {
+        const id = window.setTimeout(() => {
+          try {
+            new Notification(t.appTitle, { body: `${p.name} — ${p.time}`, silent: false });
+            const a = new Audio(ADHAN_URL);
+            a.play().catch(() => {});
+          } catch { /* */ }
+        }, delay);
+        timers.push(id);
+      }
+    }
+    return () => { timers.forEach((id) => clearTimeout(id)); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [notify, data?.timings.Fajr]);
 
   const nowSec = now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds();
   // Find next prayer + previous prayer for the progress bar.
@@ -707,31 +773,58 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
       {isLoading && !data ? (
         <p className="text-center text-muted-foreground py-8">{t.quran.loading}</p>
       ) : (
-        <div className="space-y-2">
+        <div className="space-y-2.5">
           {prayers.map((p) => {
             const isNext = next && p.id === next.id;
             const on = !!notify[p.id];
+            const playing = previewing === p.id;
+            const { time: t12, suffix } = to12h(p.time, t);
             return (
               <div
                 key={p.id}
-                className="flex items-center justify-between gap-3 px-1 py-3"
-                style={isNext ? { } : undefined}
+                className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 backdrop-blur-xl transition"
+                style={{
+                  background: isNext
+                    ? "var(--gradient-gold)"
+                    : "var(--glass-bg)",
+                  borderColor: isNext ? "transparent" : "var(--glass-border)",
+                  boxShadow: isNext ? "var(--shadow-glow)" : undefined,
+                  color: isNext ? "var(--primary-foreground)" : undefined,
+                }}
               >
-                <span className={`text-3xl font-bold tabular-nums ${isNext ? "text-primary" : "text-primary/90"}`}>
-                  {toLocaleDigits(p.time, lang)}
-                </span>
-                <button
-                  onClick={() => toggleNotify(p.id)}
-                  className="h-11 w-11 rounded-xl flex items-center justify-center transition active:scale-95"
-                  style={{
-                    background: on ? "var(--gradient-gold)" : "color-mix(in oklch, var(--foreground) 8%, transparent)",
-                    color: on ? "var(--primary-foreground)" : "oklch(0.78 0.13 180)",
-                  }}
-                  aria-label="notify"
-                >
-                  {on ? <Volume2 className="h-5 w-5" /> : <VolumeX className="h-5 w-5" />}
-                </button>
-                <span className={`flex-1 text-right font-display text-2xl ${isNext ? "text-primary" : "text-foreground"}`} dir="rtl">
+                <div className="flex items-baseline gap-1.5 tabular-nums">
+                  <span className={`text-2xl font-bold ${isNext ? "" : "text-primary"}`}>
+                    {toLocaleDigits(t12, lang)}
+                  </span>
+                  <span className={`text-[10px] font-semibold uppercase ${isNext ? "opacity-90" : "text-muted-foreground"}`}>
+                    {suffix}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => previewAdhan(p.id)}
+                    className="h-9 w-9 rounded-xl flex items-center justify-center transition active:scale-95"
+                    style={{
+                      background: isNext ? "rgba(0,0,0,0.18)" : "color-mix(in oklch, var(--foreground) 8%, transparent)",
+                      color: isNext ? "var(--primary-foreground)" : "oklch(0.78 0.13 180)",
+                    }}
+                    aria-label="preview adhan"
+                  >
+                    {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                  </button>
+                  <button
+                    onClick={() => toggleNotify(p.id)}
+                    className="h-9 w-9 rounded-xl flex items-center justify-center transition active:scale-95"
+                    style={{
+                      background: isNext ? "rgba(0,0,0,0.18)" : "color-mix(in oklch, var(--foreground) 8%, transparent)",
+                      color: isNext ? "var(--primary-foreground)" : (on ? "oklch(0.78 0.13 180)" : "var(--muted-foreground)"),
+                    }}
+                    aria-label="notify"
+                  >
+                    {on ? <Bell className="h-4 w-4" /> : <VolumeX className="h-4 w-4" />}
+                  </button>
+                </div>
+                <span className={`flex-1 text-right font-display text-2xl ${isNext ? "" : "text-foreground"}`} dir="rtl">
                   {p.name}
                 </span>
               </div>
