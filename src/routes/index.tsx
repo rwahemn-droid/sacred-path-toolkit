@@ -842,7 +842,7 @@ function MonthlyTimes({
     queryKey: ["calendar", city.id, school, year, month],
     queryFn: async () => {
       const res = await fetch(
-        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=3&school=${school}&timezonestring=${encodeURIComponent(city.tz)}`,
+        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,3,12,12,11,4,0,-9,0`,
       );
       const json = await res.json();
       return json.data as Array<{ timings: Record<string, string>; date: { gregorian: { date: string; day: string } } }>;
