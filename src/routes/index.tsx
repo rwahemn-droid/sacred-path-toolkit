@@ -552,10 +552,11 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string };
 type HijriDate = { day: string; month: { ar: string; en: string; number: number }; year: string };
 
-// Hewler local correction — push every prayer 5 minutes later to match local schedule.
-const PRAYER_OFFSET_MIN = 5;
+// Use the API's calculated times directly (Muslim World League). No manual offset.
+const PRAYER_OFFSET_MIN = 0;
 function adjustTime(hhmm: string, offset = PRAYER_OFFSET_MIN) {
   if (!hhmm || hhmm.length < 4) return hhmm;
+  if (offset === 0) return hhmm.slice(0, 5);
   const [hStr, mStr] = hhmm.split(":");
   let total = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0) + offset;
   total = ((total % 1440) + 1440) % 1440;
