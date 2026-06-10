@@ -614,7 +614,7 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
       const d = new Date();
       const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,3,12,12,11,4,0,-9,0`,
+        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,4,12,12,11,3,0,-10,0`,
       );
       const json = await res.json();
       return {
@@ -842,7 +842,7 @@ function MonthlyTimes({
     queryKey: ["calendar", city.id, school, year, month],
     queryFn: async () => {
       const res = await fetch(
-        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,3,12,12,11,4,0,-9,0`,
+        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,4,12,12,11,3,0,-10,0`,
       );
       const json = await res.json();
       return json.data as Array<{ timings: Record<string, string>; date: { gregorian: { date: string; day: string } } }>;
