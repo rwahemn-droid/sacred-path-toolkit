@@ -4,27 +4,19 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
-  BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type,
+  BookText, X, Calendar, VolumeX, Bell,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
-import { QiblaCompass } from "@/components/QiblaCompass";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
 import { TASBIHAT, DEFAULT_TASBIH_ID } from "@/lib/tasbihat";
 import { CITIES, findCity } from "@/lib/cities";
 import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
-import {
-  useSettings,
-  FONT_SIZE_PX,
-  FONT_FAMILY_CSS,
-  FONT_FAMILY_LABEL,
-  type FontSize,
-  type FontFamily,
-} from "@/lib/settings";
+import { useSettings } from "@/lib/settings";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
-  lang === "en" || lang === "kmr" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
+  lang === "en" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
 
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
 
@@ -314,10 +306,6 @@ type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
 
 function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
-  const [settings] = useSettings();
-  const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
-  const arabicFontFamily = FONT_FAMILY_CSS[settings.fontFamily];
-
   const [reciterId, setReciterId] = useState<string>(() => {
     if (typeof window === "undefined") return DEFAULT_RECITER_ID;
     return localStorage.getItem(RECITER_KEY) || DEFAULT_RECITER_ID;
@@ -325,25 +313,14 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
   const reciter = RECITERS.find((r) => r.id === reciterId) || RECITERS[0];
   const [pickerOpen, setPickerOpen] = useState(false);
 
-  // Loop for memorization: 1 = no loop, 2/3/5/10 = repeat N times total, 0 = infinite.
-  const LOOP_OPTIONS: { value: number; label: string }[] = [
-    { value: 1, label: t.quran.loopOff },
-    { value: 3, label: `3×` },
-    { value: 5, label: `5×` },
-    { value: 10, label: `10×` },
-    { value: 0, label: `∞ ${t.quran.loopInfinite}` },
-  ];
-  const [loopCount, setLoopCount] = useState<number>(1);
-
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [playAll, setPlayAll] = useState(false);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Translation edition by language (kmr/bad fall back to Kurdish Sorani translation)
-  const translationEdition =
-    lang === "en" ? "en.sahih" : lang === "ar" ? "ar.muyassar" : "ku.asan";
+  // Translation edition by language
+  const translationEdition = lang === "en" ? "en.sahih" : lang === "ar" ? "ar.muyassar" : "ku.asan";
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["surah", surah.number, translationEdition],
@@ -392,14 +369,10 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     setActiveWord(null);
   };
 
-  // loopRemaining: undefined means "use current loopCount setting on first play".
-  // For loop=0 (infinite) we pass Infinity; for loop=1 we pass 1; etc.
-  const playAyah = (idx: number, continueAll = false, loopRemaining?: number) => {
+  const playAyah = (idx: number, continueAll = false) => {
     audioRef.current?.pause();
     const ayah = arabic[idx];
     if (!ayah) return;
-    const remaining =
-      loopRemaining ?? (continueAll ? 1 : loopCount === 0 ? Infinity : loopCount);
     const audio = new Audio(ayahAudioUrl(reciter, surah.number, ayah.numberInSurah));
     audioRef.current = audio;
     setPlayingIdx(idx);
@@ -423,11 +396,6 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 
     audio.addEventListener("ended", () => {
       setActiveWord(null);
-      // Repeat this ayah if loop remaining > 1.
-      if (remaining > 1) {
-        playAyah(idx, continueAll, remaining - 1);
-        return;
-      }
       if (continueAll && idx + 1 < arabic.length) {
         playAyah(idx + 1, true);
       } else {
@@ -486,27 +454,6 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
           >
             {playAll ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
           </button>
-        </div>
-
-        {/* Loop selector for memorization */}
-        <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
-          <Repeat className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-[11px] text-muted-foreground shrink-0 me-1">{t.quran.loop}:</span>
-          {LOOP_OPTIONS.map((o) => (
-            <button
-              key={o.value}
-              onClick={() => setLoopCount(o.value)}
-              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
-                loopCount === o.value ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-              style={{
-                background: loopCount === o.value ? "var(--gradient-gold)" : "transparent",
-                borderColor: loopCount === o.value ? "transparent" : "var(--glass-border)",
-              }}
-            >
-              {o.label}
-            </button>
-          ))}
         </div>
 
         {pickerOpen && (
@@ -570,11 +517,7 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
                 </button>
               </div>
 
-              <p
-                className="leading-loose text-right"
-                dir="rtl"
-                style={{ fontFamily: arabicFontFamily, fontSize: `${arabicFontPx}px` }}
-              >
+              <p className="font-display text-2xl leading-loose text-right" dir="rtl">
                 {words.map((w, wi) => {
                   const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
                   return (
@@ -659,7 +602,6 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   const city = findCity(cityId);
   const school = madhab === "hanafi" ? 1 : 0;
   const [monthlyOpen, setMonthlyOpen] = useState(false);
-  const [qiblaOpen, setQiblaOpen] = useState(false);
   const [notify, setNotify] = useState<Record<string, boolean>>(() => readNotify());
   const [previewing, setPreviewing] = useState<string | null>(null);
   const adhanRef = useRef<HTMLAudioElement | null>(null);
@@ -868,22 +810,13 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
         </div>
       )}
 
-      <div className="grid grid-cols-2 gap-2">
-        <button
-          onClick={() => setMonthlyOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-4 font-medium transition"
-          style={{ background: "var(--gradient-gold)", borderColor: "transparent", color: "var(--primary-foreground)", boxShadow: "var(--shadow-glow)" }}
-        >
-          <Calendar className="h-4 w-4" /> {t.prayer.monthly}
-        </button>
-        <button
-          onClick={() => setQiblaOpen(true)}
-          className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-4 font-medium transition"
-          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
-        >
-          <Compass className="h-4 w-4 text-primary" /> {t.prayer.qibla}
-        </button>
-      </div>
+      <button
+        onClick={() => setMonthlyOpen(true)}
+        className="w-full flex items-center justify-center gap-2 rounded-2xl border px-5 py-4 font-medium transition"
+        style={{ background: "var(--gradient-gold)", borderColor: "transparent", color: "var(--primary-foreground)", boxShadow: "var(--shadow-glow)" }}
+      >
+        <Calendar className="h-4 w-4" /> {t.prayer.monthly}
+      </button>
 
       {monthlyOpen && (
         <MonthlyTimes
@@ -892,16 +825,6 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
           city={city}
           school={school}
           onClose={() => setMonthlyOpen(false)}
-        />
-      )}
-
-      {qiblaOpen && (
-        <QiblaCompass
-          lat={city.lat}
-          lon={city.lon}
-          cityName={cityName}
-          t={t}
-          onClose={() => setQiblaOpen(false)}
         />
       )}
     </div>
@@ -1175,16 +1098,11 @@ function TasbihView({ t, lang }: { t: Dict; lang: Lang }) {
 function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
   const [settings, update] = useSettings();
   const tzLocal = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const langs: Lang[] = ["ku", "ar", "en", "kmr", "bad"];
-  const fontSizes: FontSize[] = ["sm", "md", "lg", "xl"];
-  const fontFamilies: FontFamily[] = ["uthmani", "amiri", "scheherazade"];
+  const langs: Lang[] = ["ku", "ar", "en"];
 
   const cityLabel = (id: string) => {
     const c = findCity(id);
-    // Cities only have ku/ar/en; fall back to Kurdish for kmr/bad (Arabic script users → ku).
-    if (lang === "ar") return c.ar;
-    if (lang === "en" || lang === "kmr") return c.en;
-    return c.ku;
+    return lang === "ar" ? c.ar : lang === "en" ? c.en : c.ku;
   };
 
   return (
@@ -1271,61 +1189,6 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
             </button>
           ))}
         </div>
-      </Card>
-
-      <Card>
-        <div className="flex items-center gap-2 mb-3">
-          <Type className="h-4 w-4 text-primary" />
-          <h3 className="font-medium">{t.settings.fontSize}</h3>
-        </div>
-        <div className="grid grid-cols-4 gap-2">
-          {fontSizes.map((s) => (
-            <button
-              key={s}
-              onClick={() => update({ fontSize: s })}
-              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
-                settings.fontSize === s ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
-              }`}
-              style={{
-                background: settings.fontSize === s ? "var(--gradient-gold)" : "var(--glass-bg)",
-                borderColor: settings.fontSize === s ? "transparent" : "var(--glass-border)",
-                fontSize: `${Math.min(18, FONT_SIZE_PX[s] / 2 + 8)}px`,
-              }}
-            >
-              {t.settings.sizes[s]}
-            </button>
-          ))}
-        </div>
-
-        <div className="mt-4 mb-2 text-[12px] text-muted-foreground">{t.settings.fontFamily}</div>
-        <div className="grid grid-cols-3 gap-2">
-          {fontFamilies.map((f) => (
-            <button
-              key={f}
-              onClick={() => update({ fontFamily: f })}
-              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
-                settings.fontFamily === f ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
-              }`}
-              style={{
-                background: settings.fontFamily === f ? "var(--gradient-gold)" : "var(--glass-bg)",
-                borderColor: settings.fontFamily === f ? "transparent" : "var(--glass-border)",
-              }}
-            >
-              {FONT_FAMILY_LABEL[f]}
-            </button>
-          ))}
-        </div>
-
-        <p
-          className="mt-4 text-center leading-loose"
-          dir="rtl"
-          style={{
-            fontFamily: FONT_FAMILY_CSS[settings.fontFamily],
-            fontSize: `${FONT_SIZE_PX[settings.fontSize]}px`,
-          }}
-        >
-          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
-        </p>
       </Card>
     </div>
   );

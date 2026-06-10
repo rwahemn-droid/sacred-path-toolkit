@@ -2,26 +2,16 @@ import { useEffect, useState } from "react";
 import type { Lang } from "./i18n";
 
 export type Madhab = "shafi" | "hanafi";
-export type FontSize = "sm" | "md" | "lg" | "xl";
-export type FontFamily = "uthmani" | "amiri" | "scheherazade";
 
 export type Settings = {
   lang: Lang;
   cityId: string;
   madhab: Madhab;
-  fontSize: FontSize;
-  fontFamily: FontFamily;
 };
 
 const KEY = "ibadah:settings";
 
-const DEFAULTS: Settings = {
-  lang: "ku",
-  cityId: "hawler",
-  madhab: "shafi",
-  fontSize: "md",
-  fontFamily: "uthmani",
-};
+const DEFAULTS: Settings = { lang: "ku", cityId: "hawler", madhab: "shafi" };
 
 function read(): Settings {
   if (typeof window === "undefined") return DEFAULTS;
@@ -34,6 +24,7 @@ function read(): Settings {
   }
 }
 
+// Simple subscribable store so all components stay in sync.
 let current: Settings = DEFAULTS;
 const listeners = new Set<(s: Settings) => void>();
 
@@ -64,22 +55,3 @@ export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
   const update = (patch: Partial<Settings>) => write({ ...current, ...patch });
   return [s, update];
 }
-
-export const FONT_SIZE_PX: Record<FontSize, number> = {
-  sm: 18,
-  md: 24,
-  lg: 30,
-  xl: 38,
-};
-
-export const FONT_FAMILY_CSS: Record<FontFamily, string> = {
-  uthmani: "'Amiri Quran', 'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif",
-  amiri: "'Amiri', 'Noto Naskh Arabic', serif",
-  scheherazade: "'Scheherazade New', 'Amiri', 'Noto Naskh Arabic', serif",
-};
-
-export const FONT_FAMILY_LABEL: Record<FontFamily, string> = {
-  uthmani: "Uthmani",
-  amiri: "Amiri",
-  scheherazade: "Scheherazade",
-};

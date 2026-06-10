@@ -1,12 +1,6 @@
-export type Lang = "ku" | "ar" | "en" | "kmr" | "bad";
+export type Lang = "ku" | "ar" | "en";
 
-export const DIRS: Record<Lang, "rtl" | "ltr"> = {
-  ku: "rtl",
-  ar: "rtl",
-  en: "ltr",
-  kmr: "ltr", // Kurmanji (Latin script)
-  bad: "rtl", // Badini (Arabic script)
-};
+export const DIRS: Record<Lang, "rtl" | "ltr"> = { ku: "rtl", ar: "rtl", en: "ltr" };
 
 export type Dict = {
   appTitle: string;
@@ -22,9 +16,6 @@ export type Dict = {
     back: string;
     reciter: string;
     wordSync: string;
-    loop: string;
-    loopOff: string;
-    loopInfinite: string;
   };
   prayer: {
     nextPrayer: string;
@@ -39,12 +30,6 @@ export type Dict = {
     monthlyTitle: string;
     date: string;
     close: string;
-    qibla: string;
-    qiblaTitle: string;
-    qiblaHint: string;
-    qiblaPermission: string;
-    qiblaAligned: string;
-    qiblaOff: string;
   };
   dhikr: { morning: string; evening: string; done: string; tap: string };
   tasbih: { reset: string; choose: string };
@@ -57,9 +42,6 @@ export type Dict = {
     hanafi: string;
     asrNote: string;
     by: string;
-    fontSize: string;
-    fontFamily: string;
-    sizes: { sm: string; md: string; lg: string; xl: string };
   };
 };
 
@@ -77,9 +59,6 @@ const ku: Dict = {
     back: "← گەڕانەوە",
     reciter: "قاری",
     wordSync: "✦ سینکی وشە",
-    loop: "دووبارە",
-    loopOff: "بەبێ دووبارە",
-    loopInfinite: "بێکۆتا",
   },
   prayer: {
     nextPrayer: "نوێژی داهاتوو",
@@ -94,12 +73,6 @@ const ku: Dict = {
     monthlyTitle: "کاتەکانی بانگ لە مانگی",
     date: "بەروار",
     close: "داخستن",
-    qibla: "قیبلە",
-    qiblaTitle: "ئاراستەی قیبلە",
-    qiblaHint: "مۆبایلەکەت ڕاست بگرە و ئاراستەکە بگۆڕە تا ئەلماس سەوز ببێت",
-    qiblaPermission: "ڕێگەپێدان بدە بۆ کۆمپاس",
-    qiblaAligned: "ڕاست بەرامبەری قیبلە ✓",
-    qiblaOff: "بسوڕێنە بەرەو ئەلماسی زێڕین",
   },
   dhikr: { morning: "ویردی بەیانی", evening: "ویردی ئێوارە", done: "تەواوبوو ✓", tap: "کلیک بکە" },
   tasbih: { reset: "سفر کردنەوە", choose: "هەڵبژاردنی زیکر" },
@@ -112,9 +85,6 @@ const ku: Dict = {
     hanafi: "حەنەفی",
     asrNote: "(کاریگەری لەسەر کاتی عەسر دەکات)",
     by: "بە",
-    fontSize: "قەبارەی فۆنت",
-    fontFamily: "جۆری فۆنت",
-    sizes: { sm: "بچووک", md: "ناوەند", lg: "گەورە", xl: "زۆر گەورە" },
   },
 };
 
@@ -132,9 +102,6 @@ const ar: Dict = {
     back: "← رجوع",
     reciter: "القارئ",
     wordSync: "✦ مزامنة الكلمات",
-    loop: "تكرار",
-    loopOff: "بدون تكرار",
-    loopInfinite: "لانهائي",
   },
   prayer: {
     nextPrayer: "الصلاة القادمة",
@@ -149,12 +116,6 @@ const ar: Dict = {
     monthlyTitle: "مواقيت الصلاة لشهر",
     date: "التاريخ",
     close: "إغلاق",
-    qibla: "القبلة",
-    qiblaTitle: "اتجاه القبلة",
-    qiblaHint: "أمسك الهاتف بشكل مسطح ودوّر حتى يتجه السهم نحو الأخضر",
-    qiblaPermission: "السماح للبوصلة",
-    qiblaAligned: "متجه نحو القبلة ✓",
-    qiblaOff: "وجّه نحو السهم الذهبي",
   },
   dhikr: { morning: "أذكار الصباح", evening: "أذكار المساء", done: "اكتمل ✓", tap: "اضغط" },
   tasbih: { reset: "إعادة تعيين", choose: "اختر الذكر" },
@@ -167,9 +128,6 @@ const ar: Dict = {
     hanafi: "حنفي",
     asrNote: "(يؤثر على وقت العصر)",
     by: "بـ",
-    fontSize: "حجم الخط",
-    fontFamily: "نوع الخط",
-    sizes: { sm: "صغير", md: "متوسط", lg: "كبير", xl: "كبير جداً" },
   },
 };
 
@@ -187,9 +145,6 @@ const en: Dict = {
     back: "← Back",
     reciter: "Reciter",
     wordSync: "✦ Word sync",
-    loop: "Loop",
-    loopOff: "No loop",
-    loopInfinite: "Infinite",
   },
   prayer: {
     nextPrayer: "Next prayer",
@@ -204,12 +159,6 @@ const en: Dict = {
     monthlyTitle: "Prayer times for month",
     date: "Date",
     close: "Close",
-    qibla: "Qibla",
-    qiblaTitle: "Qibla direction",
-    qiblaHint: "Hold the phone flat and rotate until the arrow aligns with green",
-    qiblaPermission: "Allow compass access",
-    qiblaAligned: "Facing Qibla ✓",
-    qiblaOff: "Rotate toward the gold marker",
   },
   dhikr: { morning: "Morning adhkar", evening: "Evening adhkar", done: "Done ✓", tap: "Tap" },
   tasbih: { reset: "Reset", choose: "Choose dhikr" },
@@ -222,130 +171,13 @@ const en: Dict = {
     hanafi: "Hanafi",
     asrNote: "(affects Asr time)",
     by: "by",
-    fontSize: "Font size",
-    fontFamily: "Font family",
-    sizes: { sm: "Small", md: "Medium", lg: "Large", xl: "Extra large" },
   },
 };
 
-// Kurmanji (Northern Kurdish, Latin script)
-const kmr: Dict = {
-  appTitle: "IbadahPro",
-  bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "Quran", prayer: "Nimêj", dhikr: "Zikir", tasbih: "Tesbîh", settings: "Mîheng" },
-  quran: {
-    searchPlaceholder: "Li sûreyan bigere...",
-    bookmarked: "Sûreyên parastî",
-    allSurahs: "Hemû sûre",
-    loading: "Tê barkirin...",
-    error: "Çewtî di anîna daneyan de",
-    ayahs: "ayet",
-    back: "← Vegere",
-    reciter: "Qarî",
-    wordSync: "✦ Senkrona peyvan",
-    loop: "Dûbarekirin",
-    loopOff: "Bê dûbare",
-    loopInfinite: "Bêdawî",
-  },
-  prayer: {
-    nextPrayer: "Nimêja bê",
-    remaining: "Maye",
-    hours: "saet û",
-    minutes: "deqîqe",
-    locationCity: "Bajar",
-    names: { fajr: "Sibê", sunrise: "Roj-hilatin", dhuhr: "Nîvro", asr: "Êvarê dirêj", maghrib: "Mexrib", isha: "Îşa" },
-    am: "BN",
-    pm: "PN",
-    monthly: "Demên mehê",
-    monthlyTitle: "Demên nimêjê yên mehê",
-    date: "Dîrok",
-    close: "Bigire",
-    qibla: "Qible",
-    qiblaTitle: "Aliyê Qibleyê",
-    qiblaHint: "Telefonê rast bigre û bizivirîne heta tîr li ser kesk be",
-    qiblaPermission: "Destûra bûsulê bide",
-    qiblaAligned: "Beramberî Qibleyê ✓",
-    qiblaOff: "Berev nîşana zêr bizivire",
-  },
-  dhikr: { morning: "Zikirên sibê", evening: "Zikirên êvarê", done: "Temam ✓", tap: "Pê bide" },
-  tasbih: { reset: "Sifir bike", choose: "Zikir hilbijêre" },
-  settings: {
-    title: "Mîheng",
-    language: "Ziman",
-    city: "Bajar",
-    madhab: "Mezheb",
-    shafi: "Şafiî",
-    hanafi: "Henefî",
-    asrNote: "(Bandorê li dema Esrê dike)",
-    by: "bi",
-    fontSize: "Mezinahiya tîpê",
-    fontFamily: "Cureyê tîpê",
-    sizes: { sm: "Biçûk", md: "Navîn", lg: "Mezin", xl: "Pir mezin" },
-  },
-};
-
-// Badini (Behdini, Northern Kurdish in Arabic script)
-const bad: Dict = {
-  appTitle: "IbadahPro",
-  bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "قورئان", prayer: "نڤێژ", dhikr: "زکر", tasbih: "تەسبیح", settings: "ڕێکخستن" },
-  quran: {
-    searchPlaceholder: "ل سۆرەتا بگەڕە...",
-    bookmarked: "سۆرەتێن پاراستی",
-    allSurahs: "هەمی سۆرەت",
-    loading: "ل دەرئێنانێیە...",
-    error: "خەلەتی ل وەرگرتنا داتا",
-    ayahs: "ئایەت",
-    back: "← زڤڕین",
-    reciter: "قاری",
-    wordSync: "✦ سینکا پەیڤا",
-    loop: "ددوبارەکرن",
-    loopOff: "بێ ددوبارە",
-    loopInfinite: "بێ کۆتایی",
-  },
-  prayer: {
-    nextPrayer: "نڤێژا بێ",
-    remaining: "مایی",
-    hours: "دەمژمێر و",
-    minutes: "خولەک",
-    locationCity: "باژێر",
-    names: { fajr: "سپێدێ", sunrise: "ڕۆژهەلات", dhuhr: "نیڤرۆ", asr: "ئەسر", maghrib: "ئێڤارێ", isha: "عیشا" },
-    am: "ب.ن",
-    pm: "د.ن",
-    monthly: "دەمێن مەهانە",
-    monthlyTitle: "دەمێن بانگێ ل مەها",
-    date: "دیرۆک",
-    close: "گرتن",
-    qibla: "قیبلە",
-    qiblaTitle: "ئاراستا قیبلەی",
-    qiblaHint: "مۆبایلێ ڕاست بگرە و بزڤڕینە هەتا تیر بێتە سەر کەسک",
-    qiblaPermission: "دەستوور دە بۆ پشتیڤانێ",
-    qiblaAligned: "بەرامبەری قیبلەی ✓",
-    qiblaOff: "بەرەڤ نیشانا زێڕین بزڤڕە",
-  },
-  dhikr: { morning: "زکرێن سپێدێ", evening: "زکرێن ئێڤارێ", done: "تەمام ✓", tap: "بکرتنە" },
-  tasbih: { reset: "سفر کرن", choose: "زکر هەلبژێرە" },
-  settings: {
-    title: "ڕێکخستن",
-    language: "زمان",
-    city: "باژێر",
-    madhab: "مەزهەب",
-    shafi: "شافعی",
-    hanafi: "حەنەفی",
-    asrNote: "(کارتێکرنا وی ل دەمێ ئەسری هەی)",
-    by: "ب",
-    fontSize: "مەزنایا فۆنتی",
-    fontFamily: "جۆرێ فۆنتی",
-    sizes: { sm: "بچویک", md: "ناڤنجی", lg: "مەزن", xl: "گەلەک مەزن" },
-  },
-};
-
-export const DICTS: Record<Lang, Dict> = { ku, ar, en, kmr, bad };
+export const DICTS: Record<Lang, Dict> = { ku, ar, en };
 
 export const LANG_LABELS: Record<Lang, string> = {
   ku: "کوردی",
   ar: "العربية",
   en: "English",
-  kmr: "Kurmancî",
-  bad: "بادینی",
 };
