@@ -659,6 +659,7 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   const city = findCity(cityId);
   const school = madhab === "hanafi" ? 1 : 0;
   const [monthlyOpen, setMonthlyOpen] = useState(false);
+  const [qiblaOpen, setQiblaOpen] = useState(false);
   const [notify, setNotify] = useState<Record<string, boolean>>(() => readNotify());
   const [previewing, setPreviewing] = useState<string | null>(null);
   const adhanRef = useRef<HTMLAudioElement | null>(null);
