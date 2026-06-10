@@ -1272,6 +1272,61 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           ))}
         </div>
       </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Type className="h-4 w-4 text-primary" />
+          <h3 className="font-medium">{t.settings.fontSize}</h3>
+        </div>
+        <div className="grid grid-cols-4 gap-2">
+          {fontSizes.map((s) => (
+            <button
+              key={s}
+              onClick={() => update({ fontSize: s })}
+              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
+                settings.fontSize === s ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
+              }`}
+              style={{
+                background: settings.fontSize === s ? "var(--gradient-gold)" : "var(--glass-bg)",
+                borderColor: settings.fontSize === s ? "transparent" : "var(--glass-border)",
+                fontSize: `${Math.min(18, FONT_SIZE_PX[s] / 2 + 8)}px`,
+              }}
+            >
+              {t.settings.sizes[s]}
+            </button>
+          ))}
+        </div>
+
+        <div className="mt-4 mb-2 text-[12px] text-muted-foreground">{t.settings.fontFamily}</div>
+        <div className="grid grid-cols-3 gap-2">
+          {fontFamilies.map((f) => (
+            <button
+              key={f}
+              onClick={() => update({ fontFamily: f })}
+              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
+                settings.fontFamily === f ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
+              }`}
+              style={{
+                background: settings.fontFamily === f ? "var(--gradient-gold)" : "var(--glass-bg)",
+                borderColor: settings.fontFamily === f ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {FONT_FAMILY_LABEL[f]}
+            </button>
+          ))}
+        </div>
+
+        <p
+          className="mt-4 text-center leading-loose"
+          dir="rtl"
+          style={{
+            fontFamily: FONT_FAMILY_CSS[settings.fontFamily],
+            fontSize: `${FONT_SIZE_PX[settings.fontSize]}px`,
+          }}
+        >
+          بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
+        </p>
+      </Card>
     </div>
   );
 }
