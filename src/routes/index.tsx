@@ -868,13 +868,22 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
         </div>
       )}
 
-      <button
-        onClick={() => setMonthlyOpen(true)}
-        className="w-full flex items-center justify-center gap-2 rounded-2xl border px-5 py-4 font-medium transition"
-        style={{ background: "var(--gradient-gold)", borderColor: "transparent", color: "var(--primary-foreground)", boxShadow: "var(--shadow-glow)" }}
-      >
-        <Calendar className="h-4 w-4" /> {t.prayer.monthly}
-      </button>
+      <div className="grid grid-cols-2 gap-2">
+        <button
+          onClick={() => setMonthlyOpen(true)}
+          className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-4 font-medium transition"
+          style={{ background: "var(--gradient-gold)", borderColor: "transparent", color: "var(--primary-foreground)", boxShadow: "var(--shadow-glow)" }}
+        >
+          <Calendar className="h-4 w-4" /> {t.prayer.monthly}
+        </button>
+        <button
+          onClick={() => setQiblaOpen(true)}
+          className="flex items-center justify-center gap-2 rounded-2xl border px-4 py-4 font-medium transition"
+          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+        >
+          <Compass className="h-4 w-4 text-primary" /> {t.prayer.qibla}
+        </button>
+      </div>
 
       {monthlyOpen && (
         <MonthlyTimes
@@ -883,6 +892,16 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
           city={city}
           school={school}
           onClose={() => setMonthlyOpen(false)}
+        />
+      )}
+
+      {qiblaOpen && (
+        <QiblaCompass
+          lat={city.lat}
+          lon={city.lon}
+          cityName={cityName}
+          t={t}
+          onClose={() => setQiblaOpen(false)}
         />
       )}
     </div>
