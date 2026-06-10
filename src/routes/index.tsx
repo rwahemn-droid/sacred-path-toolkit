@@ -488,6 +488,27 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
           </button>
         </div>
 
+        {/* Loop selector for memorization */}
+        <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
+          <Repeat className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] text-muted-foreground shrink-0 me-1">{t.quran.loop}:</span>
+          {LOOP_OPTIONS.map((o) => (
+            <button
+              key={o.value}
+              onClick={() => setLoopCount(o.value)}
+              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
+                loopCount === o.value ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              style={{
+                background: loopCount === o.value ? "var(--gradient-gold)" : "transparent",
+                borderColor: loopCount === o.value ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
+
         {pickerOpen && (
           <div className="mt-3 max-h-72 overflow-y-auto grid gap-1 pe-1">
             {RECITERS.map((r) => (
