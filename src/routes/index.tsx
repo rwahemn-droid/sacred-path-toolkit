@@ -1175,11 +1175,16 @@ function TasbihView({ t, lang }: { t: Dict; lang: Lang }) {
 function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
   const [settings, update] = useSettings();
   const tzLocal = Intl.DateTimeFormat().resolvedOptions().timeZone;
-  const langs: Lang[] = ["ku", "ar", "en"];
+  const langs: Lang[] = ["ku", "ar", "en", "kmr", "bad"];
+  const fontSizes: FontSize[] = ["sm", "md", "lg", "xl"];
+  const fontFamilies: FontFamily[] = ["uthmani", "amiri", "scheherazade"];
 
   const cityLabel = (id: string) => {
     const c = findCity(id);
-    return lang === "ar" ? c.ar : lang === "en" ? c.en : c.ku;
+    // Cities only have ku/ar/en; fall back to Kurdish for kmr/bad (Arabic script users → ku).
+    if (lang === "ar") return c.ar;
+    if (lang === "en" || lang === "kmr") return c.en;
+    return c.ku;
   };
 
   return (
