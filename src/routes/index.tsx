@@ -314,6 +314,10 @@ type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
 
 function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
+  const [settings] = useSettings();
+  const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
+  const arabicFontFamily = FONT_FAMILY_CSS[settings.fontFamily];
+
   const [reciterId, setReciterId] = useState<string>(() => {
     if (typeof window === "undefined") return DEFAULT_RECITER_ID;
     return localStorage.getItem(RECITER_KEY) || DEFAULT_RECITER_ID;
@@ -321,14 +325,25 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
   const reciter = RECITERS.find((r) => r.id === reciterId) || RECITERS[0];
   const [pickerOpen, setPickerOpen] = useState(false);
 
+  // Loop for memorization: 1 = no loop, 2/3/5/10 = repeat N times total, 0 = infinite.
+  const LOOP_OPTIONS: { value: number; label: string }[] = [
+    { value: 1, label: t.quran.loopOff },
+    { value: 3, label: `3×` },
+    { value: 5, label: `5×` },
+    { value: 10, label: `10×` },
+    { value: 0, label: `∞ ${t.quran.loopInfinite}` },
+  ];
+  const [loopCount, setLoopCount] = useState<number>(1);
+
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [playAll, setPlayAll] = useState(false);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Translation edition by language
-  const translationEdition = lang === "en" ? "en.sahih" : lang === "ar" ? "ar.muyassar" : "ku.asan";
+  // Translation edition by language (kmr/bad fall back to Kurdish Sorani translation)
+  const translationEdition =
+    lang === "en" ? "en.sahih" : lang === "ar" ? "ar.muyassar" : "ku.asan";
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["surah", surah.number, translationEdition],
@@ -377,10 +392,14 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     setActiveWord(null);
   };
 
-  const playAyah = (idx: number, continueAll = false) => {
+  // loopRemaining: undefined means "use current loopCount setting on first play".
+  // For loop=0 (infinite) we pass Infinity; for loop=1 we pass 1; etc.
+  const playAyah = (idx: number, continueAll = false, loopRemaining?: number) => {
     audioRef.current?.pause();
     const ayah = arabic[idx];
     if (!ayah) return;
+    const remaining =
+      loopRemaining ?? (continueAll ? 1 : loopCount === 0 ? Infinity : loopCount);
     const audio = new Audio(ayahAudioUrl(reciter, surah.number, ayah.numberInSurah));
     audioRef.current = audio;
     setPlayingIdx(idx);
@@ -404,6 +423,11 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 
     audio.addEventListener("ended", () => {
       setActiveWord(null);
+      // Repeat this ayah if loop remaining > 1.
+      if (remaining > 1) {
+        playAyah(idx, continueAll, remaining - 1);
+        return;
+      }
       if (continueAll && idx + 1 < arabic.length) {
         playAyah(idx + 1, true);
       } else {
