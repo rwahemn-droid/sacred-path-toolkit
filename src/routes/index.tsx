@@ -570,7 +570,11 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
                 </button>
               </div>
 
-              <p className="font-display text-2xl leading-loose text-right" dir="rtl">
+              <p
+                className="leading-loose text-right"
+                dir="rtl"
+                style={{ fontFamily: arabicFontFamily, fontSize: `${arabicFontPx}px` }}
+              >
                 {words.map((w, wi) => {
                   const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
                   return (
