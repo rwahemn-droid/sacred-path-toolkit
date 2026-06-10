@@ -24,7 +24,7 @@ import {
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
-  lang === "en" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
+  lang === "en" || lang === "kmr" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
 
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
 
