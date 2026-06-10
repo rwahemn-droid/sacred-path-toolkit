@@ -4,15 +4,23 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
-  BookText, X, Calendar, VolumeX, Bell,
+  BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
+import { QiblaCompass } from "@/components/QiblaCompass";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
 import { TASBIHAT, DEFAULT_TASBIH_ID } from "@/lib/tasbihat";
 import { CITIES, findCity } from "@/lib/cities";
 import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
-import { useSettings } from "@/lib/settings";
+import {
+  useSettings,
+  FONT_SIZE_PX,
+  FONT_FAMILY_CSS,
+  FONT_FAMILY_LABEL,
+  type FontSize,
+  type FontFamily,
+} from "@/lib/settings";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
