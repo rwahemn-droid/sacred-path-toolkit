@@ -341,6 +341,8 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [playAll, setPlayAll] = useState(false);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
+  const [tafsirAyah, setTafsirAyah] = useState<{ surah: number; ayah: number; text: string } | null>(null);
+  const [ayahQuery, setAyahQuery] = useState("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
 
