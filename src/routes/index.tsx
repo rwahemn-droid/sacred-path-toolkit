@@ -1052,40 +1052,85 @@ function MonthlyTimes({
 
 // ============ DHIKR ============
 function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
-  const [sub, setSub] = useState<"morning" | "evening">(new Date().getHours() < 14 ? "morning" : "evening");
-  const items = sub === "morning" ? MORNING_ADHKAR : EVENING_ADHKAR;
+  const [sub, setSub] = useState<"morning" | "evening" | "khatm" | "hadith">(
+    new Date().getHours() < 14 ? "morning" : "evening",
+  );
+
+  const tabs: { id: typeof sub; label: string; icon: React.ComponentType<{ className?: string }>; bg: string }[] = [
+    { id: "morning", label: t.dhikr.morning, icon: Sunrise, bg: "var(--gradient-gold)" },
+    { id: "evening", label: t.dhikr.evening, icon: Moon, bg: "var(--gradient-teal)" },
+    { id: "khatm", label: t.dhikr.khatm, icon: CalendarCheck, bg: "var(--gradient-gold)" },
+    { id: "hadith", label: t.dhikr.hadith, icon: ScrollText, bg: "var(--gradient-teal)" },
+  ];
+
+  const items = sub === "morning" ? MORNING_ADHKAR : sub === "evening" ? EVENING_ADHKAR : [];
 
   return (
     <div className="space-y-4">
       <div
-        className="grid grid-cols-2 gap-1 rounded-2xl border p-1 backdrop-blur-xl"
+        className="grid grid-cols-4 gap-1 rounded-2xl border p-1 backdrop-blur-xl"
         style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
       >
-        <button
-          onClick={() => setSub("morning")}
-          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${
-            sub === "morning" ? "text-primary-foreground" : "text-muted-foreground"
-          }`}
-          style={sub === "morning" ? { background: "var(--gradient-gold)", boxShadow: "var(--shadow-glow)" } : undefined}
-        >
-          <Sunrise className="h-4 w-4" /> {t.dhikr.morning}
-        </button>
-        <button
-          onClick={() => setSub("evening")}
-          className={`flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-medium transition ${
-            sub === "evening" ? "text-primary-foreground" : "text-muted-foreground"
-          }`}
-          style={sub === "evening" ? { background: "var(--gradient-teal)", boxShadow: "var(--shadow-teal)" } : undefined}
-        >
-          <Moon className="h-4 w-4" /> {t.dhikr.evening}
-        </button>
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const active = sub === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setSub(tab.id)}
+              className={`flex flex-col items-center justify-center gap-0.5 py-2 rounded-xl text-[11px] font-medium transition ${
+                active ? "text-primary-foreground" : "text-muted-foreground"
+              }`}
+              style={active ? { background: tab.bg, boxShadow: "var(--shadow-glow)" } : undefined}
+            >
+              <Icon className="h-4 w-4" />
+              {tab.label}
+            </button>
+          );
+        })}
       </div>
 
-      <div className="space-y-3">
-        {items.map((d, i) => (
-          <DhikrCard key={`${sub}-${i}`} dhikr={d} storageKey={`ibadah:dhikr:${sub}:${i}`} t={t} lang={lang} />
-        ))}
-      </div>
+      {(sub === "morning" || sub === "evening") && (
+        <div className="space-y-3">
+          {items.map((d, i) => (
+            <DhikrCard key={`${sub}-${i}`} dhikr={d} storageKey={`ibadah:dhikr:${sub}:${i}`} t={t} lang={lang} />
+          ))}
+        </div>
+      )}
+
+      {sub === "khatm" && <KhatmTracker t={t} lang={lang} />}
+
+      {sub === "hadith" && (
+        <div className="space-y-3">
+          <p className="text-xs text-muted-foreground text-center">{t.hadith.title}</p>
+          {HADITHS.map((h) => (
+            <Card key={h.id}>
+              <div className="flex items-center justify-between mb-2">
+                <span
+                  className="h-7 w-7 rounded-lg flex items-center justify-center text-xs font-semibold"
+                  style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
+                >
+                  {toLocaleDigits(h.id, lang)}
+                </span>
+                <span className="text-[10px] text-muted-foreground">{h.source}</span>
+              </div>
+              <p
+                className="font-display text-xl text-right leading-loose"
+                dir="rtl"
+                style={{ lineHeight: 2 }}
+              >
+                {h.ar}
+              </p>
+              <p className="mt-3 text-[13px] text-muted-foreground text-right leading-relaxed" dir="rtl">
+                {h.ku}
+              </p>
+              <p className="mt-2 text-[10px] text-primary text-right" dir="rtl">
+                {t.hadith.narratedBy}: {h.narrator}
+              </p>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
