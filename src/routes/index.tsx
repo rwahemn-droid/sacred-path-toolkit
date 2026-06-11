@@ -4,13 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
-  BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type,
+  BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
+import { TafsirSheet } from "@/components/TafsirSheet";
+import { KhatmTracker } from "@/components/KhatmTracker";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
 import { TASBIHAT, DEFAULT_TASBIH_ID } from "@/lib/tasbihat";
+import { HADITHS } from "@/lib/hadith";
 import { CITIES, findCity } from "@/lib/cities";
 import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
 import {
