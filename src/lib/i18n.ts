@@ -4,8 +4,8 @@ export const DIRS: Record<Lang, "rtl" | "ltr"> = {
   ku: "rtl",
   ar: "rtl",
   en: "ltr",
-  kmr: "ltr", // Kurmanji (Latin script)
-  bad: "rtl", // Badini (Arabic script)
+  kmr: "ltr",
+  bad: "rtl",
 };
 
 export type Dict = {
@@ -25,6 +25,8 @@ export type Dict = {
     loop: string;
     loopOff: string;
     loopInfinite: string;
+    tafsir: string;
+    searchAyah: string;
   };
   prayer: {
     nextPrayer: string;
@@ -46,7 +48,22 @@ export type Dict = {
     qiblaAligned: string;
     qiblaOff: string;
   };
-  dhikr: { morning: string; evening: string; done: string; tap: string };
+  dhikr: { morning: string; evening: string; done: string; tap: string; khatm: string; hadith: string };
+  khatm: {
+    title: string;
+    intro: string;
+    pagesPerDay: string;
+    pagesPerDayShort: string;
+    estimate: string;
+    days: string;
+    start: string;
+    startedOn: string;
+    pages: string;
+    target: string;
+    remaining: string;
+    markToday: string;
+  };
+  hadith: { title: string; narratedBy: string; source: string };
   tasbih: { reset: string; choose: string };
   settings: {
     title: string;
@@ -80,6 +97,8 @@ const ku: Dict = {
     loop: "دووبارە",
     loopOff: "بەبێ دووبارە",
     loopInfinite: "بێکۆتا",
+    tafsir: "تەفسیر",
+    searchAyah: "گەڕان لە ناوەڕۆکی ئایەت...",
   },
   prayer: {
     nextPrayer: "نوێژی داهاتوو",
@@ -101,7 +120,22 @@ const ku: Dict = {
     qiblaAligned: "ڕاست بەرامبەری قیبلە ✓",
     qiblaOff: "بسوڕێنە بەرەو ئەلماسی زێڕین",
   },
-  dhikr: { morning: "ویردی بەیانی", evening: "ویردی ئێوارە", done: "تەواوبوو ✓", tap: "کلیک بکە" },
+  dhikr: { morning: "بەیانی", evening: "ئێوارە", done: "تەواوبوو ✓", tap: "کلیک بکە", khatm: "خەتم", hadith: "فەرموودە" },
+  khatm: {
+    title: "پلانی خەتمی قورئان",
+    intro: "پلانێکی ڕۆژانە دروست بکە بۆ خوێندنەوەی قورئان.",
+    pagesPerDay: "چەند پەڕە لە ڕۆژێکدا؟",
+    pagesPerDayShort: "پەڕە/ڕۆژ",
+    estimate: "بەپێی پلان",
+    days: "ڕۆژ",
+    start: "دەست پێ بکە",
+    startedOn: "دەستی پێکرد:",
+    pages: "پەڕە",
+    target: "ئامانجی ئەمڕۆ",
+    remaining: "ماوە",
+    markToday: "تۆمار بکە",
+  },
+  hadith: { title: "فەرموودەی پاک", narratedBy: "ڕیوایەت لە", source: "سەرچاوە" },
   tasbih: { reset: "سفر کردنەوە", choose: "هەڵبژاردنی زیکر" },
   settings: {
     title: "ڕێکخستن",
@@ -135,6 +169,8 @@ const ar: Dict = {
     loop: "تكرار",
     loopOff: "بدون تكرار",
     loopInfinite: "لانهائي",
+    tafsir: "تفسير",
+    searchAyah: "ابحث في نص الآية...",
   },
   prayer: {
     nextPrayer: "الصلاة القادمة",
@@ -156,7 +192,22 @@ const ar: Dict = {
     qiblaAligned: "متجه نحو القبلة ✓",
     qiblaOff: "وجّه نحو السهم الذهبي",
   },
-  dhikr: { morning: "أذكار الصباح", evening: "أذكار المساء", done: "اكتمل ✓", tap: "اضغط" },
+  dhikr: { morning: "الصباح", evening: "المساء", done: "اكتمل ✓", tap: "اضغط", khatm: "ختمة", hadith: "حديث" },
+  khatm: {
+    title: "خطة ختمة القرآن",
+    intro: "حدد خطة يومية لقراءة القرآن.",
+    pagesPerDay: "كم صفحة في اليوم؟",
+    pagesPerDayShort: "صفحة/يوم",
+    estimate: "حسب الخطة",
+    days: "يوم",
+    start: "ابدأ",
+    startedOn: "بدأت في:",
+    pages: "صفحة",
+    target: "هدف اليوم",
+    remaining: "متبقي",
+    markToday: "سجل اليوم",
+  },
+  hadith: { title: "الأربعون النووية", narratedBy: "روى عن", source: "المصدر" },
   tasbih: { reset: "إعادة تعيين", choose: "اختر الذكر" },
   settings: {
     title: "الإعدادات",
@@ -190,6 +241,8 @@ const en: Dict = {
     loop: "Loop",
     loopOff: "No loop",
     loopInfinite: "Infinite",
+    tafsir: "Tafsir",
+    searchAyah: "Search ayah text...",
   },
   prayer: {
     nextPrayer: "Next prayer",
@@ -211,7 +264,22 @@ const en: Dict = {
     qiblaAligned: "Facing Qibla ✓",
     qiblaOff: "Rotate toward the gold marker",
   },
-  dhikr: { morning: "Morning adhkar", evening: "Evening adhkar", done: "Done ✓", tap: "Tap" },
+  dhikr: { morning: "Morning", evening: "Evening", done: "Done ✓", tap: "Tap", khatm: "Khatm", hadith: "Hadith" },
+  khatm: {
+    title: "Quran Khatm plan",
+    intro: "Set a daily plan to complete the Quran.",
+    pagesPerDay: "Pages per day?",
+    pagesPerDayShort: "pg/day",
+    estimate: "At this pace",
+    days: "days",
+    start: "Start",
+    startedOn: "Started:",
+    pages: "pages",
+    target: "Today's target",
+    remaining: "Remaining",
+    markToday: "Log today",
+  },
+  hadith: { title: "40 Hadith of Nawawi", narratedBy: "Narrated by", source: "Source" },
   tasbih: { reset: "Reset", choose: "Choose dhikr" },
   settings: {
     title: "Settings",
@@ -228,7 +296,6 @@ const en: Dict = {
   },
 };
 
-// Kurmanji (Northern Kurdish, Latin script)
 const kmr: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
@@ -246,6 +313,8 @@ const kmr: Dict = {
     loop: "Dûbarekirin",
     loopOff: "Bê dûbare",
     loopInfinite: "Bêdawî",
+    tafsir: "Tefsîr",
+    searchAyah: "Li nava ayetê bigere...",
   },
   prayer: {
     nextPrayer: "Nimêja bê",
@@ -267,7 +336,22 @@ const kmr: Dict = {
     qiblaAligned: "Beramberî Qibleyê ✓",
     qiblaOff: "Berev nîşana zêr bizivire",
   },
-  dhikr: { morning: "Zikirên sibê", evening: "Zikirên êvarê", done: "Temam ✓", tap: "Pê bide" },
+  dhikr: { morning: "Sibê", evening: "Êvar", done: "Temam ✓", tap: "Pê bide", khatm: "Xetm", hadith: "Hedîs" },
+  khatm: {
+    title: "Plana Xetma Quranê",
+    intro: "Plana rojane saz bike ji bo xwendina Quranê.",
+    pagesPerDay: "Çend rûpel rojê?",
+    pagesPerDayShort: "rûpel/roj",
+    estimate: "Bi vê leze",
+    days: "roj",
+    start: "Dest pê bike",
+    startedOn: "Dest pê kir:",
+    pages: "rûpel",
+    target: "Armanca îro",
+    remaining: "Maye",
+    markToday: "Tomar bike",
+  },
+  hadith: { title: "40 Hedîsên Newewî", narratedBy: "Ji", source: "Çavkanî" },
   tasbih: { reset: "Sifir bike", choose: "Zikir hilbijêre" },
   settings: {
     title: "Mîheng",
@@ -284,7 +368,6 @@ const kmr: Dict = {
   },
 };
 
-// Badini (Behdini, Northern Kurdish in Arabic script)
 const bad: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
@@ -302,6 +385,8 @@ const bad: Dict = {
     loop: "ددوبارەکرن",
     loopOff: "بێ ددوبارە",
     loopInfinite: "بێ کۆتایی",
+    tafsir: "تەفسیر",
+    searchAyah: "ل ناڤا ئایەتێ بگەڕە...",
   },
   prayer: {
     nextPrayer: "نڤێژا بێ",
@@ -323,7 +408,22 @@ const bad: Dict = {
     qiblaAligned: "بەرامبەری قیبلەی ✓",
     qiblaOff: "بەرەڤ نیشانا زێڕین بزڤڕە",
   },
-  dhikr: { morning: "زکرێن سپێدێ", evening: "زکرێن ئێڤارێ", done: "تەمام ✓", tap: "بکرتنە" },
+  dhikr: { morning: "سپێدێ", evening: "ئێڤار", done: "تەمام ✓", tap: "بکرتنە", khatm: "خەتم", hadith: "حەدیس" },
+  khatm: {
+    title: "پلانا خەتما قورئانێ",
+    intro: "پلانەکا ڕۆژانە دیار بکە بۆ خواندنا قورئانێ.",
+    pagesPerDay: "چەند پەڕە ل ڕۆژێ؟",
+    pagesPerDayShort: "پەڕە/ڕۆژ",
+    estimate: "ب ڤێ لەزێ",
+    days: "ڕۆژ",
+    start: "دەست پێ بکە",
+    startedOn: "دەست پێ کر:",
+    pages: "پەڕە",
+    target: "ئارمانجا ئەڤرۆ",
+    remaining: "مایی",
+    markToday: "تۆمار کە",
+  },
+  hadith: { title: "حەدیسێن پاک", narratedBy: "ژ", source: "سەرچاڤە" },
   tasbih: { reset: "سفر کرن", choose: "زکر هەلبژێرە" },
   settings: {
     title: "ڕێکخستن",
