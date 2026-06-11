@@ -542,11 +542,30 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
         </Card>
       )}
 
+      {arabic.length > 0 && (
+        <div className="relative">
+          <Search className="absolute end-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={ayahQuery}
+            onChange={(e) => setAyahQuery(e.target.value)}
+            placeholder={t.quran.searchAyah}
+            className="w-full rounded-2xl border bg-transparent backdrop-blur-xl pe-11 ps-4 py-2.5 text-sm focus:outline-none focus:border-primary/50"
+            style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+          />
+        </div>
+      )}
+
       <div className="space-y-3">
         {arabic.map((a, i) => {
           const isActive = playingIdx === i;
           const cleanText = stripBismillah(a.text, surah.number, a.numberInSurah);
           const words = cleanText.split(/\s+/).filter(Boolean);
+          const q = ayahQuery.trim();
+          if (q) {
+            const hay = stripArabicDiacritics(cleanText) + " " + (translation[i]?.text ?? "");
+            const needle = stripArabicDiacritics(q.toLowerCase());
+            if (!hay.toLowerCase().includes(needle) && String(a.numberInSurah) !== q) return null;
+          }
           return (
             <div
               key={a.number}
@@ -565,14 +584,24 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
                 >
                   {toLocaleDigits(a.numberInSurah, lang)}
                 </div>
-                <button
-                  onClick={() => (isActive ? stopAudio() : playAyah(i))}
-                  className="h-9 w-9 rounded-full flex items-center justify-center border hover:border-primary/60 transition"
-                  style={{ borderColor: "var(--glass-border)" }}
-                  aria-label="play ayah"
-                >
-                  {isActive ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    onClick={() => setTafsirAyah({ surah: surah.number, ayah: a.numberInSurah, text: cleanText })}
+                    className="h-9 px-3 rounded-full flex items-center gap-1.5 border hover:border-primary/60 transition text-[11px] text-primary"
+                    style={{ borderColor: "var(--glass-border)" }}
+                    aria-label="tafsir"
+                  >
+                    <ScrollText className="h-3.5 w-3.5" /> {t.quran.tafsir}
+                  </button>
+                  <button
+                    onClick={() => (isActive ? stopAudio() : playAyah(i))}
+                    className="h-9 w-9 rounded-full flex items-center justify-center border hover:border-primary/60 transition"
+                    style={{ borderColor: "var(--glass-border)" }}
+                    aria-label="play ayah"
+                  >
+                    {isActive ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
+                  </button>
+                </div>
               </div>
 
               <p
@@ -606,6 +635,17 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
           );
         })}
       </div>
+
+      {tafsirAyah && (
+        <TafsirSheet
+          surahNum={tafsirAyah.surah}
+          ayahNum={tafsirAyah.ayah}
+          arabicText={tafsirAyah.text}
+          lang={lang}
+          t={t}
+          onClose={() => setTafsirAyah(null)}
+        />
+      )}
     </div>
   );
 }
