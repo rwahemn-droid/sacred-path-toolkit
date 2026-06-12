@@ -344,8 +344,41 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   const [tafsirAyah, setTafsirAyah] = useState<{ surah: number; ayah: number; text: string } | null>(null);
   const [ayahQuery, setAyahQuery] = useState("");
+  const [speed, setSpeed] = useState<number>(1);
+  // Sleep timer: 0=off, -1=end of surah, otherwise minutes.
+  const [sleep, setSleep] = useState<number>(0);
+  const [sleepRemaining, setSleepRemaining] = useState<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const listeningStartRef = useRef<number | null>(null);
+
+  // Save last-read position whenever a new ayah starts playing.
+  useEffect(() => {
+    if (playingIdx == null) return;
+    try {
+      localStorage.setItem("ibadah:last-read", JSON.stringify({
+        surah: surah.number, name: surah.name, ayah: playingIdx + 1, t: Date.now(),
+      }));
+    } catch { /* */ }
+  }, [playingIdx, surah.number, surah.name]);
+
+  // Countdown for sleep timer in minutes.
+  useEffect(() => {
+    if (sleep <= 0) { setSleepRemaining(0); return; }
+    setSleepRemaining(sleep * 60);
+    const id = window.setInterval(() => {
+      setSleepRemaining((r) => {
+        if (r <= 1) {
+          window.clearInterval(id);
+          stopAudio();
+          return 0;
+        }
+        return r - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sleep]);
 
   // Translation edition by language (kmr/bad fall back to Kurdish Sorani translation)
   const translationEdition =
