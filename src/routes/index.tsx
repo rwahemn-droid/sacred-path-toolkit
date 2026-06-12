@@ -585,6 +585,57 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
           ))}
         </div>
 
+        {/* Speed + Sleep timer */}
+        <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1">
+          <Gauge className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] text-muted-foreground shrink-0 me-1">{t.audio.speed}:</span>
+          {[0.75, 1, 1.25, 1.5, 2].map((v) => (
+            <button
+              key={v}
+              onClick={() => setSpeed(v)}
+              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
+                speed === v ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              style={{
+                background: speed === v ? "var(--gradient-gold)" : "transparent",
+                borderColor: speed === v ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {v}×
+            </button>
+          ))}
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1">
+          <Timer className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] text-muted-foreground shrink-0 me-1">{t.audio.sleepTimer}:</span>
+          {[
+            { v: 0, label: t.audio.off },
+            { v: 5, label: `5 ${t.audio.min}` },
+            { v: 15, label: `15 ${t.audio.min}` },
+            { v: 30, label: `30 ${t.audio.min}` },
+            { v: -1, label: t.audio.endOfSurah },
+          ].map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setSleep(o.v)}
+              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
+                sleep === o.v ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              style={{
+                background: sleep === o.v ? "var(--gradient-gold)" : "transparent",
+                borderColor: sleep === o.v ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {o.label}
+            </button>
+          ))}
+          {sleepRemaining > 0 && (
+            <span className="shrink-0 text-[11px] text-primary tabular-nums ms-1">
+              {Math.floor(sleepRemaining / 60)}:{String(sleepRemaining % 60).padStart(2, "0")}
+            </span>
+          )}
+        </div>
+
         {pickerOpen && (
           <div className="mt-3 max-h-72 overflow-y-auto grid gap-1 pe-1">
             {RECITERS.map((r) => (
