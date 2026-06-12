@@ -320,7 +320,7 @@ type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: num
 function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
   const [settings] = useSettings();
   const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
-  const arabicFontFamily = FONT_FAMILY_CSS[settings.fontFamily];
+  const arabicFontFamily = ARABIC_FONT_CSS;
 
   const [reciterId, setReciterId] = useState<string>(() => {
     if (typeof window === "undefined") return DEFAULT_RECITER_ID;
@@ -1268,7 +1268,6 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
   const tzLocal = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const langs: Lang[] = ["ku", "ar", "en", "kmr", "bad"];
   const fontSizes: FontSize[] = ["sm", "md", "lg", "xl"];
-  const fontFamilies: FontFamily[] = ["uthmani", "amiri", "scheherazade"];
 
   const cityLabel = (id: string) => {
     const c = findCity(id);
@@ -1388,35 +1387,40 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           ))}
         </div>
 
-        <div className="mt-4 mb-2 text-[12px] text-muted-foreground">{t.settings.fontFamily}</div>
-        <div className="grid grid-cols-3 gap-2">
-          {fontFamilies.map((f) => (
-            <button
-              key={f}
-              onClick={() => update({ fontFamily: f })}
-              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
-                settings.fontFamily === f ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
-              }`}
-              style={{
-                background: settings.fontFamily === f ? "var(--gradient-gold)" : "var(--glass-bg)",
-                borderColor: settings.fontFamily === f ? "transparent" : "var(--glass-border)",
-              }}
-            >
-              {FONT_FAMILY_LABEL[f]}
-            </button>
-          ))}
-        </div>
-
         <p
           className="mt-4 text-center leading-loose"
           dir="rtl"
           style={{
-            fontFamily: FONT_FAMILY_CSS[settings.fontFamily],
+            fontFamily: ARABIC_FONT_CSS,
             fontSize: `${FONT_SIZE_PX[settings.fontSize]}px`,
           }}
         >
           بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
         </p>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Palette className="h-4 w-4 text-primary" />
+          <h3 className="font-medium">{t.settings.theme}</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {(["dark", "sepia"] as const).map((th) => (
+            <button
+              key={th}
+              onClick={() => update({ theme: th })}
+              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
+                settings.theme === th ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
+              }`}
+              style={{
+                background: settings.theme === th ? "var(--gradient-gold)" : "var(--glass-bg)",
+                borderColor: settings.theme === th ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {t.settings.themes[th]}
+            </button>
+          ))}
+        </div>
       </Card>
     </div>
   );
