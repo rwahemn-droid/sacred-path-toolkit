@@ -109,7 +109,7 @@ function Dashboard() {
   ];
 
   return (
-    <div dir={dir} lang={settings.lang} className="min-h-screen flex flex-col pb-32">
+    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${settings.theme === "sepia" ? "theme-sepia" : ""}`}>
       <header className="px-6 pt-8 pb-4 text-center">
         <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">{t.appTitle}</p>
         <h1 className="mt-2 text-2xl font-semibold font-display">{t.bismillah}</h1>
