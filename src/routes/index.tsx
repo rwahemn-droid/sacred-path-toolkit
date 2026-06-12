@@ -5,6 +5,7 @@ import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
+  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
@@ -19,11 +20,11 @@ import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
 import {
   useSettings,
   FONT_SIZE_PX,
-  FONT_FAMILY_CSS,
-  FONT_FAMILY_LABEL,
+  ARABIC_FONT_CSS,
   type FontSize,
-  type FontFamily,
 } from "@/lib/settings";
+import { VERSES_OF_DAY } from "@/lib/verse-of-day";
+import { useStats, bumpListening, markActive } from "@/lib/stats";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
@@ -108,7 +109,7 @@ function Dashboard() {
   ];
 
   return (
-    <div dir={dir} lang={settings.lang} className="min-h-screen flex flex-col pb-32">
+    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${settings.theme === "sepia" ? "theme-sepia" : ""}`}>
       <header className="px-6 pt-8 pb-4 text-center">
         <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">{t.appTitle}</p>
         <h1 className="mt-2 text-2xl font-semibold font-display">{t.bismillah}</h1>
@@ -230,8 +231,35 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
 
   if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
 
+  // Resume last read
+  let lastRead: { surah: number; name: string; ayah: number } | null = null;
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem("ibadah:last-read") : null;
+    if (raw) lastRead = JSON.parse(raw);
+  } catch { /* */ }
+
   return (
     <div className="space-y-4">
+      {lastRead && !query && (
+        <button
+          onClick={() => {
+            const s = (surahs ?? []).find((x) => x.number === lastRead!.surah);
+            if (s) setSelected(s);
+          }}
+          className="w-full rounded-2xl border p-3 backdrop-blur-xl flex items-center gap-3 hover:border-primary/40 transition text-start"
+          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+        >
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--gradient-teal)", color: "var(--primary-foreground)" }}>
+            <BookOpen className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] text-primary">{t.resume.title}</p>
+            <p className="text-sm font-medium truncate" dir="rtl">{lastRead.name} · {toLocaleDigits(lastRead.ayah, lang)}</p>
+          </div>
+          <span className="text-xs text-primary">{t.resume.cta} →</span>
+        </button>
+      )}
+
       <div className="relative">
         <Search className="absolute end-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
@@ -319,7 +347,7 @@ type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: num
 function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
   const [settings] = useSettings();
   const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
-  const arabicFontFamily = FONT_FAMILY_CSS[settings.fontFamily];
+  const arabicFontFamily = ARABIC_FONT_CSS;
 
   const [reciterId, setReciterId] = useState<string>(() => {
     if (typeof window === "undefined") return DEFAULT_RECITER_ID;
@@ -343,8 +371,41 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   const [tafsirAyah, setTafsirAyah] = useState<{ surah: number; ayah: number; text: string } | null>(null);
   const [ayahQuery, setAyahQuery] = useState("");
+  const [speed, setSpeed] = useState<number>(1);
+  // Sleep timer: 0=off, -1=end of surah, otherwise minutes.
+  const [sleep, setSleep] = useState<number>(0);
+  const [sleepRemaining, setSleepRemaining] = useState<number>(0);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const listeningStartRef = useRef<number | null>(null);
+
+  // Save last-read position whenever a new ayah starts playing.
+  useEffect(() => {
+    if (playingIdx == null) return;
+    try {
+      localStorage.setItem("ibadah:last-read", JSON.stringify({
+        surah: surah.number, name: surah.name, ayah: playingIdx + 1, t: Date.now(),
+      }));
+    } catch { /* */ }
+  }, [playingIdx, surah.number, surah.name]);
+
+  // Countdown for sleep timer in minutes.
+  useEffect(() => {
+    if (sleep <= 0) { setSleepRemaining(0); return; }
+    setSleepRemaining(sleep * 60);
+    const id = window.setInterval(() => {
+      setSleepRemaining((r) => {
+        if (r <= 1) {
+          window.clearInterval(id);
+          stopAudio();
+          return 0;
+        }
+        return r - 1;
+      });
+    }, 1000);
+    return () => window.clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sleep]);
 
   // Translation edition by language (kmr/bad fall back to Kurdish Sorani translation)
   const translationEdition =
@@ -395,10 +456,15 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     setPlayingIdx(null);
     setPlayAll(false);
     setActiveWord(null);
+    if (listeningStartRef.current) {
+      bumpListening((Date.now() - listeningStartRef.current) / 1000);
+      listeningStartRef.current = null;
+    }
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      try { navigator.mediaSession.playbackState = "paused"; } catch { /* */ }
+    }
   };
 
-  // loopRemaining: undefined means "use current loopCount setting on first play".
-  // For loop=0 (infinite) we pass Infinity; for loop=1 we pass 1; etc.
   const playAyah = (idx: number, continueAll = false, loopRemaining?: number) => {
     audioRef.current?.pause();
     const ayah = arabic[idx];
@@ -406,9 +472,32 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     const remaining =
       loopRemaining ?? (continueAll ? 1 : loopCount === 0 ? Infinity : loopCount);
     const audio = new Audio(ayahAudioUrl(reciter, surah.number, ayah.numberInSurah));
+    audio.playbackRate = speed;
     audioRef.current = audio;
     setPlayingIdx(idx);
     if (continueAll) setPlayAll(true);
+    listeningStartRef.current = Date.now();
+    markActive();
+
+    // Lock-screen / media-session metadata.
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: `${surah.name} — ${ayah.numberInSurah}`,
+          artist: reciter.name,
+          album: "IbadahPro",
+        });
+        navigator.mediaSession.setActionHandler("pause", () => stopAudio());
+        navigator.mediaSession.setActionHandler("play", () => audio.play().catch(() => {}));
+        navigator.mediaSession.setActionHandler("nexttrack", () => {
+          if (idx + 1 < arabic.length) playAyah(idx + 1, continueAll);
+        });
+        navigator.mediaSession.setActionHandler("previoustrack", () => {
+          if (idx > 0) playAyah(idx - 1, continueAll);
+        });
+        navigator.mediaSession.playbackState = "playing";
+      } catch { /* */ }
+    }
 
     setTimeout(() => {
       ayahRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -428,7 +517,10 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 
     audio.addEventListener("ended", () => {
       setActiveWord(null);
-      // Repeat this ayah if loop remaining > 1.
+      if (listeningStartRef.current) {
+        bumpListening((Date.now() - listeningStartRef.current) / 1000);
+        listeningStartRef.current = Date.now();
+      }
       if (remaining > 1) {
         playAyah(idx, continueAll, remaining - 1);
         return;
@@ -438,6 +530,7 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
       } else {
         setPlayingIdx(null);
         setPlayAll(false);
+        if (sleep === -1) { stopAudio(); }
       }
     });
 
@@ -451,6 +544,11 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
       setPlayAll(false);
     });
   };
+
+  // Apply speed live to current audio.
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = speed;
+  }, [speed]);
 
   useEffect(() => () => stopAudio(), []);
 
@@ -512,6 +610,57 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
               {o.label}
             </button>
           ))}
+        </div>
+
+        {/* Speed + Sleep timer */}
+        <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1">
+          <Gauge className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] text-muted-foreground shrink-0 me-1">{t.audio.speed}:</span>
+          {[0.75, 1, 1.25, 1.5, 2].map((v) => (
+            <button
+              key={v}
+              onClick={() => setSpeed(v)}
+              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
+                speed === v ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              style={{
+                background: speed === v ? "var(--gradient-gold)" : "transparent",
+                borderColor: speed === v ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {v}×
+            </button>
+          ))}
+        </div>
+        <div className="mt-2 flex items-center gap-1.5 overflow-x-auto pb-1">
+          <Timer className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-[11px] text-muted-foreground shrink-0 me-1">{t.audio.sleepTimer}:</span>
+          {[
+            { v: 0, label: t.audio.off },
+            { v: 5, label: `5 ${t.audio.min}` },
+            { v: 15, label: `15 ${t.audio.min}` },
+            { v: 30, label: `30 ${t.audio.min}` },
+            { v: -1, label: t.audio.endOfSurah },
+          ].map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setSleep(o.v)}
+              className={`shrink-0 px-2.5 py-1 rounded-full text-[11px] font-medium border transition ${
+                sleep === o.v ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+              style={{
+                background: sleep === o.v ? "var(--gradient-gold)" : "transparent",
+                borderColor: sleep === o.v ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {o.label}
+            </button>
+          ))}
+          {sleepRemaining > 0 && (
+            <span className="shrink-0 text-[11px] text-primary tabular-nums ms-1">
+              {Math.floor(sleepRemaining / 60)}:{String(sleepRemaining % 60).padStart(2, "0")}
+            </span>
+          )}
         </div>
 
         {pickerOpen && (
@@ -1064,13 +1213,59 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
   ];
 
   const items = sub === "morning" ? MORNING_ADHKAR : sub === "evening" ? EVENING_ADHKAR : [];
+  const stats = useStats();
+  const vod = useMemo(() => {
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const day = Math.floor((+new Date() - +start) / 86400000);
+    return VERSES_OF_DAY[day % VERSES_OF_DAY.length];
+  }, []);
+  const isFriday = new Date().getDay() === 5;
+  const vodText = lang === "en" ? vod.en : lang === "ar" ? vod.ar : vod.ku;
+  const listenH = Math.floor(stats.listeningSec / 3600);
+  const listenM = Math.floor((stats.listeningSec % 3600) / 60);
 
   return (
     <div className="space-y-4">
+      {/* Stats card */}
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="font-medium text-sm">{t.stats.title}</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Flame className="h-3 w-3 text-primary" />{t.stats.streak}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">{toLocaleDigits(stats.streak, lang)} <span className="text-xs text-muted-foreground font-normal">{t.stats.days}</span></p>
+          </div>
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground">{t.stats.listening}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
+              {toLocaleDigits(listenH, lang)}{t.stats.hours} {toLocaleDigits(listenM, lang)}{t.stats.minutes}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Verse of the day */}
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <BookOpen className="h-4 w-4 text-primary" />
+          <h3 className="font-medium text-sm">{t.vod.title}</h3>
+        </div>
+        <p className="font-display text-2xl text-right leading-loose" dir="rtl" style={{ lineHeight: 2 }}>{vod.ar}</p>
+        {lang !== "ar" && (
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed" dir={lang === "en" ? "ltr" : "rtl"}>{vodText}</p>
+        )}
+        <p className="mt-2 text-[10px] text-primary text-end">— {toLocaleDigits(vod.surah, lang)}:{toLocaleDigits(vod.ayah, lang)}</p>
+      </Card>
+
+      {isFriday && <FridayPanel t={t} lang={lang} />}
+
       <div
         className="grid grid-cols-4 gap-1 rounded-2xl border p-1 backdrop-blur-xl"
         style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
       >
+
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const active = sub === tab.id;
@@ -1267,7 +1462,6 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
   const tzLocal = Intl.DateTimeFormat().resolvedOptions().timeZone;
   const langs: Lang[] = ["ku", "ar", "en", "kmr", "bad"];
   const fontSizes: FontSize[] = ["sm", "md", "lg", "xl"];
-  const fontFamilies: FontFamily[] = ["uthmani", "amiri", "scheherazade"];
 
   const cityLabel = (id: string) => {
     const c = findCity(id);
@@ -1387,36 +1581,118 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           ))}
         </div>
 
-        <div className="mt-4 mb-2 text-[12px] text-muted-foreground">{t.settings.fontFamily}</div>
-        <div className="grid grid-cols-3 gap-2">
-          {fontFamilies.map((f) => (
-            <button
-              key={f}
-              onClick={() => update({ fontFamily: f })}
-              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
-                settings.fontFamily === f ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
-              }`}
-              style={{
-                background: settings.fontFamily === f ? "var(--gradient-gold)" : "var(--glass-bg)",
-                borderColor: settings.fontFamily === f ? "transparent" : "var(--glass-border)",
-              }}
-            >
-              {FONT_FAMILY_LABEL[f]}
-            </button>
-          ))}
-        </div>
-
         <p
           className="mt-4 text-center leading-loose"
           dir="rtl"
           style={{
-            fontFamily: FONT_FAMILY_CSS[settings.fontFamily],
+            fontFamily: ARABIC_FONT_CSS,
             fontSize: `${FONT_SIZE_PX[settings.fontSize]}px`,
           }}
         >
           بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
         </p>
       </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Palette className="h-4 w-4 text-primary" />
+          <h3 className="font-medium">{t.settings.theme}</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {(["dark", "sepia"] as const).map((th) => (
+            <button
+              key={th}
+              onClick={() => update({ theme: th })}
+              className={`py-2.5 rounded-xl text-sm font-medium border transition ${
+                settings.theme === th ? "text-primary-foreground" : "text-foreground hover:border-primary/40"
+              }`}
+              style={{
+                background: settings.theme === th ? "var(--gradient-gold)" : "var(--glass-bg)",
+                borderColor: settings.theme === th ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {t.settings.themes[th]}
+            </button>
+          ))}
+        </div>
+      </Card>
     </div>
+  );
+}
+
+// ============ FRIDAY PANEL ============
+function FridayPanel({ t, lang }: { t: Dict; lang: Lang }) {
+  const weekKey = (() => {
+    const d = new Date();
+    const oneJan = new Date(d.getFullYear(), 0, 1);
+    const week = Math.ceil(((+d - +oneJan) / 86400000 + oneJan.getDay() + 1) / 7);
+    return `${d.getFullYear()}-w${week}`;
+  })();
+  const sKey = `ibadah:friday:${weekKey}`;
+  const cKey = `ibadah:friday-checks:${weekKey}`;
+  const [salawat, setSalawat] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return parseInt(localStorage.getItem(sKey) || "0", 10) || 0;
+  });
+  const [checks, setChecks] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem(cKey) || "{}"); } catch { return {}; }
+  });
+  useEffect(() => { try { localStorage.setItem(sKey, String(salawat)); } catch { /* */ } }, [salawat, sKey]);
+  useEffect(() => { try { localStorage.setItem(cKey, JSON.stringify(checks)); } catch { /* */ } }, [checks, cKey]);
+
+  const items: Array<{ id: keyof Dict["friday"]["items"]; label: string }> = [
+    { id: "ghusl", label: t.friday.items.ghusl },
+    { id: "perfume", label: t.friday.items.perfume },
+    { id: "mosque", label: t.friday.items.mosque },
+    { id: "kahf", label: t.friday.items.kahf },
+    { id: "salawat", label: t.friday.items.salawat },
+  ];
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-3">
+        <CalendarCheck className="h-4 w-4 text-primary" />
+        <h3 className="font-medium text-sm">{t.friday.title}</h3>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-3">{t.friday.checklist}</p>
+      <div className="space-y-2 mb-4">
+        {items.map((it) => {
+          const done = !!checks[it.id];
+          return (
+            <button
+              key={it.id}
+              onClick={() => setChecks((p) => ({ ...p, [it.id]: !p[it.id] }))}
+              className={`w-full flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${done ? "border-primary/60" : ""}`}
+              style={{
+                background: done ? "color-mix(in oklch, var(--primary) 12%, transparent)" : "var(--glass-bg)",
+                borderColor: done ? "var(--primary)" : "var(--glass-border)",
+              }}
+            >
+              <span>{it.label}</span>
+              <span className={`text-xs ${done ? "text-primary" : "text-muted-foreground"}`}>{done ? "✓" : "○"}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+        <p className="text-[11px] text-muted-foreground mb-2">{t.friday.salawat}</p>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-3xl font-bold tabular-nums text-primary">{toLocaleDigits(salawat, lang)}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSalawat(0)} className="h-9 px-3 rounded-full text-xs border" style={{ borderColor: "var(--glass-border)" }}>
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setSalawat((c) => c + 1)}
+              className="h-12 px-6 rounded-full font-semibold active:scale-95 transition"
+              style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
+            >
+              +1
+            </button>
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }
