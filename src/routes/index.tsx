@@ -1619,3 +1619,80 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
     </div>
   );
 }
+
+// ============ FRIDAY PANEL ============
+function FridayPanel({ t, lang }: { t: Dict; lang: Lang }) {
+  const weekKey = (() => {
+    const d = new Date();
+    const oneJan = new Date(d.getFullYear(), 0, 1);
+    const week = Math.ceil(((+d - +oneJan) / 86400000 + oneJan.getDay() + 1) / 7);
+    return `${d.getFullYear()}-w${week}`;
+  })();
+  const sKey = `ibadah:friday:${weekKey}`;
+  const cKey = `ibadah:friday-checks:${weekKey}`;
+  const [salawat, setSalawat] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return parseInt(localStorage.getItem(sKey) || "0", 10) || 0;
+  });
+  const [checks, setChecks] = useState<Record<string, boolean>>(() => {
+    if (typeof window === "undefined") return {};
+    try { return JSON.parse(localStorage.getItem(cKey) || "{}"); } catch { return {}; }
+  });
+  useEffect(() => { try { localStorage.setItem(sKey, String(salawat)); } catch { /* */ } }, [salawat, sKey]);
+  useEffect(() => { try { localStorage.setItem(cKey, JSON.stringify(checks)); } catch { /* */ } }, [checks, cKey]);
+
+  const items: Array<{ id: keyof Dict["friday"]["items"]; label: string }> = [
+    { id: "ghusl", label: t.friday.items.ghusl },
+    { id: "perfume", label: t.friday.items.perfume },
+    { id: "mosque", label: t.friday.items.mosque },
+    { id: "kahf", label: t.friday.items.kahf },
+    { id: "salawat", label: t.friday.items.salawat },
+  ];
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-3">
+        <CalendarCheck className="h-4 w-4 text-primary" />
+        <h3 className="font-medium text-sm">{t.friday.title}</h3>
+      </div>
+      <p className="text-[11px] text-muted-foreground mb-3">{t.friday.checklist}</p>
+      <div className="space-y-2 mb-4">
+        {items.map((it) => {
+          const done = !!checks[it.id];
+          return (
+            <button
+              key={it.id}
+              onClick={() => setChecks((p) => ({ ...p, [it.id]: !p[it.id] }))}
+              className={`w-full flex items-center justify-between rounded-xl border px-3 py-2.5 text-sm transition ${done ? "border-primary/60" : ""}`}
+              style={{
+                background: done ? "color-mix(in oklch, var(--primary) 12%, transparent)" : "var(--glass-bg)",
+                borderColor: done ? "var(--primary)" : "var(--glass-border)",
+              }}
+            >
+              <span>{it.label}</span>
+              <span className={`text-xs ${done ? "text-primary" : "text-muted-foreground"}`}>{done ? "✓" : "○"}</span>
+            </button>
+          );
+        })}
+      </div>
+      <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+        <p className="text-[11px] text-muted-foreground mb-2">{t.friday.salawat}</p>
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-3xl font-bold tabular-nums text-primary">{toLocaleDigits(salawat, lang)}</span>
+          <div className="flex items-center gap-2">
+            <button onClick={() => setSalawat(0)} className="h-9 px-3 rounded-full text-xs border" style={{ borderColor: "var(--glass-border)" }}>
+              <RotateCcw className="h-3.5 w-3.5" />
+            </button>
+            <button
+              onClick={() => setSalawat((c) => c + 1)}
+              className="h-12 px-6 rounded-full font-semibold active:scale-95 transition"
+              style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
+            >
+              +1
+            </button>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+}
