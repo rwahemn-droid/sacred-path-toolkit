@@ -429,10 +429,15 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     setPlayingIdx(null);
     setPlayAll(false);
     setActiveWord(null);
+    if (listeningStartRef.current) {
+      bumpListening((Date.now() - listeningStartRef.current) / 1000);
+      listeningStartRef.current = null;
+    }
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      try { navigator.mediaSession.playbackState = "paused"; } catch { /* */ }
+    }
   };
 
-  // loopRemaining: undefined means "use current loopCount setting on first play".
-  // For loop=0 (infinite) we pass Infinity; for loop=1 we pass 1; etc.
   const playAyah = (idx: number, continueAll = false, loopRemaining?: number) => {
     audioRef.current?.pause();
     const ayah = arabic[idx];
@@ -440,9 +445,32 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     const remaining =
       loopRemaining ?? (continueAll ? 1 : loopCount === 0 ? Infinity : loopCount);
     const audio = new Audio(ayahAudioUrl(reciter, surah.number, ayah.numberInSurah));
+    audio.playbackRate = speed;
     audioRef.current = audio;
     setPlayingIdx(idx);
     if (continueAll) setPlayAll(true);
+    listeningStartRef.current = Date.now();
+    markActive();
+
+    // Lock-screen / media-session metadata.
+    if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+      try {
+        navigator.mediaSession.metadata = new MediaMetadata({
+          title: `${surah.name} — ${ayah.numberInSurah}`,
+          artist: reciter.name,
+          album: "IbadahPro",
+        });
+        navigator.mediaSession.setActionHandler("pause", () => stopAudio());
+        navigator.mediaSession.setActionHandler("play", () => audio.play().catch(() => {}));
+        navigator.mediaSession.setActionHandler("nexttrack", () => {
+          if (idx + 1 < arabic.length) playAyah(idx + 1, continueAll);
+        });
+        navigator.mediaSession.setActionHandler("previoustrack", () => {
+          if (idx > 0) playAyah(idx - 1, continueAll);
+        });
+        navigator.mediaSession.playbackState = "playing";
+      } catch { /* */ }
+    }
 
     setTimeout(() => {
       ayahRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -462,7 +490,10 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 
     audio.addEventListener("ended", () => {
       setActiveWord(null);
-      // Repeat this ayah if loop remaining > 1.
+      if (listeningStartRef.current) {
+        bumpListening((Date.now() - listeningStartRef.current) / 1000);
+        listeningStartRef.current = Date.now();
+      }
       if (remaining > 1) {
         playAyah(idx, continueAll, remaining - 1);
         return;
@@ -472,6 +503,7 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
       } else {
         setPlayingIdx(null);
         setPlayAll(false);
+        if (sleep === -1) { stopAudio(); }
       }
     });
 
@@ -485,6 +517,11 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
       setPlayAll(false);
     });
   };
+
+  // Apply speed live to current audio.
+  useEffect(() => {
+    if (audioRef.current) audioRef.current.playbackRate = speed;
+  }, [speed]);
 
   useEffect(() => () => stopAudio(), []);
 
