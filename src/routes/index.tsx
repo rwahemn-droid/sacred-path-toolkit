@@ -5,6 +5,7 @@ import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
+  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
@@ -19,11 +20,11 @@ import { DICTS, DIRS, LANG_LABELS, type Lang, type Dict } from "@/lib/i18n";
 import {
   useSettings,
   FONT_SIZE_PX,
-  FONT_FAMILY_CSS,
-  FONT_FAMILY_LABEL,
+  ARABIC_FONT_CSS,
   type FontSize,
-  type FontFamily,
 } from "@/lib/settings";
+import { VERSES_OF_DAY } from "@/lib/verse-of-day";
+import { useStats, bumpListening, markActive } from "@/lib/stats";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
