@@ -231,8 +231,35 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
 
   if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
 
+  // Resume last read
+  let lastRead: { surah: number; name: string; ayah: number } | null = null;
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem("ibadah:last-read") : null;
+    if (raw) lastRead = JSON.parse(raw);
+  } catch { /* */ }
+
   return (
     <div className="space-y-4">
+      {lastRead && !query && (
+        <button
+          onClick={() => {
+            const s = (surahs ?? []).find((x) => x.number === lastRead!.surah);
+            if (s) setSelected(s);
+          }}
+          className="w-full rounded-2xl border p-3 backdrop-blur-xl flex items-center gap-3 hover:border-primary/40 transition text-start"
+          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+        >
+          <div className="h-10 w-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: "var(--gradient-teal)", color: "var(--primary-foreground)" }}>
+            <BookOpen className="h-5 w-5" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-[10px] text-primary">{t.resume.title}</p>
+            <p className="text-sm font-medium truncate" dir="rtl">{lastRead.name} · {toLocaleDigits(lastRead.ayah, lang)}</p>
+          </div>
+          <span className="text-xs text-primary">{t.resume.cta} →</span>
+        </button>
+      )}
+
       <div className="relative">
         <Search className="absolute end-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <input
@@ -1186,13 +1213,59 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
   ];
 
   const items = sub === "morning" ? MORNING_ADHKAR : sub === "evening" ? EVENING_ADHKAR : [];
+  const stats = useStats();
+  const vod = useMemo(() => {
+    const start = new Date(new Date().getFullYear(), 0, 0);
+    const day = Math.floor((+new Date() - +start) / 86400000);
+    return VERSES_OF_DAY[day % VERSES_OF_DAY.length];
+  }, []);
+  const isFriday = new Date().getDay() === 5;
+  const vodText = lang === "en" ? vod.en : lang === "ar" ? vod.ar : vod.ku;
+  const listenH = Math.floor(stats.listeningSec / 3600);
+  const listenM = Math.floor((stats.listeningSec % 3600) / 60);
 
   return (
     <div className="space-y-4">
+      {/* Stats card */}
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="font-medium text-sm">{t.stats.title}</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Flame className="h-3 w-3 text-primary" />{t.stats.streak}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">{toLocaleDigits(stats.streak, lang)} <span className="text-xs text-muted-foreground font-normal">{t.stats.days}</span></p>
+          </div>
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground">{t.stats.listening}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
+              {toLocaleDigits(listenH, lang)}{t.stats.hours} {toLocaleDigits(listenM, lang)}{t.stats.minutes}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Verse of the day */}
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <BookOpen className="h-4 w-4 text-primary" />
+          <h3 className="font-medium text-sm">{t.vod.title}</h3>
+        </div>
+        <p className="font-display text-2xl text-right leading-loose" dir="rtl" style={{ lineHeight: 2 }}>{vod.ar}</p>
+        {lang !== "ar" && (
+          <p className="mt-3 text-sm text-muted-foreground leading-relaxed" dir={lang === "en" ? "ltr" : "rtl"}>{vodText}</p>
+        )}
+        <p className="mt-2 text-[10px] text-primary text-end">— {toLocaleDigits(vod.surah, lang)}:{toLocaleDigits(vod.ayah, lang)}</p>
+      </Card>
+
+      {isFriday && <FridayPanel t={t} lang={lang} />}
+
       <div
         className="grid grid-cols-4 gap-1 rounded-2xl border p-1 backdrop-blur-xl"
         style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
       >
+
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const active = sub === tab.id;
