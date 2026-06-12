@@ -1,88 +1,58 @@
-# پلانی گەشەپێدانی IbadahPro
+# پلانی تەواوکردنی هەموو تایبەتمەندییەکان
 
-ئەم پلانە ١٠ داواکارییەکەت دەگرێتە خۆ. بە گرنگی ڕیز کراون.
+هەموو داواکارییەکان بە یەک پەرە جێبەجێ دەکرێن. لابردنی بەشی **جۆری فۆنت** (وەک وێنەکە).
 
-## ئەولەویەتی بەرز (Critical)
+## ١. لابردن
+- لابردنی کارتی "جۆری فۆنت" لە SettingsView (`src/routes/index.tsx`).
+- پاککردنەوەی `FontFamily`, `FONT_FAMILY_CSS`, `FONT_FAMILY_LABEL` لە `src/lib/settings.ts`.
 
-### ١. چەند خوێنەر (Qari) لە قورئان
-- لیستی ٢٨ قاری پێشتر هەیە لە `src/lib/reciters.ts`.
-- دروستکردنی دروپداونی هەڵبژاردن لە سەرەوەی پەڕەی سوورەت + پاشەکەوتکردن لە localStorage (`ibadah:reciter`).
-- گۆڕینی URLی دەنگ بەپێی قاری هەڵبژێردراو.
+## ٢. قورئان و دەنگ
+- **هاوکاتی هایلایت**: ئایەتی ئێستا بە ڕەنگی پڕی primary + auto-scroll بۆ ناوەڕاستی screen.
+- **مۆدی ئۆفلاین**: داگرتنی سوورەت بۆ IndexedDB (`idb-keyval`)؛ دوگمەی ⬇ + indicator.
+- **بەردەوامبوون لە دوایین خوێندنەوە**: پاشەکەوتی `{surah, ayah}` لە localStorage + کارت لە Home.
+- **خێرایی لێدان**: 0.5/0.75/1/1.25/1.5/2 (`audio.playbackRate`).
+- **کاژێری خەو**: 5/10/15/30/60 خولەک یان کۆتایی سوورەت.
+- **ئایەتی ڕۆژ**: لیستی پێشدابەشکراو، هەڵبژاردن بەپێی dayOfYear، کارت لە Home.
 
-### ٢. تەفسیری پوختەی کوردی
-- بەکارهێنانی API: `api.alquran.cloud/v1/ayah/{key}/ku.asan` (ئاسان بۆیی - کوردی).
-- دوگمەی "تەفسیر" لای هەر ئایەت → پشانی پۆپاپ/درۆوەری تەفسیر.
-- کاشکردن لە state بۆ نەداواکردنەوە.
+## ٣. ئامار
+- `src/lib/stats.ts`: کاتی گوێگرتن، Streak ڕۆژانە، % ـی پێشکەوتنی خەتم.
+- کارتی ئامار لە Home.
 
-### ٣. دووبارەکردنەوە (Looping) بۆ لەبەرکردن
-- لە مۆدی دەنگدا، دوگمەی 🔁 لە کۆنترۆڵی دەنگ.
-- ڕێکخستن: ژمارەی دووبارە (١، ٣، ٥، ١٠، ∞)، دەستپێک و کۆتایی ئایەت (range).
-- لۆجیک: کاتێک `ended` event ڕووی دا، ئایەتەکە دیسان دەلێتەوە.
+## ٤. نۆتیفیکەیشن
+- `src/lib/notifications.ts`: Notification API + setTimeout بۆ هەر نوێژێک ڕۆژانە.
+- تۆگڵ لە Settings بۆ هەر نوێژێک بەجیا + بیرخستنەوەی زیکری بەیانی/ئێواران.
 
-### ٤. ئاراستەی قیبلە (Qibla Compass)
-- ڕووتی نوێ: `src/routes/qibla.tsx` یان بەشێک لە تابی نوێژ.
-- بەکارهێنانی `DeviceOrientationEvent` بۆ ئاراستەی مۆبایل.
-- لێکدانەوەی bearing لە شوێنی بەکارهێنەرەوە بۆ کەعبە (٢١.٤٢٢٥, ٣٩.٨٢٦٢).
-- نیشاندانی کۆمپاسێکی جوان SVG بە تیرێک کە ئاراستەی قیبلە نیشان دەدات.
-- پێویستە permission لە iOS بکرێت.
+## ٥. ڕۆژی هەینی
+- `src/components/FridayPanel.tsx`: لینکی سوورەتی کەهف، چێکلستی سوننەت، ژمێرەری سەڵاوات.
+- دیار دەبێت لە Home تەنیا ڕۆژی هەینی.
 
-### ٥. نۆتیفیکەیشنی بانگ
-- بەکارهێنانی `Notification` API + `setTimeout` بۆ هەر نوێژێک.
-- ڕێکخستن لە تابی Settings: چالاککردن/کوژاندنەوە بۆ هەر نوێژێک بەجیا.
-- لێدانی دەنگی بانگ (mp3 لە `everyayah.com` یان CDN) لە کاتی نوێژ.
-- پاشەکەوت لە localStorage: `ibadah:notifications`.
-- تێبینی: نۆتیفیکەیشن تەنیا کات کار دەکات کە تابی بەراوزەر کراوەبێت.
+## ٦. UX/UI
+- **Framer Motion**: گواستنەوەی نەرم لەنێوان تابەکان (`AnimatePresence`).
+- **تێمی Sepia**: لە `src/styles.css` (`.theme-sepia`) + تۆگڵ.
+- **مۆدی منداڵان**: تێمی ڕەنگاوڕەنگ + فۆنتی گەورەتر + emoji.
+- **گەڕانی بابەتی**: API ـی `api.alquran.cloud/v1/search/{q}/all/ar` + لینک بۆ ئایەت.
+- **کۆنترۆڵی Lock-screen**: `navigator.mediaSession` metadata + handlers.
+- **هاوبەشیکردنی ئایەت**: `html-to-image` + `navigator.share` بۆ دروستکردنی وێنە.
+- **وەرگێڕانی دەنگی**: `speechSynthesis` بۆ خوێندنەوەی وەرگێڕانی کوردی.
 
-## ئەولەویەتی مامناوەند (Medium)
+## ٧. تەکنیکی
+- **RTL**: دڵنیاکردنەوەی `dir` لە `__root.tsx` بۆ زمانە RTL ـەکان.
+- **Cloud Sync**: چالاککردنی Lovable Cloud — تەیبڵی `user_settings`, `user_stats`, `feedback` + RLS + GRANTs + server functions.
+- **Lazy-loading**: `React.lazy` بۆ KhatmTracker, QiblaCompass, TafsirSheet.
+- **فۆڕمی پێشنیار**: لە Settings → دەنێردرێت بۆ `feedback` تەیبڵ.
 
-### ٦. پلانی خەتمەی قورئان
-- بەشێکی نوێ لە تابی زیکر یان تابی نوێ "خەتم".
-- بەکارهێنەر دەستپێکی خەتم ڕێک دەخات (بەروار) + ڕۆژانە چەند پەڕە.
-- شوماری ئۆتۆماتیکی پەڕە/جوزی ڕۆژانە.
-- پێشکەوتن (progress bar) + checklist بۆ هەر ڕۆژێک.
-- پاشەکەوت لە localStorage: `ibadah:khatm-plan`.
+## فایلە نوێیەکان (≈١٢)
+`stats.ts`, `notifications.ts`, `verse-of-day.ts`, `offline-audio.ts`, `share-image.ts`,
+`SleepTimer.tsx`, `PlaybackSpeed.tsx`, `FridayPanel.tsx`, `VerseOfDay.tsx`,
+`StatsCards.tsx`, `ThematicSearch.tsx`, `FeedbackForm.tsx`
 
-### ٧. گۆڕینی قەبارە و جۆری فۆنت
-- لە Settings: slider بۆ قەبارەی فۆنت (١٤ - ٣٢ px) و dropdown بۆ جۆری فۆنت عەرەبی (Uthmani، Amiri، Scheherazade).
-- بەکاردێت بۆ نمایشی قورئان.
-- پاشەکەوت لە localStorage.
+## نوێکردنەوەکان
+`src/routes/index.tsx`, `src/routes/__root.tsx`, `src/lib/settings.ts`, `src/lib/i18n.ts`, `src/styles.css`
 
-### ٨. فەرموودە و پرسیارە شەرعییەکان
-- تابی نوێ یان زیادکردن بۆ ناو هەنووکە.
-- مەجموعەیەکی پێشدابەشکراو لە ٤٠ فەرموودەی نەوەوی + ٤٠ پرسیار/وەڵامی شەرعی بنەڕەتی.
-- داتا لە static JSON (`src/lib/hadith.ts`، `src/lib/fatwa.ts`).
-- لیست + گەڕان.
+## پاکێجە نوێیەکان
+`framer-motion`, `idb-keyval`, `html-to-image`
 
-### ٩. گەڕانی پێشکەوتوو
-- پەرەپێدانی گەڕانی هەنووکە لە سوورەتەکان.
-- زیادکردنی گەڕان بەپێی **ناوەڕۆکی ئایەت** (debounced) لە سوورەتی هەنووکە.
-- هایلایتکردنی وشە/ڕستەی گەڕێنراو.
+## Backend (Lovable Cloud)
+چالاککردن + migration بۆ ٣ تەیبڵ + ٣ server function (`getUserData`, `saveUserData`, `submitFeedback`).
 
-### ١٠. زمانی کرمانجی (Kurmanji) و بادینی
-- زیادکردن بۆ `src/lib/i18n.ts`: `kmr` (کرمانجی-ڕۆما) و `bad` (بادینی-عەرەبی).
-- وەرگێڕانی تەواوی هەموو string ـەکان.
-- لە Settings دروپداونی زمان.
-
-## بەشی تەکنیکی
-
-پەڕگەکانی نوێ:
-- `src/lib/hadith.ts`, `src/lib/fatwa.ts` — داتای فەرموودە و فەتوا
-- `src/routes/qibla.tsx` — پەڕەی قیبلە
-- `src/components/QiblaCompass.tsx` — کۆمپاس
-- `src/components/AudioControls.tsx` — کۆنترۆڵی دەنگ + looping
-- `src/components/TafsirSheet.tsx` — درۆوەری تەفسیر
-- `src/components/KhatmTracker.tsx` — شوماری خەتم
-- `src/lib/notifications.ts` — لۆجیکی نۆتیفیکەیشن
-
-نوێکردنەوەکان:
-- `src/routes/index.tsx` — یەکگرتنی قاری، تەفسیر، looping، نۆتیفیکەیشن
-- `src/lib/i18n.ts` — زمانی کرمانجی + بادینی
-- `src/lib/settings.ts` — فۆنت، نۆتیفیکەیشن، خەتم
-
-APIs:
-- `api.alquran.cloud/v1/ayah/{key}/ku.asan` — تەفسیر
-- Notification API + Audio API
-- DeviceOrientationEvent — قیبلە
-
-## تێبینی
-ئەمە کارێکی زۆرە. ئەگەر دەتەوێت یەکجار هەمووی بکەم، دەست پێ دەکەم. ئەگەر دەتەوێت بەشێک پێشتر، پێم بڵێ کام (وەک: ١، ٣، ٤، ٥ یەکەم) و من ئەو بەشانە دەکەم.
+دوای پەسەندکردن، هەمووی بە یەک گەڕان جێبەجێ دەکەم.
