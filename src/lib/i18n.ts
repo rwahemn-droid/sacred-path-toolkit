@@ -75,8 +75,17 @@ export type Dict = {
     asrNote: string;
     by: string;
     fontSize: string;
-    fontFamily: string;
     sizes: { sm: string; md: string; lg: string; xl: string };
+    theme: string;
+    themes: { dark: string; sepia: string };
+  };
+  audio: { speed: string; sleepTimer: string; off: string; endOfSurah: string; min: string };
+  resume: { title: string; cta: string };
+  vod: { title: string };
+  stats: { title: string; listening: string; streak: string; days: string; hours: string; minutes: string };
+  friday: {
+    title: string; kahf: string; salawat: string; checklist: string;
+    items: { ghusl: string; perfume: string; mosque: string; kahf: string; salawat: string };
   };
 };
 
