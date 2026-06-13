@@ -774,8 +774,8 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
                   return (
                     <span
                       key={`${a.number}-w-${wi}`}
-                      className="transition-colors"
-                      style={highlight ? { color: "oklch(0.92 0.18 95)", textShadow: "0 0 12px oklch(0.92 0.18 95 / 0.5)" } : undefined}
+                      className="transition-all duration-500 ease-out"
+                      style={highlight ? { color: "oklch(0.92 0.18 95)", textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)" } : undefined}
                     >
                       {w}{" "}
                     </span>
@@ -784,12 +784,32 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
               </p>
 
               {translation[i] && (
-                <p
-                  className="mt-4 pt-4 border-t border-white/10 text-sm leading-relaxed text-muted-foreground"
-                  dir={lang === "en" ? "ltr" : "rtl"}
-                >
-                  {translation[i].text}
-                </p>
+                <div className="mt-4 pt-4 border-t border-white/10">
+                  <p
+                    className="text-sm leading-relaxed text-muted-foreground"
+                    dir={lang === "en" || lang === "kmr" ? "ltr" : "rtl"}
+                  >
+                    {translation[i].text}
+                  </p>
+                  <div className="mt-2 flex items-center gap-2 justify-end">
+                    <button
+                      onClick={() => speakText(translation[i].text, lang)}
+                      className="h-7 px-2.5 rounded-full flex items-center gap-1 border hover:border-primary/60 transition text-[10px] text-primary"
+                      style={{ borderColor: "var(--glass-border)" }}
+                      aria-label="speak translation"
+                    >
+                      <Volume2 className="h-3 w-3" /> {t.audio.translation}
+                    </button>
+                    <button
+                      onClick={() => shareAyah({ surah: surah.englishName, num: a.numberInSurah, ar: cleanText, tr: translation[i].text })}
+                      className="h-7 px-2.5 rounded-full flex items-center gap-1 border hover:border-primary/60 transition text-[10px] text-primary"
+                      style={{ borderColor: "var(--glass-border)" }}
+                      aria-label="share ayah"
+                    >
+                      <Share2 className="h-3 w-3" /> {t.audio.share}
+                    </button>
+                  </div>
+                </div>
               )}
             </div>
           );
