@@ -85,3 +85,16 @@
     min-height: 100vh;
   }
 }
+
+/* Kids mode: bigger text, gentler corners, brighter accents */
+.kids-mode {
+  font-size: 1.06rem;
+}
+.kids-mode button,
+.kids-mode .text-sm { font-size: 1rem; }
+.kids-mode .text-xs,
+.kids-mode .text-\[10px\],
+.kids-mode .text-\[11px\] { font-size: 0.85rem !important; }
+.kids-mode h1, .kids-mode h2, .kids-mode h3 { letter-spacing: 0.01em; }
+.kids-mode .rounded-2xl { border-radius: 1.5rem; }
+.kids-mode .rounded-xl { border-radius: 1.25rem; }
