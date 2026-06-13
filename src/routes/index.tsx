@@ -32,6 +32,74 @@ function useMounted() {
   return m;
 }
 
+const LANG_TO_BCP47: Record<Lang, string> = {
+  ku: "ar-SA", ar: "ar-SA", en: "en-US", kmr: "tr-TR", bad: "ar-SA",
+};
+
+function speakText(text: string, lang: Lang) {
+  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
+  try {
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = LANG_TO_BCP47[lang] ?? "ar-SA";
+    u.rate = 0.95;
+    window.speechSynthesis.speak(u);
+  } catch { /* */ }
+}
+
+async function shareAyah(ayah: { surah: string; num: number; ar: string; tr: string }) {
+  const text = `${ayah.ar}\n\n${ayah.tr}\n\n— ${ayah.surah} : ${ayah.num}\n\nIbadahPro`;
+  try {
+    // Build a simple share image via canvas.
+    const canvas = document.createElement("canvas");
+    const W = 1080, H = 1080;
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext("2d")!;
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, "#0b1c1c"); grad.addColorStop(1, "#1a2e2e");
+    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#d4af37"; ctx.font = "600 36px serif"; ctx.textAlign = "center";
+    ctx.fillText("IbadahPro", W / 2, 80);
+    ctx.fillStyle = "#f5e7c4"; ctx.font = "600 48px 'Amiri Quran', serif"; ctx.direction = "rtl";
+    const wrap = (txt: string, maxW: number, lineH: number, y0: number, font: string) => {
+      ctx.font = font;
+      const words = txt.split(" "); let line = ""; let y = y0;
+      for (const w of words) {
+        const test = line ? line + " " + w : w;
+        if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, W / 2, y); line = w; y += lineH; }
+        else line = test;
+      }
+      if (line) ctx.fillText(line, W / 2, y);
+      return y + lineH;
+    };
+    let y = wrap(ayah.ar, W - 160, 70, 240, "600 46px 'Amiri Quran', serif");
+    ctx.fillStyle = "#cfd8d8";
+    y = wrap(ayah.tr, W - 200, 44, y + 40, "400 30px sans-serif");
+    ctx.fillStyle = "#d4af37"; ctx.font = "500 28px sans-serif";
+    ctx.fillText(`— ${ayah.surah} : ${ayah.num}`, W / 2, H - 80);
+    const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, "image/png"));
+    if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], "ayah.png", { type: "image/png" })] })) {
+      await navigator.share({ files: [new File([blob], "ayah.png", { type: "image/png" })], text });
+      return;
+    }
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a"); a.href = url; a.download = "ayah.png"; a.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      return;
+    }
+  } catch { /* fall back to text */ }
+  try {
+    if (navigator.share) await navigator.share({ text });
+    else await navigator.clipboard.writeText(text);
+  } catch { /* */ }
+}
+
+  const [m, setM] = useState(false);
+  useEffect(() => setM(true), []);
+  return m;
+}
+
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
   lang === "en" || lang === "kmr" ? String(n) : String(n).replace(/\d/g, (d) => KU_DIGITS[+d]);
