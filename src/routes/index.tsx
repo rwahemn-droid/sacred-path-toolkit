@@ -5,7 +5,7 @@ import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
-  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette,
+  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, User, Share2, Volume2, Baby,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
@@ -24,7 +24,13 @@ import {
   type FontSize,
 } from "@/lib/settings";
 import { VERSES_OF_DAY } from "@/lib/verse-of-day";
-import { useStats, bumpListening, markActive } from "@/lib/stats";
+import { useStats, bumpListening, markActive, lastDaysActivity } from "@/lib/stats";
+
+function useMounted() {
+  const [m, setM] = useState(false);
+  useEffect(() => setM(true), []);
+  return m;
+}
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
@@ -92,7 +98,7 @@ function AppRoot() {
   );
 }
 
-type TabId = "quran" | "prayer" | "dhikr" | "tasbih" | "settings";
+type TabId = "quran" | "prayer" | "dhikr" | "tasbih" | "profile" | "settings";
 
 function Dashboard() {
   const [settings] = useSettings();
@@ -105,11 +111,12 @@ function Dashboard() {
     { id: "prayer", label: t.tabs.prayer, icon: Clock },
     { id: "dhikr", label: t.tabs.dhikr, icon: BookText },
     { id: "tasbih", label: t.tabs.tasbih, icon: BeadsIcon },
+    { id: "profile", label: t.tabs.profile, icon: User },
     { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
   ];
 
   return (
-    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${settings.theme === "sepia" ? "theme-sepia" : ""}`}>
+    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${settings.theme === "sepia" ? "theme-sepia" : ""} ${settings.kidsMode ? "kids-mode" : ""}`}>
       <header className="px-6 pt-8 pb-4 text-center">
         <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">{t.appTitle}</p>
         <h1 className="mt-2 text-2xl font-semibold font-display">{t.bismillah}</h1>
@@ -120,6 +127,7 @@ function Dashboard() {
         {active === "prayer" && <PrayerView t={t} lang={settings.lang} cityId={settings.cityId} madhab={settings.madhab} />}
         {active === "dhikr" && <DhikrView t={t} lang={settings.lang} />}
         {active === "tasbih" && <TasbihView t={t} lang={settings.lang} />}
+        {active === "profile" && <ProfileView t={t} lang={settings.lang} />}
         {active === "settings" && <SettingsView t={t} lang={settings.lang} />}
       </main>
 
