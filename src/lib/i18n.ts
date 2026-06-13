@@ -11,7 +11,7 @@ export const DIRS: Record<Lang, "rtl" | "ltr"> = {
 export type Dict = {
   appTitle: string;
   bismillah: string;
-  tabs: { quran: string; prayer: string; dhikr: string; tasbih: string; settings: string };
+  tabs: { quran: string; prayer: string; dhikr: string; tasbih: string; settings: string; profile: string };
   quran: {
     searchPlaceholder: string;
     bookmarked: string;
@@ -78,11 +78,13 @@ export type Dict = {
     sizes: { sm: string; md: string; lg: string; xl: string };
     theme: string;
     themes: { dark: string; sepia: string };
+    kidsMode: string;
+    kidsModeHint: string;
   };
-  audio: { speed: string; sleepTimer: string; off: string; endOfSurah: string; min: string };
+  audio: { speed: string; sleepTimer: string; off: string; endOfSurah: string; min: string; translation: string; share: string };
   resume: { title: string; cta: string };
   vod: { title: string };
-  stats: { title: string; listening: string; streak: string; days: string; hours: string; minutes: string };
+  stats: { title: string; listening: string; streak: string; days: string; hours: string; minutes: string; last30: string };
   friday: {
     title: string; kahf: string; salawat: string; checklist: string;
     items: { ghusl: string; perfume: string; mosque: string; kahf: string; salawat: string };
@@ -92,7 +94,7 @@ export type Dict = {
 const ku: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "ویرد", tasbih: "تەسبیح", settings: "ڕێکخستن" },
+  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "ویرد", tasbih: "تەسبیح", settings: "ڕێکخستن", profile: "پڕۆفایل" },
   quran: {
     searchPlaceholder: "گەڕان لە سوورەتەکان...",
     bookmarked: "سوورەتە بوکمارککراوەکان",
@@ -159,11 +161,13 @@ const ku: Dict = {
     sizes: { sm: "بچووک", md: "ناوەند", lg: "گەورە", xl: "زۆر گەورە" },
     theme: "ڕەنگی ڕووکار",
     themes: { dark: "تاریک", sepia: "سیپیا" },
+    kidsMode: "مۆدی منداڵان",
+    kidsModeHint: "ڕووکارێکی ساکار و فۆنتی گەورەتر بۆ منداڵان",
   },
-  audio: { speed: "خێرایی", sleepTimer: "کاژێری خەو", off: "کوژاوە", endOfSurah: "کۆتایی سوورەت", min: "خولەک" },
+  audio: { speed: "خێرایی", sleepTimer: "کاژێری خەو", off: "کوژاوە", endOfSurah: "کۆتایی سوورەت", min: "خولەک", translation: "وەرگێڕان بخوێنە", share: "هاوبەشی" },
   resume: { title: "بەردەوامبە لە دوایین خوێندنەوە", cta: "بەردەوامبە" },
   vod: { title: "ئایەتی ڕۆژ" },
-  stats: { title: "چالاکیی تۆ", listening: "کاتی گوێگرتن", streak: "ڕۆژی بەردەوام", days: "ڕۆژ", hours: "کاتژمێر", minutes: "خولەک" },
+  stats: { title: "چالاکیی تۆ", listening: "کاتی گوێگرتن", streak: "ڕۆژی بەردەوام", days: "ڕۆژ", hours: "کاتژمێر", minutes: "خولەک", last30: "٣٠ ڕۆژی ڕابردوو" },
   friday: {
     title: "هەینی پیرۆز",
     kahf: "سوورەتی کەهف",
@@ -176,7 +180,7 @@ const ku: Dict = {
 const ar: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الورد", tasbih: "التسبيح", settings: "الإعدادات" },
+  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الورد", tasbih: "التسبيح", settings: "الإعدادات", profile: "حسابي" },
   quran: {
     searchPlaceholder: "ابحث في السور...",
     bookmarked: "السور المحفوظة",
@@ -243,11 +247,13 @@ const ar: Dict = {
     sizes: { sm: "صغير", md: "متوسط", lg: "كبير", xl: "كبير جداً" },
     theme: "لون الواجهة",
     themes: { dark: "داكن", sepia: "سيبيا" },
+    kidsMode: "وضع الأطفال",
+    kidsModeHint: "واجهة مبسطة وخط أكبر للأطفال",
   },
-  audio: { speed: "السرعة", sleepTimer: "مؤقت النوم", off: "إيقاف", endOfSurah: "نهاية السورة", min: "دقيقة" },
+  audio: { speed: "السرعة", sleepTimer: "مؤقت النوم", off: "إيقاف", endOfSurah: "نهاية السورة", min: "دقيقة", translation: "اقرأ الترجمة", share: "مشاركة" },
   resume: { title: "تابع من آخر قراءة", cta: "متابعة" },
   vod: { title: "آية اليوم" },
-  stats: { title: "نشاطك", listening: "وقت الاستماع", streak: "أيام متواصلة", days: "يوم", hours: "ساعة", minutes: "دقيقة" },
+  stats: { title: "نشاطك", listening: "وقت الاستماع", streak: "أيام متواصلة", days: "يوم", hours: "ساعة", minutes: "دقيقة", last30: "آخر ٣٠ يوم" },
   friday: {
     title: "يوم الجمعة المبارك",
     kahf: "سورة الكهف",
@@ -260,7 +266,7 @@ const ar: Dict = {
 const en: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Wird", tasbih: "Tasbih", settings: "Settings" },
+  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Wird", tasbih: "Tasbih", settings: "Settings", profile: "Profile" },
   quran: {
     searchPlaceholder: "Search surahs...",
     bookmarked: "Bookmarked surahs",
@@ -327,11 +333,13 @@ const en: Dict = {
     sizes: { sm: "Small", md: "Medium", lg: "Large", xl: "Extra large" },
     theme: "Theme",
     themes: { dark: "Dark", sepia: "Sepia" },
+    kidsMode: "Kids mode",
+    kidsModeHint: "Bigger fonts and simpler layout for children",
   },
-  audio: { speed: "Speed", sleepTimer: "Sleep timer", off: "Off", endOfSurah: "End of surah", min: "min" },
+  audio: { speed: "Speed", sleepTimer: "Sleep timer", off: "Off", endOfSurah: "End of surah", min: "min", translation: "Read translation", share: "Share" },
   resume: { title: "Continue last read", cta: "Resume" },
   vod: { title: "Verse of the day" },
-  stats: { title: "Your activity", listening: "Listening time", streak: "Day streak", days: "days", hours: "h", minutes: "m" },
+  stats: { title: "Your activity", listening: "Listening time", streak: "Day streak", days: "days", hours: "h", minutes: "m", last30: "Last 30 days" },
   friday: {
     title: "Blessed Friday",
     kahf: "Surah Al-Kahf",
@@ -344,7 +352,7 @@ const en: Dict = {
 const kmr: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "Quran", prayer: "Nimêj", dhikr: "Zikir", tasbih: "Tesbîh", settings: "Mîheng" },
+  tabs: { quran: "Quran", prayer: "Nimêj", dhikr: "Zikir", tasbih: "Tesbîh", settings: "Mîheng", profile: "Profîl" },
   quran: {
     searchPlaceholder: "Li sûreyan bigere...",
     bookmarked: "Sûreyên parastî",
@@ -411,11 +419,13 @@ const kmr: Dict = {
     sizes: { sm: "Biçûk", md: "Navîn", lg: "Mezin", xl: "Pir mezin" },
     theme: "Rengê rûyê",
     themes: { dark: "Tarî", sepia: "Sepia" },
+    kidsMode: "Moda zarokan",
+    kidsModeHint: "Tîpên mezintir û rûyek hêsantir ji bo zarokan",
   },
-  audio: { speed: "Lez", sleepTimer: "Demjimêra xewê", off: "Vekirî", endOfSurah: "Dawiya sûreyê", min: "deq" },
+  audio: { speed: "Lez", sleepTimer: "Demjimêra xewê", off: "Vekirî", endOfSurah: "Dawiya sûreyê", min: "deq", translation: "Wergerê bixwîne", share: "Parve bike" },
   resume: { title: "Berdewam ji xwendina dawî", cta: "Berdewam" },
   vod: { title: "Ayeta rojê" },
-  stats: { title: "Çalakiya te", listening: "Dema guhdarîkirinê", streak: "Rojên domdar", days: "roj", hours: "s", minutes: "d" },
+  stats: { title: "Çalakiya te", listening: "Dema guhdarîkirinê", streak: "Rojên domdar", days: "roj", hours: "s", minutes: "d", last30: "30 rojên dawî" },
   friday: {
     title: "Îniya pîroz",
     kahf: "Sûreya Kehfê",
@@ -428,7 +438,7 @@ const kmr: Dict = {
 const bad: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "قورئان", prayer: "نڤێژ", dhikr: "زکر", tasbih: "تەسبیح", settings: "ڕێکخستن" },
+  tabs: { quran: "قورئان", prayer: "نڤێژ", dhikr: "زکر", tasbih: "تەسبیح", settings: "ڕێکخستن", profile: "پڕۆفایل" },
   quran: {
     searchPlaceholder: "ل سۆرەتا بگەڕە...",
     bookmarked: "سۆرەتێن پاراستی",
@@ -495,11 +505,13 @@ const bad: Dict = {
     sizes: { sm: "بچویک", md: "ناڤنجی", lg: "مەزن", xl: "گەلەک مەزن" },
     theme: "رەنگێ ڕویێ",
     themes: { dark: "تاری", sepia: "سیپیا" },
+    kidsMode: "مۆدی زاڕۆکا",
+    kidsModeHint: "تیپێن مەزنتر و ڕویەکێ ساکارتر بۆ زاڕۆکا",
   },
-  audio: { speed: "لەز", sleepTimer: "دەمژمێرا خەوێ", off: "گرتی", endOfSurah: "دوماهیا سۆرەتێ", min: "خولەک" },
+  audio: { speed: "لەز", sleepTimer: "دەمژمێرا خەوێ", off: "گرتی", endOfSurah: "دوماهیا سۆرەتێ", min: "خولەک", translation: "وەرگێڕانێ بخوینە", share: "پارڤەکرن" },
   resume: { title: "بەردەوام ژ دوماهی خواندنا", cta: "بەردەوام" },
   vod: { title: "ئایەتا ڕۆژێ" },
-  stats: { title: "چالاکیا تە", listening: "دەمێ گوهداریێ", streak: "ڕۆژێن بەردەوام", days: "ڕۆژ", hours: "دەمژمێر", minutes: "خولەک" },
+  stats: { title: "چالاکیا تە", listening: "دەمێ گوهداریێ", streak: "ڕۆژێن بەردەوام", days: "ڕۆژ", hours: "دەمژمێر", minutes: "خولەک", last30: "٣٠ ڕۆژێن بۆری" },
   friday: {
     title: "ئینیا پیرۆز",
     kahf: "سۆرەتا کەهفێ",

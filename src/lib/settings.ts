@@ -11,6 +11,7 @@ export type Settings = {
   madhab: Madhab;
   fontSize: FontSize;
   theme: Theme;
+  kidsMode: boolean;
 };
 
 const KEY = "ibadah:settings";
@@ -21,6 +22,7 @@ const DEFAULTS: Settings = {
   madhab: "shafi",
   fontSize: "md",
   theme: "dark",
+  kidsMode: false,
 };
 
 function read(): Settings {
@@ -37,10 +39,6 @@ function read(): Settings {
 let current: Settings = DEFAULTS;
 const listeners = new Set<(s: Settings) => void>();
 
-if (typeof window !== "undefined") {
-  current = read();
-}
-
 function write(next: Settings) {
   current = next;
   try {
@@ -52,8 +50,10 @@ function write(next: Settings) {
 }
 
 export function useSettings(): [Settings, (patch: Partial<Settings>) => void] {
-  const [s, setS] = useState<Settings>(current);
+  // Start with DEFAULTS so SSR and first client render match, then sync from localStorage on mount.
+  const [s, setS] = useState<Settings>(DEFAULTS);
   useEffect(() => {
+    current = read();
     setS(current);
     const fn = (n: Settings) => setS(n);
     listeners.add(fn);
