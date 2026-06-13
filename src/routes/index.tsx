@@ -1687,6 +1687,92 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           ))}
         </div>
       </Card>
+
+      <Card>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Baby className="h-4 w-4 text-primary" />
+            <div>
+              <h3 className="font-medium">{t.settings.kidsMode}</h3>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{t.settings.kidsModeHint}</p>
+            </div>
+          </div>
+          <button
+            onClick={() => update({ kidsMode: !settings.kidsMode })}
+            className="relative h-7 w-12 rounded-full border transition"
+            style={{
+              background: settings.kidsMode ? "var(--gradient-gold)" : "var(--glass-bg)",
+              borderColor: "var(--glass-border)",
+            }}
+            aria-pressed={settings.kidsMode}
+          >
+            <span
+              className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all"
+              style={{ insetInlineStart: settings.kidsMode ? "1.5rem" : "0.125rem" }}
+            />
+          </button>
+        </div>
+      </Card>
+    </div>
+  );
+}
+
+// ============ PROFILE ============
+function ProfileView({ t, lang }: { t: Dict; lang: Lang }) {
+  const stats = useStats();
+  const mounted = useMounted();
+  const listenH = Math.floor(stats.listeningSec / 3600);
+  const listenM = Math.floor((stats.listeningSec % 3600) / 60);
+  const days = useMemo(() => (mounted ? lastDaysActivity(stats, 35) : []), [mounted, stats]);
+  const maxVal = Math.max(1, ...days.map((d) => d.value));
+
+  const levelClass = (v: number) => {
+    if (v === 0) return "bg-white/5";
+    const r = v / maxVal;
+    if (r < 0.25) return "bg-primary/25";
+    if (r < 0.5) return "bg-primary/45";
+    if (r < 0.75) return "bg-primary/70";
+    return "bg-primary";
+  };
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="font-medium text-sm">{t.stats.title}</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Flame className="h-3 w-3 text-primary" />{t.stats.streak}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
+              {toLocaleDigits(stats.streak, lang)} <span className="text-xs text-muted-foreground font-normal">{t.stats.days}</span>
+            </p>
+          </div>
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground">{t.stats.listening}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
+              {toLocaleDigits(listenH, lang)}{t.stats.hours} {toLocaleDigits(listenM, lang)}{t.stats.minutes}
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Flame className="h-4 w-4 text-primary" />
+          <h3 className="font-medium text-sm">{t.stats.last30}</h3>
+        </div>
+        <div className="grid grid-cols-7 gap-1.5" dir="ltr">
+          {days.map((d) => (
+            <div
+              key={d.date}
+              title={`${d.date} · ${Math.round(d.value)}`}
+              className={`aspect-square rounded-md ${levelClass(d.value)} transition-colors`}
+            />
+          ))}
+        </div>
+      </Card>
     </div>
   );
 }
