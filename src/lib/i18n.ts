@@ -11,7 +11,7 @@ export const DIRS: Record<Lang, "rtl" | "ltr"> = {
 export type Dict = {
   appTitle: string;
   bismillah: string;
-  tabs: { quran: string; prayer: string; dhikr: string; tasbih: string; settings: string };
+  tabs: { quran: string; prayer: string; dhikr: string; tasbih: string; settings: string; profile: string };
   quran: {
     searchPlaceholder: string;
     bookmarked: string;
@@ -78,11 +78,13 @@ export type Dict = {
     sizes: { sm: string; md: string; lg: string; xl: string };
     theme: string;
     themes: { dark: string; sepia: string };
+    kidsMode: string;
+    kidsModeHint: string;
   };
-  audio: { speed: string; sleepTimer: string; off: string; endOfSurah: string; min: string };
+  audio: { speed: string; sleepTimer: string; off: string; endOfSurah: string; min: string; translation: string; share: string };
   resume: { title: string; cta: string };
   vod: { title: string };
-  stats: { title: string; listening: string; streak: string; days: string; hours: string; minutes: string };
+  stats: { title: string; listening: string; streak: string; days: string; hours: string; minutes: string; last30: string };
   friday: {
     title: string; kahf: string; salawat: string; checklist: string;
     items: { ghusl: string; perfume: string; mosque: string; kahf: string; salawat: string };
