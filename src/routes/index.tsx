@@ -1221,7 +1221,6 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
   ];
 
   const items = sub === "morning" ? MORNING_ADHKAR : sub === "evening" ? EVENING_ADHKAR : [];
-  const stats = useStats();
   const vod = useMemo(() => {
     const start = new Date(new Date().getFullYear(), 0, 0);
     const day = Math.floor((+new Date() - +start) / 86400000);
@@ -1229,31 +1228,9 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
   }, []);
   const isFriday = new Date().getDay() === 5;
   const vodText = lang === "en" ? vod.en : lang === "ar" ? vod.ar : vod.ku;
-  const listenH = Math.floor(stats.listeningSec / 3600);
-  const listenM = Math.floor((stats.listeningSec % 3600) / 60);
 
   return (
     <div className="space-y-4">
-      {/* Stats card */}
-      <Card>
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h3 className="font-medium text-sm">{t.stats.title}</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
-            <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Flame className="h-3 w-3 text-primary" />{t.stats.streak}</p>
-            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">{toLocaleDigits(stats.streak, lang)} <span className="text-xs text-muted-foreground font-normal">{t.stats.days}</span></p>
-          </div>
-          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
-            <p className="text-[10px] text-muted-foreground">{t.stats.listening}</p>
-            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
-              {toLocaleDigits(listenH, lang)}{t.stats.hours} {toLocaleDigits(listenM, lang)}{t.stats.minutes}
-            </p>
-          </div>
-        </div>
-      </Card>
-
       {/* Verse of the day */}
       <Card>
         <div className="flex items-center gap-2 mb-3">
