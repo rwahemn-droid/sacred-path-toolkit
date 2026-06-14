@@ -169,7 +169,13 @@ function Dashboard() {
   const dir = DIRS[settings.lang];
   const [active, setActive] = useState<TabId>("quran");
 
-  const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  // Register service worker for offline support (one-shot, client only).
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js").catch(() => { /* ignore */ });
+  }, []);
+
+  const allTabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "quran", label: t.tabs.quran, icon: BookOpen },
     { id: "prayer", label: t.tabs.prayer, icon: Clock },
     { id: "dhikr", label: t.tabs.dhikr, icon: BookText },
@@ -177,16 +183,28 @@ function Dashboard() {
     { id: "profile", label: t.tabs.profile, icon: User },
     { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
   ];
+  // Kids mode: simpler nav — only Qur'an, easy dhikr, tasbih, settings.
+  const tabs = settings.kidsMode
+    ? allTabs.filter((x) => x.id === "quran" || x.id === "dhikr" || x.id === "tasbih" || x.id === "settings")
+    : allTabs;
+
+  // Ensure active tab is always allowed (e.g. if kids mode just turned on).
+  useEffect(() => {
+    if (!tabs.find((x) => x.id === active)) setActive("quran");
+  }, [settings.kidsMode]);
+
+  const themeClass =
+    settings.theme === "sepia" ? "theme-sepia" : settings.theme === "light" ? "theme-light" : "";
 
   return (
-    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${settings.theme === "sepia" ? "theme-sepia" : ""} ${settings.kidsMode ? "kids-mode" : ""}`}>
+    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${themeClass} ${settings.kidsMode ? "kids-mode" : ""}`}>
       <header className="px-6 pt-8 pb-4 text-center">
         <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">{t.appTitle}</p>
         <h1 className="mt-2 text-2xl font-semibold font-display">{t.bismillah}</h1>
       </header>
 
       <main className="flex-1 px-4">
-        {active === "quran" && <QuranView t={t} lang={settings.lang} />}
+        {active === "quran" && <QuranView t={t} lang={settings.lang} kidsMode={settings.kidsMode} />}
         {active === "prayer" && <PrayerView t={t} lang={settings.lang} cityId={settings.cityId} madhab={settings.madhab} />}
         {active === "dhikr" && <DhikrView t={t} lang={settings.lang} />}
         {active === "tasbih" && <TasbihView t={t} lang={settings.lang} />}
