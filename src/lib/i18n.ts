@@ -77,7 +77,7 @@ export type Dict = {
     fontSize: string;
     sizes: { sm: string; md: string; lg: string; xl: string };
     theme: string;
-    themes: { dark: string; sepia: string };
+    themes: { dark: string; light: string; sepia: string };
     kidsMode: string;
     kidsModeHint: string;
   };
@@ -160,7 +160,7 @@ const ku: Dict = {
     fontSize: "قەبارەی فۆنت",
     sizes: { sm: "بچووک", md: "ناوەند", lg: "گەورە", xl: "زۆر گەورە" },
     theme: "ڕەنگی ڕووکار",
-    themes: { dark: "تاریک", sepia: "سیپیا" },
+    themes: { dark: "تاریک", light: "ڕووناک", sepia: "سیپیا" },
     kidsMode: "مۆدی منداڵان",
     kidsModeHint: "ڕووکارێکی ساکار و فۆنتی گەورەتر بۆ منداڵان",
   },
@@ -246,7 +246,7 @@ const ar: Dict = {
     fontSize: "حجم الخط",
     sizes: { sm: "صغير", md: "متوسط", lg: "كبير", xl: "كبير جداً" },
     theme: "لون الواجهة",
-    themes: { dark: "داكن", sepia: "سيبيا" },
+    themes: { dark: "داكن", light: "فاتح", sepia: "سيبيا" },
     kidsMode: "وضع الأطفال",
     kidsModeHint: "واجهة مبسطة وخط أكبر للأطفال",
   },
@@ -332,7 +332,7 @@ const en: Dict = {
     fontSize: "Font size",
     sizes: { sm: "Small", md: "Medium", lg: "Large", xl: "Extra large" },
     theme: "Theme",
-    themes: { dark: "Dark", sepia: "Sepia" },
+    themes: { dark: "Dark", light: "Light", sepia: "Sepia" },
     kidsMode: "Kids mode",
     kidsModeHint: "Bigger fonts and simpler layout for children",
   },
@@ -418,7 +418,7 @@ const kmr: Dict = {
     fontSize: "Mezinahiya tîpê",
     sizes: { sm: "Biçûk", md: "Navîn", lg: "Mezin", xl: "Pir mezin" },
     theme: "Rengê rûyê",
-    themes: { dark: "Tarî", sepia: "Sepia" },
+    themes: { dark: "Tarî", light: "Ronî", sepia: "Sepia" },
     kidsMode: "Moda zarokan",
     kidsModeHint: "Tîpên mezintir û rûyek hêsantir ji bo zarokan",
   },
@@ -504,7 +504,7 @@ const bad: Dict = {
     fontSize: "مەزنایا فۆنتی",
     sizes: { sm: "بچویک", md: "ناڤنجی", lg: "مەزن", xl: "گەلەک مەزن" },
     theme: "رەنگێ ڕویێ",
-    themes: { dark: "تاری", sepia: "سیپیا" },
+    themes: { dark: "تاری", light: "ڕوناک", sepia: "سیپیا" },
     kidsMode: "مۆدی زاڕۆکا",
     kidsModeHint: "تیپێن مەزنتر و ڕویەکێ ساکارتر بۆ زاڕۆکا",
   },
