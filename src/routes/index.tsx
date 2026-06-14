@@ -389,7 +389,7 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
       {isLoading && <div className="text-center py-12 text-muted-foreground">{t.quran.loading}</div>}
       {isError && <div className="text-center py-12 text-destructive">{t.quran.error}</div>}
       <div className="grid gap-2">
-        {filtered.map((s) => (
+        {filtered.slice(0, visibleCount).map((s) => (
           <SurahItem
             key={s.number}
             s={s}
@@ -401,6 +401,18 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
           />
         ))}
       </div>
+      {visibleCount < filtered.length && (
+        <>
+          <div ref={sentinelRef} className="h-1" aria-hidden />
+          <button
+            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+            className="w-full rounded-2xl border p-3 text-sm text-primary backdrop-blur-xl hover:border-primary/40 transition"
+            style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+          >
+            {t.quran.loading}
+          </button>
+        </>
+      )}
     </div>
   );
 }
