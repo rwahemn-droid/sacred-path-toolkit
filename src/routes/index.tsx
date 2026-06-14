@@ -1729,8 +1729,8 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           <Palette className="h-4 w-4 text-primary" />
           <h3 className="font-medium">{t.settings.theme}</h3>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {(["dark", "sepia"] as const).map((th) => (
+        <div className="grid grid-cols-3 gap-2">
+          {(["dark", "light", "sepia"] as const).map((th) => (
             <button
               key={th}
               onClick={() => update({ theme: th })}
