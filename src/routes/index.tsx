@@ -714,7 +714,7 @@ function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Sura
           </button>
           <button
             onClick={() => (playingIdx !== null ? stopAudio() : playAyah(0, true))}
-            className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
+            className="kids-play h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
             style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
             aria-label="play all"
           >
