@@ -268,9 +268,12 @@ function useBookmarks() {
   return { bookmarks, toggle };
 }
 
+const PAGE_SIZE = 20;
+
 function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
   const [selected, setSelected] = useState<Surah | null>(null);
   const [query, setQuery] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { bookmarks, toggle } = useBookmarks();
 
   const { data: surahs, isLoading, isError } = useQuery({
@@ -280,7 +283,31 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
       if (!res.ok) throw new Error("Failed");
       return (await res.json()).data;
     },
+    staleTime: 1000 * 60 * 60 * 24,
+    gcTime: 1000 * 60 * 60 * 24,
   });
+
+  // Reset visible window when search query changes.
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [query]);
+
+  // Auto-load next page when sentinel scrolls into view.
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el || typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((e) => e.isIntersecting)) {
+          setVisibleCount((c) => c + PAGE_SIZE);
+        }
+      },
+      { rootMargin: "300px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, [surahs, query]);
 
   const filtered = useMemo(() => {
     if (!surahs) return [];
