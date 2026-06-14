@@ -475,7 +475,7 @@ function SurahItem({
 type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
 
-function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
+function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang; kidsMode?: boolean }) {
   const [settings] = useSettings();
   const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
   const arabicFontFamily = ARABIC_FONT_CSS;
