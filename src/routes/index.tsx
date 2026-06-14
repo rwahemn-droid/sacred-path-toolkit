@@ -169,7 +169,13 @@ function Dashboard() {
   const dir = DIRS[settings.lang];
   const [active, setActive] = useState<TabId>("quran");
 
-  const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  // Register service worker for offline support (one-shot, client only).
+  useEffect(() => {
+    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
+    navigator.serviceWorker.register("/sw.js").catch(() => { /* ignore */ });
+  }, []);
+
+  const allTabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "quran", label: t.tabs.quran, icon: BookOpen },
     { id: "prayer", label: t.tabs.prayer, icon: Clock },
     { id: "dhikr", label: t.tabs.dhikr, icon: BookText },
@@ -177,16 +183,28 @@ function Dashboard() {
     { id: "profile", label: t.tabs.profile, icon: User },
     { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
   ];
+  // Kids mode: simpler nav — only Qur'an, easy dhikr, tasbih, settings.
+  const tabs = settings.kidsMode
+    ? allTabs.filter((x) => x.id === "quran" || x.id === "dhikr" || x.id === "tasbih" || x.id === "settings")
+    : allTabs;
+
+  // Ensure active tab is always allowed (e.g. if kids mode just turned on).
+  useEffect(() => {
+    if (!tabs.find((x) => x.id === active)) setActive("quran");
+  }, [settings.kidsMode]);
+
+  const themeClass =
+    settings.theme === "sepia" ? "theme-sepia" : settings.theme === "light" ? "theme-light" : "";
 
   return (
-    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${settings.theme === "sepia" ? "theme-sepia" : ""} ${settings.kidsMode ? "kids-mode" : ""}`}>
+    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${themeClass} ${settings.kidsMode ? "kids-mode" : ""}`}>
       <header className="px-6 pt-8 pb-4 text-center">
         <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">{t.appTitle}</p>
         <h1 className="mt-2 text-2xl font-semibold font-display">{t.bismillah}</h1>
       </header>
 
       <main className="flex-1 px-4">
-        {active === "quran" && <QuranView t={t} lang={settings.lang} />}
+        {active === "quran" && <QuranView t={t} lang={settings.lang} kidsMode={settings.kidsMode} />}
         {active === "prayer" && <PrayerView t={t} lang={settings.lang} cityId={settings.cityId} madhab={settings.madhab} />}
         {active === "dhikr" && <DhikrView t={t} lang={settings.lang} />}
         {active === "tasbih" && <TasbihView t={t} lang={settings.lang} />}
@@ -270,7 +288,7 @@ function useBookmarks() {
 
 const PAGE_SIZE = 20;
 
-function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
+function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMode?: boolean }) {
   const [selected, setSelected] = useState<Surah | null>(null);
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
@@ -327,7 +345,7 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
     [surahs, bookmarks],
   );
 
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
+  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} kidsMode={kidsMode} />;
 
   // Resume last read — gated on mount to avoid SSR/CSR mismatch.
   const mounted = useMounted();
@@ -457,7 +475,7 @@ function SurahItem({
 type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
 
-function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
+function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang; kidsMode?: boolean }) {
   const [settings] = useSettings();
   const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
   const arabicFontFamily = ARABIC_FONT_CSS;
@@ -640,6 +658,9 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
       }
       if (continueAll && idx + 1 < arabic.length) {
         playAyah(idx + 1, true);
+      } else if (continueAll && kidsMode && sleep !== -1) {
+        // Kids mode: auto-loop the surah so the child never has to tap again.
+        playAyah(0, true);
       } else {
         setPlayingIdx(null);
         setPlayAll(false);
@@ -696,7 +717,7 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
           </button>
           <button
             onClick={() => (playingIdx !== null ? stopAudio() : playAyah(0, true))}
-            className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
+            className="kids-play h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
             style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
             aria-label="play all"
           >
@@ -1708,8 +1729,8 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           <Palette className="h-4 w-4 text-primary" />
           <h3 className="font-medium">{t.settings.theme}</h3>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          {(["dark", "sepia"] as const).map((th) => (
+        <div className="grid grid-cols-3 gap-2">
+          {(["dark", "light", "sepia"] as const).map((th) => (
             <button
               key={th}
               onClick={() => update({ theme: th })}

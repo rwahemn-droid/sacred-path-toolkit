@@ -3,7 +3,7 @@ import type { Lang } from "./i18n";
 
 export type Madhab = "shafi" | "hanafi";
 export type FontSize = "sm" | "md" | "lg" | "xl";
-export type Theme = "dark" | "sepia";
+export type Theme = "dark" | "light" | "sepia";
 
 export type Settings = {
   lang: Lang;

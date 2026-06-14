@@ -53,6 +53,30 @@
   --glass-border: oklch(1 0 0 / 0.1);
 }
 
+.theme-light {
+  --background: oklch(0.98 0.01 250);
+  --foreground: oklch(0.2 0.03 250);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.2 0.03 250);
+  --primary: oklch(0.55 0.16 250);
+  --primary-foreground: oklch(0.99 0.005 250);
+  --secondary: oklch(0.95 0.02 250);
+  --secondary-foreground: oklch(0.25 0.03 250);
+  --muted: oklch(0.94 0.02 250);
+  --muted-foreground: oklch(0.5 0.02 250);
+  --accent: oklch(0.55 0.16 250);
+  --accent-foreground: oklch(0.99 0.005 250);
+  --border: oklch(0.2 0.03 250 / 12%);
+  --ring: oklch(0.55 0.16 250);
+  --gradient-bg: radial-gradient(ellipse at top, oklch(0.98 0.02 240) 0%, oklch(0.95 0.03 230) 60%, oklch(0.92 0.04 220) 100%);
+  --gradient-gold: linear-gradient(135deg, oklch(0.7 0.16 250), oklch(0.55 0.18 260));
+  --gradient-teal: linear-gradient(135deg, oklch(0.7 0.12 180), oklch(0.55 0.13 195));
+  --shadow-glow: 0 10px 40px -10px oklch(0.55 0.16 250 / 0.35);
+  --shadow-teal: 0 10px 40px -10px oklch(0.55 0.13 185 / 0.3);
+  --glass-bg: oklch(1 0 0 / 0.6);
+  --glass-border: oklch(0.2 0.03 250 / 0.1);
+}
+
 .theme-sepia {
   --background: oklch(0.93 0.04 75);
   --foreground: oklch(0.28 0.04 50);
@@ -86,15 +110,38 @@
   }
 }
 
-/* Kids mode: bigger text, gentler corners, brighter accents */
+/* Kids mode: bright sky theme, oversized typography & controls. */
 .kids-mode {
-  font-size: 1.06rem;
+  --background: oklch(0.97 0.04 220);
+  --foreground: oklch(0.22 0.05 240);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.05 240);
+  --primary: oklch(0.65 0.18 230);
+  --primary-foreground: oklch(0.99 0.005 230);
+  --secondary: oklch(0.93 0.06 200);
+  --secondary-foreground: oklch(0.22 0.05 240);
+  --muted: oklch(0.94 0.05 200);
+  --muted-foreground: oklch(0.4 0.04 230);
+  --accent: oklch(0.78 0.17 150);
+  --accent-foreground: oklch(0.18 0.04 240);
+  --border: oklch(0.4 0.06 230 / 14%);
+  --ring: oklch(0.65 0.18 230);
+  --gradient-bg: radial-gradient(ellipse at top, oklch(0.95 0.08 220) 0%, oklch(0.92 0.09 200) 50%, oklch(0.94 0.1 150) 100%);
+  --gradient-gold: linear-gradient(135deg, oklch(0.72 0.18 230), oklch(0.78 0.17 150));
+  --gradient-teal: linear-gradient(135deg, oklch(0.78 0.16 180), oklch(0.7 0.18 150));
+  --shadow-glow: 0 10px 40px -10px oklch(0.65 0.18 230 / 0.5);
+  --shadow-teal: 0 10px 40px -10px oklch(0.78 0.17 150 / 0.45);
+  --glass-bg: oklch(1 0 0 / 0.7);
+  --glass-border: oklch(0.4 0.06 230 / 0.15);
+  font-size: 1.12rem;
 }
 .kids-mode button,
-.kids-mode .text-sm { font-size: 1rem; }
+.kids-mode .text-sm { font-size: 1.05rem; }
 .kids-mode .text-xs,
 .kids-mode .text-\[10px\],
-.kids-mode .text-\[11px\] { font-size: 0.85rem !important; }
+.kids-mode .text-\[11px\] { font-size: 0.92rem !important; }
 .kids-mode h1, .kids-mode h2, .kids-mode h3 { letter-spacing: 0.01em; }
-.kids-mode .rounded-2xl { border-radius: 1.5rem; }
-.kids-mode .rounded-xl { border-radius: 1.25rem; }
+.kids-mode .rounded-2xl { border-radius: 1.75rem; }
+.kids-mode .rounded-xl { border-radius: 1.4rem; }
+.kids-mode .kids-play { height: 5rem !important; width: 5rem !important; }
+.kids-mode .kids-play svg { width: 2.5rem !important; height: 2.5rem !important; }
