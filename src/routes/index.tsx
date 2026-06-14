@@ -288,7 +288,7 @@ function useBookmarks() {
 
 const PAGE_SIZE = 20;
 
-function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
+function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMode?: boolean }) {
   const [selected, setSelected] = useState<Surah | null>(null);
   const [query, setQuery] = useState("");
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
