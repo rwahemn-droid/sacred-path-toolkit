@@ -658,6 +658,9 @@ function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Sura
       }
       if (continueAll && idx + 1 < arabic.length) {
         playAyah(idx + 1, true);
+      } else if (continueAll && kidsMode && sleep !== -1) {
+        // Kids mode: auto-loop the surah so the child never has to tap again.
+        playAyah(0, true);
       } else {
         setPlayingIdx(null);
         setPlayAll(false);
