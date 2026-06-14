@@ -345,7 +345,7 @@ function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMod
     [surahs, bookmarks],
   );
 
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
+  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} kidsMode={kidsMode} />;
 
   // Resume last read — gated on mount to avoid SSR/CSR mismatch.
   const mounted = useMounted();
