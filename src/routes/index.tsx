@@ -345,8 +345,9 @@ function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMod
     [surahs, bookmarks],
   );
 
+  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} kidsMode={kidsMode} />;
+
   // Resume last read — gated on mount to avoid SSR/CSR mismatch.
-  // IMPORTANT: this hook must be called before any conditional return.
   const mounted = useMounted();
   let lastRead: { surah: number; name: string; ayah: number } | null = null;
   if (mounted) {
@@ -355,8 +356,6 @@ function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMod
       if (raw) lastRead = JSON.parse(raw);
     } catch { /* */ }
   }
-
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} kidsMode={kidsMode} />;
 
   return (
     <div className="space-y-4">
