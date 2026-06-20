@@ -5,7 +5,7 @@ import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
-  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, User, Share2, Volume2, Baby,
+  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
@@ -24,76 +24,7 @@ import {
   type FontSize,
 } from "@/lib/settings";
 import { VERSES_OF_DAY } from "@/lib/verse-of-day";
-import { useStats, bumpListening, markActive, lastDaysActivity } from "@/lib/stats";
-
-function useMounted() {
-  const [m, setM] = useState(false);
-  useEffect(() => setM(true), []);
-  return m;
-}
-
-const LANG_TO_BCP47: Record<Lang, string> = {
-  ku: "ar-SA", ar: "ar-SA", en: "en-US", kmr: "tr-TR", bad: "ar-SA",
-};
-
-function speakText(text: string, lang: Lang) {
-  if (typeof window === "undefined" || !("speechSynthesis" in window)) return;
-  try {
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = LANG_TO_BCP47[lang] ?? "ar-SA";
-    u.rate = 0.95;
-    window.speechSynthesis.speak(u);
-  } catch { /* */ }
-}
-
-async function shareAyah(ayah: { surah: string; num: number; ar: string; tr: string }) {
-  const text = `${ayah.ar}\n\n${ayah.tr}\n\n— ${ayah.surah} : ${ayah.num}\n\nIbadahPro`;
-  try {
-    // Build a simple share image via canvas.
-    const canvas = document.createElement("canvas");
-    const W = 1080, H = 1080;
-    canvas.width = W; canvas.height = H;
-    const ctx = canvas.getContext("2d")!;
-    const grad = ctx.createLinearGradient(0, 0, W, H);
-    grad.addColorStop(0, "#0b1c1c"); grad.addColorStop(1, "#1a2e2e");
-    ctx.fillStyle = grad; ctx.fillRect(0, 0, W, H);
-    ctx.fillStyle = "#d4af37"; ctx.font = "600 36px serif"; ctx.textAlign = "center";
-    ctx.fillText("IbadahPro", W / 2, 80);
-    ctx.fillStyle = "#f5e7c4"; ctx.font = "600 48px 'Amiri Quran', serif"; ctx.direction = "rtl";
-    const wrap = (txt: string, maxW: number, lineH: number, y0: number, font: string) => {
-      ctx.font = font;
-      const words = txt.split(" "); let line = ""; let y = y0;
-      for (const w of words) {
-        const test = line ? line + " " + w : w;
-        if (ctx.measureText(test).width > maxW && line) { ctx.fillText(line, W / 2, y); line = w; y += lineH; }
-        else line = test;
-      }
-      if (line) ctx.fillText(line, W / 2, y);
-      return y + lineH;
-    };
-    let y = wrap(ayah.ar, W - 160, 70, 240, "600 46px 'Amiri Quran', serif");
-    ctx.fillStyle = "#cfd8d8";
-    y = wrap(ayah.tr, W - 200, 44, y + 40, "400 30px sans-serif");
-    ctx.fillStyle = "#d4af37"; ctx.font = "500 28px sans-serif";
-    ctx.fillText(`— ${ayah.surah} : ${ayah.num}`, W / 2, H - 80);
-    const blob: Blob | null = await new Promise((r) => canvas.toBlob(r, "image/png"));
-    if (blob && navigator.canShare && navigator.canShare({ files: [new File([blob], "ayah.png", { type: "image/png" })] })) {
-      await navigator.share({ files: [new File([blob], "ayah.png", { type: "image/png" })], text });
-      return;
-    }
-    if (blob) {
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a"); a.href = url; a.download = "ayah.png"; a.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-      return;
-    }
-  } catch { /* fall back to text */ }
-  try {
-    if (navigator.share) await navigator.share({ text });
-    else await navigator.clipboard.writeText(text);
-  } catch { /* */ }
-}
+import { useStats, bumpListening, markActive } from "@/lib/stats";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
@@ -161,7 +92,7 @@ function AppRoot() {
   );
 }
 
-type TabId = "quran" | "prayer" | "dhikr" | "tasbih" | "profile" | "settings";
+type TabId = "quran" | "prayer" | "dhikr" | "tasbih" | "settings";
 
 function Dashboard() {
   const [settings] = useSettings();
@@ -169,46 +100,26 @@ function Dashboard() {
   const dir = DIRS[settings.lang];
   const [active, setActive] = useState<TabId>("quran");
 
-  // Register service worker for offline support (one-shot, client only).
-  useEffect(() => {
-    if (typeof window === "undefined" || !("serviceWorker" in navigator)) return;
-    navigator.serviceWorker.register("/sw.js").catch(() => { /* ignore */ });
-  }, []);
-
-  const allTabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  const tabs: { id: TabId; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
     { id: "quran", label: t.tabs.quran, icon: BookOpen },
     { id: "prayer", label: t.tabs.prayer, icon: Clock },
     { id: "dhikr", label: t.tabs.dhikr, icon: BookText },
     { id: "tasbih", label: t.tabs.tasbih, icon: BeadsIcon },
-    { id: "profile", label: t.tabs.profile, icon: User },
     { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
   ];
-  // Kids mode: simpler nav — only Qur'an, easy dhikr, tasbih, settings.
-  const tabs = settings.kidsMode
-    ? allTabs.filter((x) => x.id === "quran" || x.id === "dhikr" || x.id === "tasbih" || x.id === "settings")
-    : allTabs;
-
-  // Ensure active tab is always allowed (e.g. if kids mode just turned on).
-  useEffect(() => {
-    if (!tabs.find((x) => x.id === active)) setActive("quran");
-  }, [settings.kidsMode]);
-
-  const themeClass =
-    settings.theme === "sepia" ? "theme-sepia" : settings.theme === "light" ? "theme-light" : "";
 
   return (
-    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${themeClass} ${settings.kidsMode ? "kids-mode" : ""}`}>
+    <div dir={dir} lang={settings.lang} className={`min-h-screen flex flex-col pb-32 ${settings.theme === "sepia" ? "theme-sepia" : ""}`}>
       <header className="px-6 pt-8 pb-4 text-center">
         <p className="text-xs tracking-[0.3em] text-primary/80 uppercase">{t.appTitle}</p>
         <h1 className="mt-2 text-2xl font-semibold font-display">{t.bismillah}</h1>
       </header>
 
       <main className="flex-1 px-4">
-        {active === "quran" && <QuranView t={t} lang={settings.lang} kidsMode={settings.kidsMode} />}
+        {active === "quran" && <QuranView t={t} lang={settings.lang} />}
         {active === "prayer" && <PrayerView t={t} lang={settings.lang} cityId={settings.cityId} madhab={settings.madhab} />}
         {active === "dhikr" && <DhikrView t={t} lang={settings.lang} />}
         {active === "tasbih" && <TasbihView t={t} lang={settings.lang} />}
-        {active === "profile" && <ProfileView t={t} lang={settings.lang} />}
         {active === "settings" && <SettingsView t={t} lang={settings.lang} />}
       </main>
 
@@ -286,12 +197,9 @@ function useBookmarks() {
   return { bookmarks, toggle };
 }
 
-const PAGE_SIZE = 20;
-
-function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMode?: boolean }) {
+function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
   const [selected, setSelected] = useState<Surah | null>(null);
   const [query, setQuery] = useState("");
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const { bookmarks, toggle } = useBookmarks();
 
   const { data: surahs, isLoading, isError } = useQuery({
@@ -301,31 +209,7 @@ function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMod
       if (!res.ok) throw new Error("Failed");
       return (await res.json()).data;
     },
-    staleTime: 1000 * 60 * 60 * 24,
-    gcTime: 1000 * 60 * 60 * 24,
   });
-
-  // Reset visible window when search query changes.
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [query]);
-
-  // Auto-load next page when sentinel scrolls into view.
-  const sentinelRef = useRef<HTMLDivElement | null>(null);
-  useEffect(() => {
-    const el = sentinelRef.current;
-    if (!el || typeof IntersectionObserver === "undefined") return;
-    const io = new IntersectionObserver(
-      (entries) => {
-        if (entries.some((e) => e.isIntersecting)) {
-          setVisibleCount((c) => c + PAGE_SIZE);
-        }
-      },
-      { rootMargin: "300px" },
-    );
-    io.observe(el);
-    return () => io.disconnect();
-  }, [surahs, query]);
 
   const filtered = useMemo(() => {
     if (!surahs) return [];
@@ -345,17 +229,14 @@ function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMod
     [surahs, bookmarks],
   );
 
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} kidsMode={kidsMode} />;
+  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
 
-  // Resume last read — gated on mount to avoid SSR/CSR mismatch.
-  const mounted = useMounted();
+  // Resume last read
   let lastRead: { surah: number; name: string; ayah: number } | null = null;
-  if (mounted) {
-    try {
-      const raw = localStorage.getItem("ibadah:last-read");
-      if (raw) lastRead = JSON.parse(raw);
-    } catch { /* */ }
-  }
+  try {
+    const raw = typeof window !== "undefined" ? localStorage.getItem("ibadah:last-read") : null;
+    if (raw) lastRead = JSON.parse(raw);
+  } catch { /* */ }
 
   return (
     <div className="space-y-4">
@@ -407,7 +288,7 @@ function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMod
       {isLoading && <div className="text-center py-12 text-muted-foreground">{t.quran.loading}</div>}
       {isError && <div className="text-center py-12 text-destructive">{t.quran.error}</div>}
       <div className="grid gap-2">
-        {filtered.slice(0, visibleCount).map((s) => (
+        {filtered.map((s) => (
           <SurahItem
             key={s.number}
             s={s}
@@ -419,18 +300,6 @@ function QuranView({ t, lang, kidsMode = false }: { t: Dict; lang: Lang; kidsMod
           />
         ))}
       </div>
-      {visibleCount < filtered.length && (
-        <>
-          <div ref={sentinelRef} className="h-1" aria-hidden />
-          <button
-            onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
-            className="w-full rounded-2xl border p-3 text-sm text-primary backdrop-blur-xl hover:border-primary/40 transition"
-            style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
-          >
-            {t.quran.loading}
-          </button>
-        </>
-      )}
     </div>
   );
 }
@@ -475,7 +344,7 @@ function SurahItem({
 type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
 
-function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang; kidsMode?: boolean }) {
+function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
   const [settings] = useSettings();
   const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
   const arabicFontFamily = ARABIC_FONT_CSS;
@@ -658,9 +527,6 @@ function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Sura
       }
       if (continueAll && idx + 1 < arabic.length) {
         playAyah(idx + 1, true);
-      } else if (continueAll && kidsMode && sleep !== -1) {
-        // Kids mode: auto-loop the surah so the child never has to tap again.
-        playAyah(0, true);
       } else {
         setPlayingIdx(null);
         setPlayAll(false);
@@ -717,7 +583,7 @@ function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Sura
           </button>
           <button
             onClick={() => (playingIdx !== null ? stopAudio() : playAyah(0, true))}
-            className="kids-play h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
+            className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
             style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
             aria-label="play all"
           >
@@ -897,8 +763,8 @@ function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Sura
                   return (
                     <span
                       key={`${a.number}-w-${wi}`}
-                      className="transition-all duration-500 ease-out"
-                      style={highlight ? { color: "oklch(0.92 0.18 95)", textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)" } : undefined}
+                      className="transition-colors"
+                      style={highlight ? { color: "oklch(0.92 0.18 95)", textShadow: "0 0 12px oklch(0.92 0.18 95 / 0.5)" } : undefined}
                     >
                       {w}{" "}
                     </span>
@@ -907,32 +773,12 @@ function SurahDetail({ surah, onBack, t, lang, kidsMode = false }: { surah: Sura
               </p>
 
               {translation[i] && (
-                <div className="mt-4 pt-4 border-t border-white/10">
-                  <p
-                    className="text-sm leading-relaxed text-muted-foreground"
-                    dir={lang === "en" || lang === "kmr" ? "ltr" : "rtl"}
-                  >
-                    {translation[i].text}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2 justify-end">
-                    <button
-                      onClick={() => speakText(translation[i].text, lang)}
-                      className="h-7 px-2.5 rounded-full flex items-center gap-1 border hover:border-primary/60 transition text-[10px] text-primary"
-                      style={{ borderColor: "var(--glass-border)" }}
-                      aria-label="speak translation"
-                    >
-                      <Volume2 className="h-3 w-3" /> {t.audio.translation}
-                    </button>
-                    <button
-                      onClick={() => shareAyah({ surah: surah.englishName, num: a.numberInSurah, ar: cleanText, tr: translation[i].text })}
-                      className="h-7 px-2.5 rounded-full flex items-center gap-1 border hover:border-primary/60 transition text-[10px] text-primary"
-                      style={{ borderColor: "var(--glass-border)" }}
-                      aria-label="share ayah"
-                    >
-                      <Share2 className="h-3 w-3" /> {t.audio.share}
-                    </button>
-                  </div>
-                </div>
+                <p
+                  className="mt-4 pt-4 border-t border-white/10 text-sm leading-relaxed text-muted-foreground"
+                  dir={lang === "en" ? "ltr" : "rtl"}
+                >
+                  {translation[i].text}
+                </p>
               )}
             </div>
           );
@@ -1367,6 +1213,7 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
   ];
 
   const items = sub === "morning" ? MORNING_ADHKAR : sub === "evening" ? EVENING_ADHKAR : [];
+  const stats = useStats();
   const vod = useMemo(() => {
     const start = new Date(new Date().getFullYear(), 0, 0);
     const day = Math.floor((+new Date() - +start) / 86400000);
@@ -1374,9 +1221,31 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
   }, []);
   const isFriday = new Date().getDay() === 5;
   const vodText = lang === "en" ? vod.en : lang === "ar" ? vod.ar : vod.ku;
+  const listenH = Math.floor(stats.listeningSec / 3600);
+  const listenM = Math.floor((stats.listeningSec % 3600) / 60);
 
   return (
     <div className="space-y-4">
+      {/* Stats card */}
+      <Card>
+        <div className="flex items-center gap-2 mb-3">
+          <Sparkles className="h-4 w-4 text-primary" />
+          <h3 className="font-medium text-sm">{t.stats.title}</h3>
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Flame className="h-3 w-3 text-primary" />{t.stats.streak}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">{toLocaleDigits(stats.streak, lang)} <span className="text-xs text-muted-foreground font-normal">{t.stats.days}</span></p>
+          </div>
+          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p className="text-[10px] text-muted-foreground">{t.stats.listening}</p>
+            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
+              {toLocaleDigits(listenH, lang)}{t.stats.hours} {toLocaleDigits(listenM, lang)}{t.stats.minutes}
+            </p>
+          </div>
+        </div>
+      </Card>
+
       {/* Verse of the day */}
       <Card>
         <div className="flex items-center gap-2 mb-3">
@@ -1729,8 +1598,8 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
           <Palette className="h-4 w-4 text-primary" />
           <h3 className="font-medium">{t.settings.theme}</h3>
         </div>
-        <div className="grid grid-cols-3 gap-2">
-          {(["dark", "light", "sepia"] as const).map((th) => (
+        <div className="grid grid-cols-2 gap-2">
+          {(["dark", "sepia"] as const).map((th) => (
             <button
               key={th}
               onClick={() => update({ theme: th })}
@@ -1744,92 +1613,6 @@ function SettingsView({ t, lang }: { t: Dict; lang: Lang }) {
             >
               {t.settings.themes[th]}
             </button>
-          ))}
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Baby className="h-4 w-4 text-primary" />
-            <div>
-              <h3 className="font-medium">{t.settings.kidsMode}</h3>
-              <p className="text-[11px] text-muted-foreground mt-0.5">{t.settings.kidsModeHint}</p>
-            </div>
-          </div>
-          <button
-            onClick={() => update({ kidsMode: !settings.kidsMode })}
-            className="relative h-7 w-12 rounded-full border transition"
-            style={{
-              background: settings.kidsMode ? "var(--gradient-gold)" : "var(--glass-bg)",
-              borderColor: "var(--glass-border)",
-            }}
-            aria-pressed={settings.kidsMode}
-          >
-            <span
-              className="absolute top-0.5 h-5 w-5 rounded-full bg-white transition-all"
-              style={{ insetInlineStart: settings.kidsMode ? "1.5rem" : "0.125rem" }}
-            />
-          </button>
-        </div>
-      </Card>
-    </div>
-  );
-}
-
-// ============ PROFILE ============
-function ProfileView({ t, lang }: { t: Dict; lang: Lang }) {
-  const stats = useStats();
-  const mounted = useMounted();
-  const listenH = Math.floor(stats.listeningSec / 3600);
-  const listenM = Math.floor((stats.listeningSec % 3600) / 60);
-  const days = useMemo(() => (mounted ? lastDaysActivity(stats, 35) : []), [mounted, stats]);
-  const maxVal = Math.max(1, ...days.map((d) => d.value));
-
-  const levelClass = (v: number) => {
-    if (v === 0) return "bg-white/5";
-    const r = v / maxVal;
-    if (r < 0.25) return "bg-primary/25";
-    if (r < 0.5) return "bg-primary/45";
-    if (r < 0.75) return "bg-primary/70";
-    return "bg-primary";
-  };
-
-  return (
-    <div className="space-y-4">
-      <Card>
-        <div className="flex items-center gap-2 mb-3">
-          <Sparkles className="h-4 w-4 text-primary" />
-          <h3 className="font-medium text-sm">{t.stats.title}</h3>
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
-            <p className="text-[10px] text-muted-foreground flex items-center gap-1"><Flame className="h-3 w-3 text-primary" />{t.stats.streak}</p>
-            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
-              {toLocaleDigits(stats.streak, lang)} <span className="text-xs text-muted-foreground font-normal">{t.stats.days}</span>
-            </p>
-          </div>
-          <div className="rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
-            <p className="text-[10px] text-muted-foreground">{t.stats.listening}</p>
-            <p className="mt-1 text-2xl font-bold text-primary tabular-nums">
-              {toLocaleDigits(listenH, lang)}{t.stats.hours} {toLocaleDigits(listenM, lang)}{t.stats.minutes}
-            </p>
-          </div>
-        </div>
-      </Card>
-
-      <Card>
-        <div className="flex items-center gap-2 mb-3">
-          <Flame className="h-4 w-4 text-primary" />
-          <h3 className="font-medium text-sm">{t.stats.last30}</h3>
-        </div>
-        <div className="grid grid-cols-7 gap-1.5" dir="ltr">
-          {days.map((d) => (
-            <div
-              key={d.date}
-              title={`${d.date} · ${Math.round(d.value)}`}
-              className={`aspect-square rounded-md ${levelClass(d.value)} transition-colors`}
-            />
           ))}
         </div>
       </Card>
