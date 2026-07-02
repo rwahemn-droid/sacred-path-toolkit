@@ -92,7 +92,7 @@ export type Dict = {
 const ku: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "ویرد", tasbih: "تەسبیح", settings: "ڕێکخستن" },
+  tabs: { quran: "قورئان", prayer: "نوێژ", dhikr: "ویرد", tasbih: "تەسبیح", settings: "ڕێکخستن", more: "زیاتر" },
   quran: {
     searchPlaceholder: "گەڕان لە سوورەتەکان...",
     bookmarked: "سوورەتە بوکمارککراوەکان",
@@ -176,7 +176,7 @@ const ku: Dict = {
 const ar: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الورد", tasbih: "التسبيح", settings: "الإعدادات" },
+  tabs: { quran: "القرآن", prayer: "الصلاة", dhikr: "الورد", tasbih: "التسبيح", settings: "الإعدادات", more: "المزيد" },
   quran: {
     searchPlaceholder: "ابحث في السور...",
     bookmarked: "السور المحفوظة",
@@ -260,7 +260,7 @@ const ar: Dict = {
 const en: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Wird", tasbih: "Tasbih", settings: "Settings" },
+  tabs: { quran: "Quran", prayer: "Prayer", dhikr: "Wird", tasbih: "Tasbih", settings: "Settings", more: "More" },
   quran: {
     searchPlaceholder: "Search surahs...",
     bookmarked: "Bookmarked surahs",
@@ -344,7 +344,7 @@ const en: Dict = {
 const kmr: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "Quran", prayer: "Nimêj", dhikr: "Zikir", tasbih: "Tesbîh", settings: "Mîheng" },
+  tabs: { quran: "Quran", prayer: "Nimêj", dhikr: "Zikir", tasbih: "Tesbîh", settings: "Mîheng", more: "Zêdetir" },
   quran: {
     searchPlaceholder: "Li sûreyan bigere...",
     bookmarked: "Sûreyên parastî",
@@ -428,7 +428,7 @@ const kmr: Dict = {
 const bad: Dict = {
   appTitle: "IbadahPro",
   bismillah: "بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ",
-  tabs: { quran: "قورئان", prayer: "نڤێژ", dhikr: "زکر", tasbih: "تەسبیح", settings: "ڕێکخستن" },
+  tabs: { quran: "قورئان", prayer: "نڤێژ", dhikr: "زکر", tasbih: "تەسبیح", settings: "ڕێکخستن", more: "زێدەتر" },
   quran: {
     searchPlaceholder: "ل سۆرەتا بگەڕە...",
     bookmarked: "سۆرەتێن پاراستی",
