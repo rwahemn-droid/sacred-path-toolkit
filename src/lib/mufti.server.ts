@@ -3,7 +3,7 @@ import { createServerFn } from "@tanstack/react-start";
 type Msg = { role: "user" | "assistant"; content: string };
 
 export const askMufti = createServerFn({ method: "POST" })
-  .validator((data: { messages: Msg[]; lang: string }) => data)
+  .inputValidator((data: { messages: Msg[]; lang: string }) => data)
   .handler(async ({ data }) => {
     const apiKey = process.env.LOVABLE_API_KEY;
     if (!apiKey) {
