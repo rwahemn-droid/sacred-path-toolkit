@@ -11,7 +11,7 @@ export const DIRS: Record<Lang, "rtl" | "ltr"> = {
 export type Dict = {
   appTitle: string;
   bismillah: string;
-  tabs: { quran: string; prayer: string; dhikr: string; tasbih: string; settings: string };
+  tabs: { quran: string; prayer: string; dhikr: string; tasbih: string; settings: string; more: string };
   quran: {
     searchPlaceholder: string;
     bookmarked: string;
