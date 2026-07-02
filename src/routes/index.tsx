@@ -5,12 +5,13 @@ import {
   BookOpen, Clock, Search, Bookmark, BookmarkCheck,
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
-  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette,
+  Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, Grid3x3,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
 import { TafsirSheet } from "@/components/TafsirSheet";
 import { KhatmTracker } from "@/components/KhatmTracker";
+import { MoreView } from "@/components/MoreView";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 import { MORNING_ADHKAR, EVENING_ADHKAR, type Dhikr } from "@/lib/adhkar";
 import { TASBIHAT, DEFAULT_TASBIH_ID } from "@/lib/tasbihat";
@@ -92,7 +93,7 @@ function AppRoot() {
   );
 }
 
-type TabId = "quran" | "prayer" | "dhikr" | "tasbih" | "settings";
+type TabId = "quran" | "prayer" | "dhikr" | "tasbih" | "more" | "settings";
 
 function Dashboard() {
   const [settings] = useSettings();
@@ -105,6 +106,7 @@ function Dashboard() {
     { id: "prayer", label: t.tabs.prayer, icon: Clock },
     { id: "dhikr", label: t.tabs.dhikr, icon: BookText },
     { id: "tasbih", label: t.tabs.tasbih, icon: BeadsIcon },
+    { id: "more", label: t.tabs.more, icon: Grid3x3 },
     { id: "settings", label: t.tabs.settings, icon: SettingsIcon },
   ];
 
@@ -120,6 +122,7 @@ function Dashboard() {
         {active === "prayer" && <PrayerView t={t} lang={settings.lang} cityId={settings.cityId} madhab={settings.madhab} />}
         {active === "dhikr" && <DhikrView t={t} lang={settings.lang} />}
         {active === "tasbih" && <TasbihView t={t} lang={settings.lang} />}
+        {active === "more" && <MoreView t={t} lang={settings.lang} />}
         {active === "settings" && <SettingsView t={t} lang={settings.lang} />}
       </main>
 
