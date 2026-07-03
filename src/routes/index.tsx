@@ -234,12 +234,14 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
 
   if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
 
-  // Resume last read
-  let lastRead: { surah: number; name: string; ayah: number } | null = null;
-  try {
-    const raw = typeof window !== "undefined" ? localStorage.getItem("ibadah:last-read") : null;
-    if (raw) lastRead = JSON.parse(raw);
-  } catch { /* */ }
+  // Resume last read (client-only to avoid hydration mismatch)
+  const [lastRead, setLastRead] = useState<{ surah: number; name: string; ayah: number } | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("ibadah:last-read");
+      if (raw) setLastRead(JSON.parse(raw));
+    } catch { /* */ }
+  }, []);
 
   return (
     <div className="space-y-4">
