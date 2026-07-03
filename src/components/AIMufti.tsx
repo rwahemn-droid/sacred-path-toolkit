@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Send, Sparkles, ArrowLeft } from "lucide-react";
+import { Send, Sparkles, ArrowLeft, Printer } from "lucide-react";
 import { askMufti } from "@/lib/mufti.server";
 import type { Lang, Dict } from "@/lib/i18n";
 import { MORE } from "@/lib/more-i18n";
@@ -40,11 +40,38 @@ export function AIMufti({ lang, t, onBack }: { lang: Lang; t: Dict; onBack: () =
     }
   };
 
+  const printChat = () => {
+    if (typeof window === "undefined") return;
+    const w = window.open("", "_blank", "width=800,height=900");
+    if (!w) return;
+    const isRTL = lang !== "en";
+    const rows = messages
+      .map((msg) => {
+        const who = msg.role === "user" ? (isRTL ? "پرسیار" : "You") : "AI Mufti";
+        const bg = msg.role === "user" ? "#f5efe0" : "#ffffff";
+        const safe = msg.content.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c]!);
+        return `<div style="border:1px solid #d9c99b;background:${bg};border-radius:12px;padding:12px 16px;margin:10px 0;"><div style="font-size:11px;color:#8a7420;margin-bottom:4px;">${who}</div><div style="white-space:pre-wrap;line-height:1.8;">${safe}</div></div>`;
+      })
+      .join("");
+    w.document.write(`<!doctype html><html dir="${isRTL ? "rtl" : "ltr"}"><head><meta charset="utf-8"><title>${m.title}</title><style>body{font-family:${isRTL ? "'Noto Naskh Arabic',serif" : "system-ui,sans-serif"};max-width:720px;margin:24px auto;padding:0 20px;color:#1a1a1a;}h1{color:#8a7420;border-bottom:2px solid #d9c99b;padding-bottom:8px;}footer{margin-top:24px;font-size:11px;color:#888;text-align:center;}</style></head><body><h1>${m.title}</h1><p style="color:#666;font-size:12px;">${new Date().toLocaleString()}</p>${rows}<footer>${m.disclaimer} · IbadahPro</footer></body></html>`);
+    w.document.close();
+    setTimeout(() => { try { w.print(); } catch { /* */ } }, 300);
+  };
+
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-      <button onClick={onBack} className="mb-3 inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80">
-        <ArrowLeft className="h-4 w-4" /> {t.quran.back}
-      </button>
+      <div className="mb-3 flex items-center justify-between">
+        <button onClick={onBack} className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80">
+          <ArrowLeft className="h-4 w-4" /> {t.quran.back}
+        </button>
+        {messages.length > 0 && (
+          <button onClick={printChat} className="inline-flex items-center gap-2 text-xs rounded-full border px-3 py-1.5 hover:border-primary/50 transition"
+            style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <Printer className="h-3.5 w-3.5 text-primary" />
+            {lang === "en" ? "Print" : lang === "ar" ? "طباعة" : "چاپکردن"}
+          </button>
+        )}
+      </div>
 
       <div className="rounded-3xl border p-5 mb-4 backdrop-blur-xl"
         style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>

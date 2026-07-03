@@ -1,58 +1,77 @@
-# پلانی تەواوکردنی هەموو تایبەتمەندییەکان
 
-هەموو داواکارییەکان بە یەک پەرە جێبەجێ دەکرێن. لابردنی بەشی **جۆری فۆنت** (وەک وێنەکە).
+# پلانی گەورە: IbadahPro → Islamic Super App
 
-## ١. لابردن
-- لابردنی کارتی "جۆری فۆنت" لە SettingsView (`src/routes/index.tsx`).
-- پاککردنەوەی `FontFamily`, `FONT_FAMILY_CSS`, `FONT_FAMILY_LABEL` لە `src/lib/settings.ts`.
+داواکاریەکەت ٣٠٠+ تایبەتمەندی لەخۆدەگرێت. ناکرێت هەمووی بە یەک گەڕان جێبەجێ بکرێت بەشێوەیەکی کارا و جوان. بۆیە بە **٦ قۆناغ** دابەشی دەکەم و لە هەر گەڕانێکدا قۆناغێک تەواو دەکەم.
 
-## ٢. قورئان و دەنگ
-- **هاوکاتی هایلایت**: ئایەتی ئێستا بە ڕەنگی پڕی primary + auto-scroll بۆ ناوەڕاستی screen.
-- **مۆدی ئۆفلاین**: داگرتنی سوورەت بۆ IndexedDB (`idb-keyval`)؛ دوگمەی ⬇ + indicator.
-- **بەردەوامبوون لە دوایین خوێندنەوە**: پاشەکەوتی `{surah, ayah}` لە localStorage + کارت لە Home.
-- **خێرایی لێدان**: 0.5/0.75/1/1.25/1.5/2 (`audio.playbackRate`).
-- **کاژێری خەو**: 5/10/15/30/60 خولەک یان کۆتایی سوورەت.
-- **ئایەتی ڕۆژ**: لیستی پێشدابەشکراو، هەڵبژاردن بەپێی dayOfYear، کارت لە Home.
+## قۆناغی ١ — چاککردنی هەڵەکان و بنەڕەتی نوێ (ئێستا)
+- **چاککردنی قورئان**: کاتێ کلیک لە سوورەت دەکەیت، دەبێت خۆکار بەردەوام بێت لە ئایەتی ١ تا کۆتایی بێ ڕاوەستان (auto-continue playback).
+- **AI Mufti چاپکردن**: زیادکردنی دوگمەی چاپ/PDF بۆ وەڵامەکان.
+- **پلانی هەینی**: پەڕەیەکی تەواو (سوورەتی کەهف، سەڵاوات ١٠٠، سوننەتەکان، دوعا).
+- **کاتەکانی ڕەمەزان و عید**: کاتی سوحوور، ئیفتار، تەراویح، ژماردنی ڕۆژان بۆ ڕەمەزان و عید.
 
-## ٣. ئامار
-- `src/lib/stats.ts`: کاتی گوێگرتن، Streak ڕۆژانە، % ـی پێشکەوتنی خەتم.
-- کارتی ئامار لە Home.
+## قۆناغی ٢ — قورئان پڕۆ
+- Mushaf View (Madinah/IndoPak/Warsh)
+- Word by Word + Root Words
+- Tafsir چەندین (Muyassar, Jalalayn, Kathir, Sa'di)
+- Asbab Al-Nuzul
+- Tajweed Colors
+- Bookmark Folders + Notes + Highlights
+- ٣٠٠+ قاری (لە everyayah + mp3quran API)
+- Memorization mode + Revision
+- Reading Goals + Khatmah Planner
+- Quran Quiz
 
-## ٤. نۆتیفیکەیشن
-- `src/lib/notifications.ts`: Notification API + setTimeout بۆ هەر نوێژێک ڕۆژانە.
-- تۆگڵ لە Settings بۆ هەر نوێژێک بەجیا + بیرخستنەوەی زیکری بەیانی/ئێواران.
+## قۆناغی ٣ — حەدیس و پرۆفێتان و مێژوو
+- ٩ کۆمەڵەی حەدیس (Bukhari, Muslim, ...) لە sunnah.com API
+- Hadith Search + Bookmark
+- Stories of Prophets (٢٥ پێغەمبەر)
+- Companions + Four Caliphs + Wives + Battles
+- Islamic Timeline + Encyclopedia
 
-## ٥. ڕۆژی هەینی
-- `src/components/FridayPanel.tsx`: لینکی سوورەتی کەهف، چێکلستی سوننەت، ژمێرەری سەڵاوات.
-- دیار دەبێت لە Home تەنیا ڕۆژی هەینی.
+## قۆناغی ٤ — نوێژ، دوعا، حەج
+- Prayer Tracker + Missed Prayer + Statistics
+- Qibla AR Camera
+- Mosque Finder (OpenStreetMap)
+- Wudu/Ghusl/Salah Guides (بە animation)
+- Hajj/Umrah Guide + Tawaf/Sai Counter + Checklist
+- ١٥+ کۆمەڵەی ئەزکار (خەو، بەیانی، سەفەر، خواردن، ...)
 
-## ٦. UX/UI
-- **Framer Motion**: گواستنەوەی نەرم لەنێوان تابەکان (`AnimatePresence`).
-- **تێمی Sepia**: لە `src/styles.css` (`.theme-sepia`) + تۆگڵ.
-- **مۆدی منداڵان**: تێمی ڕەنگاوڕەنگ + فۆنتی گەورەتر + emoji.
-- **گەڕانی بابەتی**: API ـی `api.alquran.cloud/v1/search/{q}/all/ar` + لینک بۆ ئایەت.
-- **کۆنترۆڵی Lock-screen**: `navigator.mediaSession` metadata + handlers.
-- **هاوبەشیکردنی ئایەت**: `html-to-image` + `navigator.share` بۆ دروستکردنی وێنە.
-- **وەرگێڕانی دەنگی**: `speechSynthesis` بۆ خوێندنەوەی وەرگێڕانی کوردی.
+## قۆناغی ٥ — AI و فێربوون و منداڵان
+- AI Quran Teacher + AI Tafsir + AI Hadith Teacher
+- AI Voice Assistant + AI OCR
+- AI Tajweed Checker + AI Study Planner
+- AI Quiz/Flashcard Generator
+- Aqeedah/Fiqh/Seerah/Tajweed Courses
+- Kids Mode (Stories, Coloring, Games, Rewards, Parent Dashboard)
 
-## ٧. تەکنیکی
-- **RTL**: دڵنیاکردنەوەی `dir` لە `__root.tsx` بۆ زمانە RTL ـەکان.
-- **Cloud Sync**: چالاککردنی Lovable Cloud — تەیبڵی `user_settings`, `user_stats`, `feedback` + RLS + GRANTs + server functions.
-- **Lazy-loading**: `React.lazy` بۆ KhatmTracker, QiblaCompass, TafsirSheet.
-- **فۆڕمی پێشنیار**: لە Settings → دەنێردرێت بۆ `feedback` تەیبڵ.
+## قۆناغی ٦ — میدیا، کۆمەڵگە، یوتیلیتی، سێکیوریتی
+- Live Makkah/Madinah (YouTube embed)
+- Islamic TV/Radio/Podcasts
+- Community + Leaderboards + Achievements
+- Halal Restaurant Finder + Weather
+- PIN/Fingerprint Lock
+- Cloud Sync (Lovable Cloud)
+- Widgets + Offline Mode + Backup/Restore
+- 3D Kaaba/Haramain (three.js)
 
-## فایلە نوێیەکان (≈١٢)
-`stats.ts`, `notifications.ts`, `verse-of-day.ts`, `offline-audio.ts`, `share-image.ts`,
-`SleepTimer.tsx`, `PlaybackSpeed.tsx`, `FridayPanel.tsx`, `VerseOfDay.tsx`,
-`StatsCards.tsx`, `ThematicSearch.tsx`, `FeedbackForm.tsx`
+## دیزاینی گشتی (لە هەموو قۆناغەکاندا)
+- Framer Motion animations (120fps feel)
+- Glassmorphism + Aurora background
+- Lottie animations
+- Shimmer/Skeleton loading
+- Haptic feedback (Vibration API)
+- Beautiful empty states
+- Voice search
+- Bottom nav modernization
 
-## نوێکردنەوەکان
-`src/routes/index.tsx`, `src/routes/__root.tsx`, `src/lib/settings.ts`, `src/lib/i18n.ts`, `src/styles.css`
+## تەکنیکی
+- پاکێج: `framer-motion`, `idb-keyval`, `html-to-image`, `three`, `@react-three/fiber`, `lottie-react`
+- Lovable Cloud بۆ sync (user_bookmarks, user_notes, user_progress, user_settings)
+- Server functions بۆ AI features (mufti, teacher, tafsir, quiz-gen)
+- IndexedDB بۆ offline audio/mushaf pages
 
-## پاکێجە نوێیەکان
-`framer-motion`, `idb-keyval`, `html-to-image`
+---
 
-## Backend (Lovable Cloud)
-چالاککردن + migration بۆ ٣ تەیبڵ + ٣ server function (`getUserData`, `saveUserData`, `submitFeedback`).
+**ئێستا دەست بکەم بە قۆناغی ١؟** یان ڕیزبەندییەک بەگوێرەی گرنگی خۆت هەیە (بۆ نموونە یەکەم قورئان پڕۆ، دواتر حەدیس)؟
 
-دوای پەسەندکردن، هەمووی بە یەک گەڕان جێبەجێ دەکەم.
+هەر قۆناغێک ~٣٠-٥٠ فایل نوێ و چەندین گەڕان پێویستە. با یەک بەیەک تەواوی بکەین.
