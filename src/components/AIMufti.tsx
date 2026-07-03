@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect } from "react";
-import { Send, Sparkles, ArrowLeft } from "lucide-react";
+import { Send, Sparkles, ArrowLeft, Printer } from "lucide-react";
 import { askMufti } from "@/lib/mufti.server";
 import type { Lang, Dict } from "@/lib/i18n";
 import { MORE } from "@/lib/more-i18n";
