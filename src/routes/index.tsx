@@ -1703,3 +1703,111 @@ function FridayPanel({ t, lang }: { t: Dict; lang: Lang }) {
     </Card>
   );
 }
+
+function RamadanCard({ t: _t, lang }: { t: Dict; lang: Lang }) {
+  const [info, setInfo] = useState<{ ramadanStart?: Date; eidFitr?: Date; eidAdha?: Date; inRamadan?: boolean; dayOfRamadan?: number; suhoor?: string; iftar?: string } | null>(null);
+
+  useEffect(() => {
+    let cancel = false;
+    (async () => {
+      try {
+        // Current Hijri date
+        const now = new Date();
+        const dd = String(now.getDate()).padStart(2, "0");
+        const mm = String(now.getMonth() + 1).padStart(2, "0");
+        const yy = now.getFullYear();
+        const r = await fetch(`https://api.aladhan.com/v1/gToH/${dd}-${mm}-${yy}`).then((r) => r.json());
+        const hMonth = Number(r?.data?.hijri?.month?.number ?? 0);
+        const hDay = Number(r?.data?.hijri?.day ?? 0);
+        const hYear = Number(r?.data?.hijri?.year ?? 0);
+
+        // Compute Ramadan 1 & Eid dates for current or next Hijri year
+        const hYearUse = hMonth <= 9 ? hYear : hYear + 1;
+        const [ramadan, eidFitr, eidAdha] = await Promise.all([
+          fetch(`https://api.aladhan.com/v1/hToG/01-09-${hYearUse}`).then((r) => r.json()),
+          fetch(`https://api.aladhan.com/v1/hToG/01-10-${hYearUse}`).then((r) => r.json()),
+          fetch(`https://api.aladhan.com/v1/hToG/10-12-${hYearUse}`).then((r) => r.json()),
+        ]);
+        const toDate = (j: { data?: { gregorian?: { date?: string } } }) => {
+          const s: string = j?.data?.gregorian?.date ?? "";
+          const [d, m, y] = s.split("-").map((n: string) => parseInt(n, 10));
+          return new Date(y, (m || 1) - 1, d || 1);
+        };
+        const inRamadan = hMonth === 9;
+        let suhoor: string | undefined;
+        let iftar: string | undefined;
+        if (inRamadan) {
+          try {
+            const coords = JSON.parse(localStorage.getItem("ibadah:coords") || "null") || { lat: 36.1911, lng: 44.0093 };
+            const pr = await fetch(`https://api.aladhan.com/v1/timings/${dd}-${mm}-${yy}?latitude=${coords.lat}&longitude=${coords.lng}&method=14`).then((r) => r.json());
+            const to12 = (t?: string) => {
+              if (!t) return undefined;
+              const [H, M] = t.split(":").map(Number);
+              const p = H >= 12 ? "PM" : "AM";
+              const h12 = ((H + 11) % 12) + 1;
+              return `${h12}:${String(M).padStart(2, "0")} ${p}`;
+            };
+            suhoor = to12(pr?.data?.timings?.Imsak);
+            iftar = to12(pr?.data?.timings?.Maghrib);
+          } catch { /* */ }
+        }
+        if (!cancel) {
+          setInfo({
+            ramadanStart: toDate(ramadan),
+            eidFitr: toDate(eidFitr),
+            eidAdha: toDate(eidAdha),
+            inRamadan,
+            dayOfRamadan: inRamadan ? hDay : undefined,
+            suhoor,
+            iftar,
+          });
+        }
+      } catch { /* */ }
+    })();
+    return () => { cancel = true; };
+  }, []);
+
+  const label = lang === "en" ? { title: "Ramadan & Eid", ramadan: "Ramadan", eidFitr: "Eid al-Fitr", eidAdha: "Eid al-Adha", days: "days", today: "Today", day: "Day", suhoor: "Suhoor", iftar: "Iftar" }
+    : lang === "ar" ? { title: "رمضان والعيد", ramadan: "رمضان", eidFitr: "عيد الفطر", eidAdha: "عيد الأضحى", days: "يوم", today: "اليوم", day: "اليوم", suhoor: "السحور", iftar: "الإفطار" }
+    : { title: "ڕەمەزان و جەژن", ramadan: "ڕەمەزان", eidFitr: "جەژنی ڕەمەزان", eidAdha: "جەژنی قوربان", days: "ڕۆژ", today: "ئەمڕۆ", day: "ڕۆژی", suhoor: "سوحوور", iftar: "ئیفتار" };
+
+  const daysUntil = (d?: Date) => d ? Math.max(0, Math.ceil((+d - +new Date()) / 86400000)) : 0;
+  const fmt = (d?: Date) => d ? d.toLocaleDateString(lang === "ar" ? "ar" : lang === "en" ? "en-GB" : "ku", { day: "numeric", month: "short", year: "numeric" }) : "";
+
+  return (
+    <Card>
+      <div className="flex items-center gap-2 mb-3">
+        <Moon className="h-4 w-4 text-primary" />
+        <h3 className="font-medium text-sm">{label.title}</h3>
+      </div>
+      {info?.inRamadan && (
+        <div className="rounded-2xl border p-3 mb-3" style={{ background: "var(--gradient-gold)", borderColor: "var(--glass-border)", color: "var(--primary-foreground)" }}>
+          <p className="text-xs opacity-90">{label.today} · {label.day} {toLocaleDigits(info.dayOfRamadan ?? 0, lang)}</p>
+          <div className="mt-2 grid grid-cols-2 gap-2 text-sm">
+            <div><p className="text-[10px] opacity-80">{label.suhoor}</p><p className="font-semibold tabular-nums">{info.suhoor ?? "—"}</p></div>
+            <div><p className="text-[10px] opacity-80">{label.iftar}</p><p className="font-semibold tabular-nums">{info.iftar ?? "—"}</p></div>
+          </div>
+        </div>
+      )}
+      <div className="grid gap-2">
+        {[
+          { name: label.ramadan, d: info?.ramadanStart, hide: info?.inRamadan },
+          { name: label.eidFitr, d: info?.eidFitr },
+          { name: label.eidAdha, d: info?.eidAdha },
+        ].filter((x) => !x.hide).map((x) => (
+          <div key={x.name} className="flex items-center justify-between rounded-xl border p-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <div>
+              <p className="text-sm font-medium">{x.name}</p>
+              <p className="text-[11px] text-muted-foreground">{fmt(x.d)}</p>
+            </div>
+            <div className="text-end">
+              <p className="text-lg font-bold text-primary tabular-nums leading-none">{toLocaleDigits(daysUntil(x.d), lang)}</p>
+              <p className="text-[10px] text-muted-foreground">{label.days}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
