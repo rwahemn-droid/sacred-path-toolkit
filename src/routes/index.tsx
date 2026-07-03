@@ -746,7 +746,7 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
                     <ScrollText className="h-3.5 w-3.5" /> {t.quran.tafsir}
                   </button>
                   <button
-                    onClick={() => (isActive ? stopAudio() : playAyah(i))}
+                    onClick={() => (isActive ? stopAudio() : playAyah(i, true))}
                     className="h-9 w-9 rounded-full flex items-center justify-center border hover:border-primary/60 transition"
                     style={{ borderColor: "var(--glass-border)" }}
                     aria-label="play ayah"
