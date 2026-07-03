@@ -1264,7 +1264,9 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
         <p className="mt-2 text-[10px] text-primary text-end">— {toLocaleDigits(vod.surah, lang)}:{toLocaleDigits(vod.ayah, lang)}</p>
       </Card>
 
-      {isFriday && <FridayPanel t={t} lang={lang} />}
+      <FridayPanel t={t} lang={lang} />
+      <RamadanCard t={t} lang={lang} />
+
 
       <div
         className="grid grid-cols-4 gap-1 rounded-2xl border p-1 backdrop-blur-xl"
