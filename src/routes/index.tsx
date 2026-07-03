@@ -1224,7 +1224,7 @@ function DhikrView({ t, lang }: { t: Dict; lang: Lang }) {
     const day = Math.floor((+new Date() - +start) / 86400000);
     return VERSES_OF_DAY[day % VERSES_OF_DAY.length];
   }, []);
-  const isFriday = new Date().getDay() === 5;
+  void 0;
   const vodText = lang === "en" ? vod.en : lang === "ar" ? vod.ar : vod.ku;
   const listenH = Math.floor(stats.listeningSec / 3600);
   const listenM = Math.floor((stats.listeningSec % 3600) / 60);
