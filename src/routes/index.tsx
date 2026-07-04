@@ -232,8 +232,6 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
     [surahs, bookmarks],
   );
 
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
-
   // Resume last read (client-only to avoid hydration mismatch)
   const [lastRead, setLastRead] = useState<{ surah: number; name: string; ayah: number } | null>(null);
   useEffect(() => {
@@ -242,6 +240,9 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
       if (raw) setLastRead(JSON.parse(raw));
     } catch { /* */ }
   }, []);
+
+  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
+
 
   return (
     <div className="space-y-4">
