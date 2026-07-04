@@ -1,5 +1,8 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, BookOpen, RotateCcw } from "lucide-react";
+import type { Lang, Dict } from "@/lib/i18n";
+void 0 as unknown as Dict;
+
 import type { Lang } from "@/lib/i18n";
 
 const KEY = "ibadah:khatm"; // { juz: bool[30], startedAt: iso }
