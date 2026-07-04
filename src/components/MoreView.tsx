@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Coins, CalendarDays, Flame, Star } from "lucide-react";
+import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked } from "lucide-react";
 import type { Lang, Dict } from "@/lib/i18n";
 import { MORE } from "@/lib/more-i18n";
 import { AIMufti } from "./AIMufti";
@@ -7,8 +7,11 @@ import { AsmaAllah } from "./AsmaAllah";
 import { ZakatCalculator } from "./ZakatCalculator";
 import { IslamicEvents } from "./IslamicEvents";
 import { HabitTracker } from "./HabitTracker";
+import { HadithLibrary } from "./HadithLibrary";
+import { PrayerTracker } from "./PrayerTracker";
+import { KhatmTracker } from "./KhatmTracker";
 
-type Sub = "hub" | "mufti" | "asma" | "zakat" | "events" | "habits";
+type Sub = "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith" | "prayer" | "khatm";
 
 export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const [sub, setSub] = useState<Sub>("hub");
@@ -19,6 +22,11 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   if (sub === "zakat") return <ZakatCalculator lang={lang} t={t} onBack={() => setSub("hub")} />;
   if (sub === "events") return <IslamicEvents lang={lang} t={t} onBack={() => setSub("hub")} />;
   if (sub === "habits") return <HabitTracker lang={lang} t={t} onBack={() => setSub("hub")} />;
+  if (sub === "hadith") return <HadithLibrary lang={lang} t={t} onBack={() => setSub("hub")} />;
+  if (sub === "prayer") return <PrayerTracker lang={lang} onBack={() => setSub("hub")} />;
+  if (sub === "khatm") return <KhatmTracker lang={lang} onBack={() => setSub("hub")} />;
+
+  const L = (ku: string, ar: string, en: string) => lang === "ar" ? ar : lang === "en" ? en : ku;
 
   const cards: {
     id: Sub;
@@ -29,11 +37,15 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
     category: string;
   }[] = [
     { id: "mufti",  title: m.cards.mufti.title,  desc: m.cards.mufti.desc,  icon: Sparkles,    bg: "linear-gradient(135deg,#a855f7,#6366f1)", category: m.categories.ai },
+    { id: "hadith", title: L("کتێبخانەی حەدیس","مكتبة الحديث","Hadith Library"), desc: L("٩ کۆمەڵەی حەدیس","٩ مجموعات","9 collections"), icon: BookMarked, bg: "linear-gradient(135deg,#0891b2,#0e7490)", category: m.categories.knowledge },
+    { id: "prayer", title: L("شوێنپێی نوێژ","متتبع الصلوات","Prayer Tracker"), desc: L("٥ نوێژی ڕۆژانە","٥ صلوات يومية","5 daily prayers"), icon: ClipboardCheck, bg: "linear-gradient(135deg,#0ea5e9,#2563eb)", category: m.categories.tools },
+    { id: "khatm",  title: L("شوێنپێی خەتم","متتبع الختمة","Khatmah Tracker"), desc: L("٣٠ جزء قورئان","٣٠ جزء قرآن","30 juz progress"), icon: BookOpen, bg: "linear-gradient(135deg,#d97706,#b45309)", category: m.categories.knowledge },
     { id: "asma",   title: m.cards.asma.title,   desc: m.cards.asma.desc,   icon: Star,        bg: "linear-gradient(135deg,#f59e0b,#f97316)", category: m.categories.knowledge },
     { id: "zakat",  title: m.cards.zakat.title,  desc: m.cards.zakat.desc,  icon: Coins,       bg: "linear-gradient(135deg,#10b981,#14b8a6)", category: m.categories.tools },
     { id: "events", title: m.cards.events.title, desc: m.cards.events.desc, icon: CalendarDays,bg: "linear-gradient(135deg,#0ea5a3,#3b82f6)", category: m.categories.calendar },
     { id: "habits", title: m.cards.habits.title, desc: m.cards.habits.desc, icon: Flame,       bg: "linear-gradient(135deg,#ef4444,#f59e0b)", category: m.categories.tools },
   ];
+
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-4">
