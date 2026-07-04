@@ -42,10 +42,13 @@ export function KhatmTracker({ lang, onBack }: { lang: Lang; t?: Dict; onBack?: 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-4">
       <div className="flex items-center gap-2">
-        <button onClick={onBack} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-white/5">
-          <ArrowLeft className="h-4 w-4" />
-        </button>
+        {onBack && (
+          <button onClick={onBack} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-white/5">
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+        )}
         <h2 className="text-lg font-semibold flex-1">
+
           {lang === "ar" ? "متتبع الختمة" : lang === "en" ? "Khatmah Tracker" : "شوێنپێی خەتم"}
         </h2>
         <button onClick={reset} className="h-9 w-9 rounded-full flex items-center justify-center hover:bg-white/5" title="Reset">
