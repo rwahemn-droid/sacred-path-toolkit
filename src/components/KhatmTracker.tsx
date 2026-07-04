@@ -1,9 +1,6 @@
 import { useMemo, useState } from "react";
 import { ArrowLeft, BookOpen, RotateCcw } from "lucide-react";
 import type { Lang, Dict } from "@/lib/i18n";
-void 0 as unknown as Dict;
-
-import type { Lang } from "@/lib/i18n";
 
 const KEY = "ibadah:khatm"; // { juz: bool[30], startedAt: iso }
 type State = { juz: boolean[]; startedAt: string };
@@ -18,7 +15,8 @@ function load(): State {
 }
 function save(s: State) { localStorage.setItem(KEY, JSON.stringify(s)); }
 
-export function KhatmTracker({ lang, onBack }: { lang: Lang; onBack: () => void }) {
+export function KhatmTracker({ lang, onBack }: { lang: Lang; t?: Dict; onBack?: () => void }) {
+
   const [state, setState] = useState<State>(load);
   const done = state.juz.filter(Boolean).length;
   const pct = Math.round((done / 30) * 100);
