@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked } from "lucide-react";
+import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked, Sun, Droplet, User, Compass, Moon } from "lucide-react";
 import type { Lang, Dict } from "@/lib/i18n";
 import { MORE } from "@/lib/more-i18n";
 import { AIMufti } from "./AIMufti";
@@ -10,21 +10,33 @@ import { HabitTracker } from "./HabitTracker";
 import { HadithLibrary } from "./HadithLibrary";
 import { PrayerTracker } from "./PrayerTracker";
 import { KhatmTracker } from "./KhatmTracker";
+import { AdhkarPacks } from "./AdhkarPacks";
+import { WudhuGuide, SalahGuide } from "./Guides";
+import { TawafSaiCounter } from "./TawafSaiCounter";
+import { RamadanPlanner } from "./RamadanPlanner";
 
-type Sub = "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith" | "prayer" | "khatm";
+type Sub =
+  | "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith"
+  | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan";
 
 export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const [sub, setSub] = useState<Sub>("hub");
   const m = MORE[lang];
+  const back = () => setSub("hub");
 
-  if (sub === "mufti") return <AIMufti lang={lang} t={t} onBack={() => setSub("hub")} />;
-  if (sub === "asma") return <AsmaAllah lang={lang} t={t} onBack={() => setSub("hub")} />;
-  if (sub === "zakat") return <ZakatCalculator lang={lang} t={t} onBack={() => setSub("hub")} />;
-  if (sub === "events") return <IslamicEvents lang={lang} t={t} onBack={() => setSub("hub")} />;
-  if (sub === "habits") return <HabitTracker lang={lang} t={t} onBack={() => setSub("hub")} />;
-  if (sub === "hadith") return <HadithLibrary lang={lang} t={t} onBack={() => setSub("hub")} />;
-  if (sub === "prayer") return <PrayerTracker lang={lang} onBack={() => setSub("hub")} />;
-  if (sub === "khatm") return <KhatmTracker lang={lang} onBack={() => setSub("hub")} />;
+  if (sub === "mufti") return <AIMufti lang={lang} t={t} onBack={back} />;
+  if (sub === "asma") return <AsmaAllah lang={lang} t={t} onBack={back} />;
+  if (sub === "zakat") return <ZakatCalculator lang={lang} t={t} onBack={back} />;
+  if (sub === "events") return <IslamicEvents lang={lang} t={t} onBack={back} />;
+  if (sub === "habits") return <HabitTracker lang={lang} t={t} onBack={back} />;
+  if (sub === "hadith") return <HadithLibrary lang={lang} t={t} onBack={back} />;
+  if (sub === "prayer") return <PrayerTracker lang={lang} onBack={back} />;
+  if (sub === "khatm") return <KhatmTracker lang={lang} onBack={back} />;
+  if (sub === "adhkar") return <AdhkarPacks lang={lang} onBack={back} />;
+  if (sub === "wudhu") return <WudhuGuide lang={lang} onBack={back} />;
+  if (sub === "salah") return <SalahGuide lang={lang} onBack={back} />;
+  if (sub === "tawaf") return <TawafSaiCounter lang={lang} onBack={back} />;
+  if (sub === "ramadan") return <RamadanPlanner lang={lang} onBack={back} />;
 
   const L = (ku: string, ar: string, en: string) => lang === "ar" ? ar : lang === "en" ? en : ku;
 
@@ -37,7 +49,12 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
     category: string;
   }[] = [
     { id: "mufti",  title: m.cards.mufti.title,  desc: m.cards.mufti.desc,  icon: Sparkles,    bg: "linear-gradient(135deg,#a855f7,#6366f1)", category: m.categories.ai },
+    { id: "adhkar", title: L("ئەذکاری ڕۆژانە","الأذكار اليومية","Daily Adhkar"), desc: L("بەیانی، ئێواره، خەو، گەشت","صباح، مساء، نوم، سفر","Morning, evening, sleep, travel"), icon: Sun, bg: "linear-gradient(135deg,#f59e0b,#f97316)", category: m.categories.knowledge },
     { id: "hadith", title: L("کتێبخانەی حەدیس","مكتبة الحديث","Hadith Library"), desc: L("٩ کۆمەڵەی حەدیس","٩ مجموعات","9 collections"), icon: BookMarked, bg: "linear-gradient(135deg,#0891b2,#0e7490)", category: m.categories.knowledge },
+    { id: "wudhu",  title: L("ڕێنمای وزو","دليل الوضوء","Wudhu Guide"), desc: L("١١ هەنگاو","١١ خطوة","11 steps"), icon: Droplet, bg: "linear-gradient(135deg,#06b6d4,#0891b2)", category: m.categories.knowledge },
+    { id: "salah",  title: L("ڕێنمای نوێژ","دليل الصلاة","Salah Guide"), desc: L("١٣ هەنگاو","١٣ خطوة","13 steps"), icon: User, bg: "linear-gradient(135deg,#22c55e,#16a34a)", category: m.categories.knowledge },
+    { id: "tawaf",  title: L("تەواف و سعی","الطواف والسعي","Tawaf & Saʿi"), desc: L("ژماردەی ٧ خول","عداد ٧ أشواط","7-circuit counter"), icon: Compass, bg: "linear-gradient(135deg,#8b5cf6,#6d28d9)", category: m.categories.tools },
+    { id: "ramadan", title: L("پلانی ڕەمەزان","خطة رمضان","Ramadan Planner"), desc: L("٣٠ ڕۆژ + لەیلەتولقەدر","٣٠ يوم + ليلة القدر","30 days + Laylatul Qadr"), icon: Moon, bg: "linear-gradient(135deg,#4f46e5,#7c3aed)", category: m.categories.calendar },
     { id: "prayer", title: L("شوێنپێی نوێژ","متتبع الصلوات","Prayer Tracker"), desc: L("٥ نوێژی ڕۆژانە","٥ صلوات يومية","5 daily prayers"), icon: ClipboardCheck, bg: "linear-gradient(135deg,#0ea5e9,#2563eb)", category: m.categories.tools },
     { id: "khatm",  title: L("شوێنپێی خەتم","متتبع الختمة","Khatmah Tracker"), desc: L("٣٠ جزء قورئان","٣٠ جزء قرآن","30 juz progress"), icon: BookOpen, bg: "linear-gradient(135deg,#d97706,#b45309)", category: m.categories.knowledge },
     { id: "asma",   title: m.cards.asma.title,   desc: m.cards.asma.desc,   icon: Star,        bg: "linear-gradient(135deg,#f59e0b,#f97316)", category: m.categories.knowledge },
