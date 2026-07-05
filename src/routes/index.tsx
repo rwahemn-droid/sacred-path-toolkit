@@ -541,11 +541,14 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     });
 
     audio.addEventListener("error", () => {
+      if (audioRef.current !== audio) return;
       setPlayingIdx(null);
       setPlayAll(false);
     });
 
     audio.play().catch(() => {
+      // Ignore aborts caused by starting the next ayah (audioRef swapped).
+      if (audioRef.current !== audio) return;
       setPlayingIdx(null);
       setPlayAll(false);
     });
