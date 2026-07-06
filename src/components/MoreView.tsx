@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked, Sun, Droplet, User, Compass, Moon } from "lucide-react";
+import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked, Sun, Droplet, User, Compass, Moon, Scale, Users, ScrollText } from "lucide-react";
 import type { Lang, Dict } from "@/lib/i18n";
 import { MORE } from "@/lib/more-i18n";
 import { AIMufti } from "./AIMufti";
@@ -14,10 +14,14 @@ import { AdhkarPacks } from "./AdhkarPacks";
 import { WudhuGuide, SalahGuide } from "./Guides";
 import { TawafSaiCounter } from "./TawafSaiCounter";
 import { RamadanPlanner } from "./RamadanPlanner";
+import { InheritanceCalculator } from "./InheritanceCalculator";
+import { ProphetsLibrary } from "./ProphetsLibrary";
+import { IslamicHistory } from "./IslamicHistory";
 
 type Sub =
   | "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith"
-  | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan";
+  | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan"
+  | "mirath" | "prophets" | "history";
 
 export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const [sub, setSub] = useState<Sub>("hub");
