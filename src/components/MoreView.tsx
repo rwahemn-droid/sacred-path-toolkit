@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked, Sun, Droplet, User, Compass, Moon } from "lucide-react";
+import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked, Sun, Droplet, User, Compass, Moon, Scale, Users, ScrollText } from "lucide-react";
 import type { Lang, Dict } from "@/lib/i18n";
 import { MORE } from "@/lib/more-i18n";
 import { AIMufti } from "./AIMufti";
@@ -14,10 +14,14 @@ import { AdhkarPacks } from "./AdhkarPacks";
 import { WudhuGuide, SalahGuide } from "./Guides";
 import { TawafSaiCounter } from "./TawafSaiCounter";
 import { RamadanPlanner } from "./RamadanPlanner";
+import { InheritanceCalculator } from "./InheritanceCalculator";
+import { ProphetsLibrary } from "./ProphetsLibrary";
+import { IslamicHistory } from "./IslamicHistory";
 
 type Sub =
   | "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith"
-  | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan";
+  | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan"
+  | "mirath" | "prophets" | "history";
 
 export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const [sub, setSub] = useState<Sub>("hub");
@@ -37,6 +41,9 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   if (sub === "salah") return <SalahGuide lang={lang} onBack={back} />;
   if (sub === "tawaf") return <TawafSaiCounter lang={lang} onBack={back} />;
   if (sub === "ramadan") return <RamadanPlanner lang={lang} onBack={back} />;
+  if (sub === "mirath") return <InheritanceCalculator lang={lang} onBack={back} />;
+  if (sub === "prophets") return <ProphetsLibrary lang={lang} onBack={back} />;
+  if (sub === "history") return <IslamicHistory lang={lang} onBack={back} />;
 
   const L = (ku: string, ar: string, en: string) => lang === "ar" ? ar : lang === "en" ? en : ku;
 
@@ -49,6 +56,9 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
     category: string;
   }[] = [
     { id: "mufti",  title: m.cards.mufti.title,  desc: m.cards.mufti.desc,  icon: Sparkles,    bg: "linear-gradient(135deg,#a855f7,#6366f1)", category: m.categories.ai },
+    { id: "prophets", title: L("پێغەمبەران","الأنبياء","Prophets"), desc: L("ژیاننامەی ٢٥ پێغەمبەر","سيرة ٢٥ نبياً","25 prophet biographies"), icon: Users, bg: "linear-gradient(135deg,#10b981,#059669)", category: m.categories.knowledge },
+    { id: "history", title: L("مێژووی ئیسلامی","التاريخ الإسلامي","Islamic History"), desc: L("ڕووداوە گرنگەکان","أهم الأحداث","Key events timeline"), icon: ScrollText, bg: "linear-gradient(135deg,#f97316,#dc2626)", category: m.categories.knowledge },
+    { id: "mirath", title: L("ژماردەی میرات","حاسبة الميراث","Inheritance"), desc: L("حوکمی فەرائیز","أحكام الفرائض","Faraid calculator"), icon: Scale, bg: "linear-gradient(135deg,#f59e0b,#d97706)", category: m.categories.tools },
     { id: "adhkar", title: L("ئەذکاری ڕۆژانە","الأذكار اليومية","Daily Adhkar"), desc: L("بەیانی، ئێواره، خەو، گەشت","صباح، مساء، نوم، سفر","Morning, evening, sleep, travel"), icon: Sun, bg: "linear-gradient(135deg,#f59e0b,#f97316)", category: m.categories.knowledge },
     { id: "hadith", title: L("کتێبخانەی حەدیس","مكتبة الحديث","Hadith Library"), desc: L("٩ کۆمەڵەی حەدیس","٩ مجموعات","9 collections"), icon: BookMarked, bg: "linear-gradient(135deg,#0891b2,#0e7490)", category: m.categories.knowledge },
     { id: "wudhu",  title: L("ڕێنمای وزو","دليل الوضوء","Wudhu Guide"), desc: L("١١ هەنگاو","١١ خطوة","11 steps"), icon: Droplet, bg: "linear-gradient(135deg,#06b6d4,#0891b2)", category: m.categories.knowledge },
