@@ -41,6 +41,9 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   if (sub === "salah") return <SalahGuide lang={lang} onBack={back} />;
   if (sub === "tawaf") return <TawafSaiCounter lang={lang} onBack={back} />;
   if (sub === "ramadan") return <RamadanPlanner lang={lang} onBack={back} />;
+  if (sub === "mirath") return <InheritanceCalculator lang={lang} onBack={back} />;
+  if (sub === "prophets") return <ProphetsLibrary lang={lang} onBack={back} />;
+  if (sub === "history") return <IslamicHistory lang={lang} onBack={back} />;
 
   const L = (ku: string, ar: string, en: string) => lang === "ar" ? ar : lang === "en" ? en : ku;
 
