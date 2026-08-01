@@ -6,6 +6,7 @@ import {
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
   Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, Grid3x3,
+  SkipBack, SkipForward, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
@@ -241,7 +242,19 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
     } catch { /* */ }
   }, []);
 
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
+  if (selected)
+    return (
+      <SurahDetail
+        surah={selected}
+        onBack={() => setSelected(null)}
+        onSelectSurah={(n) => {
+          const s = (surahs ?? []).find((x) => x.number === n);
+          if (s) setSelected(s);
+        }}
+        t={t}
+        lang={lang}
+      />
+    );
 
 
   return (
@@ -350,7 +363,7 @@ function SurahItem({
 type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
 
-function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
+function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; onBack: () => void; onSelectSurah?: (n: number) => void; t: Dict; lang: Lang }) {
   const [settings] = useSettings();
   const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
   const arabicFontFamily = ARABIC_FONT_CSS;
@@ -374,6 +387,10 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [playAll, setPlayAll] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const rafRef = useRef<number | null>(null);
+  // Continue to the next surah automatically when this one finishes.
+  const [autoNextSurah, setAutoNextSurah] = useState(true);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   const [tafsirAyah, setTafsirAyah] = useState<{ surah: number; ayah: number; text: string } | null>(null);
   const [ayahQuery, setAyahQuery] = useState("");
@@ -384,6 +401,8 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
   const listeningStartRef = useRef<number | null>(null);
+  const wordRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const pendingAutoplayRef = useRef(false);
 
   // Save last-read position whenever a new ayah starts playing.
   useEffect(() => {
@@ -456,11 +475,20 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     stopAudio();
   };
 
+  const stopWordSync = () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
+
   const stopAudio = () => {
+    stopWordSync();
     audioRef.current?.pause();
     audioRef.current = null;
     setPlayingIdx(null);
     setPlayAll(false);
+    setPaused(false);
     setActiveWord(null);
     if (listeningStartRef.current) {
       bumpListening((Date.now() - listeningStartRef.current) / 1000);
@@ -471,7 +499,27 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     }
   };
 
+  // Pause / resume without losing position.
+  const togglePause = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) {
+      a.play().catch(() => {});
+      setPaused(false);
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        try { navigator.mediaSession.playbackState = "playing"; } catch { /* */ }
+      }
+    } else {
+      a.pause();
+      setPaused(true);
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        try { navigator.mediaSession.playbackState = "paused"; } catch { /* */ }
+      }
+    }
+  };
+
   const playAyah = (idx: number, continueAll = false, loopRemaining?: number) => {
+    stopWordSync();
     audioRef.current?.pause();
     const ayah = arabic[idx];
     if (!ayah) return;
@@ -481,6 +529,7 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
     audio.playbackRate = speed;
     audioRef.current = audio;
     setPlayingIdx(idx);
+    setPaused(false);
     if (continueAll) setPlayAll(true);
     listeningStartRef.current = Date.now();
     markActive();
@@ -493,8 +542,8 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
           artist: reciter.name,
           album: "IbadahPro",
         });
-        navigator.mediaSession.setActionHandler("pause", () => stopAudio());
-        navigator.mediaSession.setActionHandler("play", () => audio.play().catch(() => {}));
+        navigator.mediaSession.setActionHandler("pause", () => togglePause());
+        navigator.mediaSession.setActionHandler("play", () => togglePause());
         navigator.mediaSession.setActionHandler("nexttrack", () => {
           if (idx + 1 < arabic.length) playAyah(idx + 1, continueAll);
         });
@@ -509,19 +558,41 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
       ayahRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
 
+    // Smooth word-by-word highlighting driven by requestAnimationFrame (60–120fps)
+    // instead of the coarse `timeupdate` event (~4fps).
     const ayahTiming = timings?.[ayah.numberInSurah];
     if (ayahTiming?.segments?.length) {
       const baseMs = ayahTiming.timestamp_from;
-      audio.addEventListener("timeupdate", () => {
-        const ms = audio.currentTime * 1000 + baseMs;
-        const seg = ayahTiming.segments.find((s) => ms >= s[1] && ms <= s[2]);
-        if (seg) setActiveWord({ ayahIdx: idx, wordIdx: seg[0] - 1 });
-      });
+      const segs = ayahTiming.segments;
+      let lastWord = -1;
+      const tick = () => {
+        if (audioRef.current !== audio) { rafRef.current = null; return; }
+        if (!audio.paused && !audio.ended) {
+          const ms = audio.currentTime * 1000 + baseMs;
+          let lo = 0, hi = segs.length - 1, found = -1;
+          while (lo <= hi) {
+            const mid = (lo + hi) >> 1;
+            const s = segs[mid];
+            if (ms < s[1]) hi = mid - 1;
+            else if (ms > s[2]) lo = mid + 1;
+            else { found = s[0] - 1; break; }
+          }
+          if (found >= 0 && found !== lastWord) {
+            lastWord = found;
+            setActiveWord({ ayahIdx: idx, wordIdx: found });
+            // Keep the highlighted word visible on long ayahs.
+            wordRefs.current[`${idx}-${found}`]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+          }
+        }
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
     } else {
       setActiveWord(null);
     }
 
     audio.addEventListener("ended", () => {
+      stopWordSync();
       setActiveWord(null);
       if (listeningStartRef.current) {
         bumpListening((Date.now() - listeningStartRef.current) / 1000);
@@ -533,15 +604,24 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
       }
       if (continueAll && idx + 1 < arabic.length) {
         playAyah(idx + 1, true);
-      } else {
+        return;
+      }
+      // End of surah: optionally roll straight into the next surah.
+      if (continueAll && autoNextSurah && sleep !== -1 && surah.number < 114 && onSelectSurah) {
+        pendingAutoplayRef.current = true;
         setPlayingIdx(null);
         setPlayAll(false);
-        if (sleep === -1) { stopAudio(); }
+        onSelectSurah(surah.number + 1);
+        return;
       }
+      setPlayingIdx(null);
+      setPlayAll(false);
+      if (sleep === -1) { stopAudio(); }
     });
 
     audio.addEventListener("error", () => {
       if (audioRef.current !== audio) return;
+      stopWordSync();
       setPlayingIdx(null);
       setPlayAll(false);
     });
@@ -558,6 +638,22 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed;
   }, [speed]);
+
+  // Reset playback when the surah changes; auto-start if we rolled over from
+  // the previous surah.
+  useEffect(() => {
+    stopAudio();
+    setActiveWord(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surah.number]);
+
+  useEffect(() => {
+    if (!pendingAutoplayRef.current) return;
+    if (arabic.length === 0) return;
+    pendingAutoplayRef.current = false;
+    playAyah(0, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arabic.length, surah.number]);
 
   useEffect(() => () => stopAudio(), []);
 
@@ -591,14 +687,82 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
             </div>
           </button>
           <button
-            onClick={() => (playingIdx !== null ? stopAudio() : playAyah(0, true))}
+            onClick={() => (playingIdx !== null ? togglePause() : playAyah(0, true))}
             className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
             style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
             aria-label="play all"
           >
-            {playAll ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            {playingIdx !== null && !paused ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
           </button>
         </div>
+
+        {/* Transport: surah / ayah navigation */}
+        <div className="mt-3 flex items-center justify-between gap-1.5">
+          <button
+            onClick={() => { pendingAutoplayRef.current = playingIdx !== null; onSelectSurah?.(Math.max(1, surah.number - 1)); }}
+            disabled={surah.number <= 1}
+            className="h-10 w-10 rounded-xl border flex items-center justify-center disabled:opacity-30 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="previous surah"
+          >
+            <ChevronRight className="h-4 w-4 text-primary rtl:hidden" />
+            <ChevronLeft className="h-4 w-4 text-primary ltr:hidden" />
+          </button>
+          <button
+            onClick={() => playAyah(Math.max(0, (playingIdx ?? 0) - 1), true)}
+            className="h-10 flex-1 rounded-xl border flex items-center justify-center gap-1.5 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="previous ayah"
+          >
+            <SkipBack className="h-4 w-4 text-primary" />
+          </button>
+          <button
+            onClick={stopAudio}
+            className="h-10 w-10 rounded-xl border flex items-center justify-center hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="stop"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <button
+            onClick={() => playAyah(Math.min(arabic.length - 1, (playingIdx ?? -1) + 1), true)}
+            className="h-10 flex-1 rounded-xl border flex items-center justify-center gap-1.5 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="next ayah"
+          >
+            <SkipForward className="h-4 w-4 text-primary" />
+          </button>
+          <button
+            onClick={() => { pendingAutoplayRef.current = playingIdx !== null; onSelectSurah?.(Math.min(114, surah.number + 1)); }}
+            disabled={surah.number >= 114}
+            className="h-10 w-10 rounded-xl border flex items-center justify-center disabled:opacity-30 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="next surah"
+          >
+            <ChevronLeft className="h-4 w-4 text-primary rtl:hidden" />
+            <ChevronRight className="h-4 w-4 text-primary ltr:hidden" />
+          </button>
+        </div>
+
+        {/* Auto-continue to next surah */}
+        <button
+          onClick={() => setAutoNextSurah((v) => !v)}
+          className="mt-2 w-full flex items-center justify-between rounded-xl border px-3 py-2 text-[12px] hover:border-primary/40 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <span className="text-muted-foreground">
+            {lang === "ar" ? "المتابعة إلى السورة التالية" : lang === "en" ? "Continue to next surah" : "بەردەوامبوون بۆ سوورەتی دواتر"}
+          </span>
+          <span
+            className="h-5 w-9 rounded-full relative transition"
+            style={{ background: autoNextSurah ? "var(--gradient-gold)" : "var(--glass-border)" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+              style={{ insetInlineStart: autoNextSurah ? "1.25rem" : "0.125rem" }}
+            />
+          </span>
+        </button>
 
         {/* Loop selector for memorization */}
         <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
@@ -752,12 +916,12 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
                     <ScrollText className="h-3.5 w-3.5" /> {t.quran.tafsir}
                   </button>
                   <button
-                    onClick={() => (isActive ? stopAudio() : playAyah(i, true))}
+                    onClick={() => (isActive ? togglePause() : playAyah(i, true))}
                     className="h-9 w-9 rounded-full flex items-center justify-center border hover:border-primary/60 transition"
                     style={{ borderColor: "var(--glass-border)" }}
                     aria-label="play ayah"
                   >
-                    {isActive ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
+                    {isActive && !paused ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
                   </button>
                 </div>
               </div>
@@ -772,8 +936,18 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
                   return (
                     <span
                       key={`${a.number}-w-${wi}`}
-                      className="transition-colors"
-                      style={highlight ? { color: "oklch(0.92 0.18 95)", textShadow: "0 0 12px oklch(0.92 0.18 95 / 0.5)" } : undefined}
+                      ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
+                      className="rounded-md transition-all duration-150 ease-out"
+                      style={
+                        highlight
+                          ? {
+                              color: "oklch(0.95 0.19 95)",
+                              background: "oklch(0.92 0.18 95 / 0.14)",
+                              textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)",
+                              padding: "0 0.12em",
+                            }
+                          : undefined
+                      }
                     >
                       {w}{" "}
                     </span>
