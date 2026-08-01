@@ -6,6 +6,7 @@ import {
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
   Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, Grid3x3,
+  SkipBack, SkipForward, ChevronLeft, ChevronRight,
 } from "lucide-react";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
@@ -241,7 +242,19 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
     } catch { /* */ }
   }, []);
 
-  if (selected) return <SurahDetail surah={selected} onBack={() => setSelected(null)} t={t} lang={lang} />;
+  if (selected)
+    return (
+      <SurahDetail
+        surah={selected}
+        onBack={() => setSelected(null)}
+        onSelectSurah={(n) => {
+          const s = (surahs ?? []).find((x) => x.number === n);
+          if (s) setSelected(s);
+        }}
+        t={t}
+        lang={lang}
+      />
+    );
 
 
   return (
@@ -350,7 +363,7 @@ function SurahItem({
 type WordTiming = [number, number, number];
 type AyahTiming = { verse_key: string; timestamp_from: number; timestamp_to: number; segments: WordTiming[] };
 
-function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => void; t: Dict; lang: Lang }) {
+function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; onBack: () => void; onSelectSurah?: (n: number) => void; t: Dict; lang: Lang }) {
   const [settings] = useSettings();
   const arabicFontPx = FONT_SIZE_PX[settings.fontSize];
   const arabicFontFamily = ARABIC_FONT_CSS;
@@ -374,6 +387,10 @@ function SurahDetail({ surah, onBack, t, lang }: { surah: Surah; onBack: () => v
 
   const [playingIdx, setPlayingIdx] = useState<number | null>(null);
   const [playAll, setPlayAll] = useState(false);
+  const [paused, setPaused] = useState(false);
+  const rafRef = useRef<number | null>(null);
+  // Continue to the next surah automatically when this one finishes.
+  const [autoNextSurah, setAutoNextSurah] = useState(true);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   const [tafsirAyah, setTafsirAyah] = useState<{ surah: number; ayah: number; text: string } | null>(null);
   const [ayahQuery, setAyahQuery] = useState("");
