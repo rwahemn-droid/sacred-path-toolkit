@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { ArrowLeft, Users, ChevronRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeft, Users, ChevronRight, Search, Sparkles, ListOrdered, BookOpen, ScrollText } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
+import { PROPHET_STORIES } from "@/lib/prophet-stories";
+import { PROPHET_EXTRAS } from "@/lib/prophet-extra";
 
 type Prophet = {
   id: string;
@@ -38,49 +40,153 @@ const PROPHETS: Prophet[] = [
   { id: "muhammad",name: { ku: "موحەممەد ﷺ",   ar: "محمد ﷺ",      en: "Muhammad ﷺ" }, bio: { ku: "کۆتا پێغەمبەر و باشترینیان. لە مەککە لەدایکبوو (٥٧٠م). قورئانی وەرگرت لە تەمەنی ٤٠ ساڵیدا.", ar: "خاتم النبيين وسيّد المرسلين، وُلد في مكة عام الفيل، بُعث في الأربعين وأُنزل عليه القرآن الكريم.", en: "The Seal of the Prophets, master of the messengers. Born in Makkah, received the Qur'an at age 40." }, refs: ["Al-Ahzab 33:40"] },
 ];
 
+const ULUL_AZM = new Set(["nuh", "ibrahim", "musa", "isa", "muhammad"]);
+
+type SortMode = "quran" | "az";
+type Tab = "bio" | "story" | "events" | "miracles" | "verses";
+
 export function ProphetsLibrary({ lang, onBack }: { lang: Lang; onBack: () => void }) {
   const L = (ku: string, ar: string, en: string) => (lang === "ar" ? ar : lang === "en" ? en : ku);
   const [openId, setOpenId] = useState<string | null>(null);
   const [q, setQ] = useState("");
+  const [sort, setSort] = useState<SortMode>("quran");
+  const [tab, setTab] = useState<Tab>("bio");
+
+  const t = (o: { ku: string; ar: string; en: string }) => (lang === "ar" ? o.ar : lang === "en" ? o.en : o.ku);
+  const storyLang: "ku" | "ar" | "en" = lang === "ar" ? "ar" : lang === "en" ? "en" : "ku";
 
   const open = openId ? PROPHETS.find((p) => p.id === openId) : null;
-  const t = (o: { ku: string; ar: string; en: string }) => (lang === "ar" ? o.ar : lang === "en" ? o.en : o.ku);
 
+  const filtered = useMemo(() => {
+    const needle = q.trim().toLowerCase();
+    const list = PROPHETS.filter((p) => {
+      if (!needle) return true;
+      return (
+        t(p.name).toLowerCase().includes(needle) ||
+        p.name.en.toLowerCase().includes(needle) ||
+        p.name.ar.includes(needle) ||
+        p.id.includes(needle)
+      );
+    });
+    if (sort === "az") {
+      return [...list].sort((a, b) => t(a.name).localeCompare(t(b.name), lang === "ar" ? "ar" : "en"));
+    }
+    return list;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [q, sort, lang]);
+
+  // ---------- Detail view ----------
   if (open) {
+    const extra = PROPHET_EXTRAS[open.id];
+    const story = PROPHET_STORIES[open.id]?.[storyLang];
+
+    const TABS: { id: Tab; label: string; icon: typeof BookOpen; show: boolean }[] = [
+      { id: "bio", label: L("پوختە", "نبذة", "Overview"), icon: BookOpen, show: true },
+      { id: "story", label: L("چیرۆک", "القصة", "Life story"), icon: ScrollText, show: !!story?.length },
+      { id: "events", label: L("ڕووداوەکان", "الأحداث", "Key events"), icon: ListOrdered, show: !!extra?.events?.length },
+      { id: "miracles", label: L("موعجیزەکان", "المعجزات", "Miracles"), icon: Sparkles, show: !!extra?.miracles?.length },
+      { id: "verses", label: L("ئایەتەکان", "الآيات", "Verses"), icon: BookOpen, show: !!open.refs?.length },
+    ];
+    const visible = TABS.filter((x) => x.show);
+    const activeTab = visible.some((x) => x.id === tab) ? tab : "bio";
+
     return (
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-4">
-        <button onClick={() => setOpenId(null)} className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80">
+        <button onClick={() => { setOpenId(null); setTab("bio"); }} className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80">
           <ArrowLeft className="h-4 w-4" /> {L("گەڕانەوە", "رجوع", "Back")}
         </button>
+
         <div className="rounded-3xl border p-6 backdrop-blur-xl text-center" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
-          <h1 className="text-3xl font-semibold" style={{ fontFamily: "var(--font-display)" }}>{t(open.name)}</h1>
+          <h1 className="text-3xl sm:text-4xl font-semibold" style={{ fontFamily: "var(--font-display)" }}>{t(open.name)}</h1>
           {open.people && <p className="mt-2 text-sm text-primary/90">{t(open.people)}</p>}
-        </div>
-        <div className="rounded-3xl border p-5 backdrop-blur-xl leading-8" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
-          <p>{t(open.bio)}</p>
-          {open.refs && (
-            <div className="mt-4 pt-4 border-t flex flex-wrap gap-2" style={{ borderColor: "var(--glass-border)" }}>
-              {open.refs.map((r) => (
-                <span key={r} className="text-xs rounded-full px-3 py-1 border" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>{r}</span>
-              ))}
-            </div>
+          {ULUL_AZM.has(open.id) && (
+            <span className="mt-3 inline-block text-[11px] rounded-full px-3 py-1" style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}>
+              {L("ئولوالعەزم", "أولو العزم", "Ulul-ʿAzm")}
+            </span>
           )}
         </div>
+
+        <div className="flex gap-1.5 overflow-x-auto pb-1">
+          {visible.map((x) => {
+            const Icon = x.icon;
+            const on = activeTab === x.id;
+            return (
+              <button
+                key={x.id}
+                onClick={() => setTab(x.id)}
+                className={`shrink-0 inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition ${on ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                style={{
+                  background: on ? "var(--gradient-gold)" : "var(--glass-bg)",
+                  borderColor: on ? "transparent" : "var(--glass-border)",
+                }}
+              >
+                <Icon className="h-3.5 w-3.5" /> {x.label}
+              </button>
+            );
+          })}
+        </div>
+
+        {activeTab === "bio" && (
+          <div className="rounded-3xl border p-5 backdrop-blur-xl leading-8" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <p>{t(open.bio)}</p>
+          </div>
+        )}
+
+        {activeTab === "story" && story && (
+          <div className="space-y-3">
+            {story.map((sec, i) => (
+              <div key={i} className="rounded-3xl border p-5 backdrop-blur-xl" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+                <p className="text-sm font-semibold text-primary mb-2">{sec.title}</p>
+                <p className="leading-8 text-sm sm:text-base">{sec.body}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "events" && extra && (
+          <div className="rounded-3xl border p-5 backdrop-blur-xl" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            <ol className="space-y-3">
+              {extra.events.map((ev, i) => (
+                <li key={i} className="flex items-start gap-3">
+                  <span className="mt-0.5 grid h-6 w-6 shrink-0 place-items-center rounded-full text-[11px] font-semibold" style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}>
+                    {i + 1}
+                  </span>
+                  <span className="leading-7 text-sm sm:text-base">{t(ev)}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        {activeTab === "miracles" && extra && (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {extra.miracles.map((m, i) => (
+              <div key={i} className="rounded-2xl border p-4 backdrop-blur-xl flex items-start gap-3" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+                <Sparkles className="h-4 w-4 text-primary shrink-0 mt-1" />
+                <p className="leading-7 text-sm">{t(m)}</p>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {activeTab === "verses" && open.refs && (
+          <div className="rounded-3xl border p-5 backdrop-blur-xl flex flex-wrap gap-2" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
+            {open.refs.map((r) => (
+              <span key={r} className="text-xs rounded-full px-3 py-1.5 border" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>{r}</span>
+            ))}
+          </div>
+        )}
       </div>
     );
   }
 
-  const filtered = PROPHETS.filter((p) => {
-    if (!q.trim()) return true;
-    const needle = q.toLowerCase();
-    return t(p.name).toLowerCase().includes(needle) || p.id.includes(needle);
-  });
-
+  // ---------- List view ----------
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 space-y-4">
       <button onClick={onBack} className="inline-flex items-center gap-2 text-sm text-primary hover:text-primary/80">
         <ArrowLeft className="h-4 w-4" /> {L("گەڕانەوە", "رجوع", "Back")}
       </button>
+
       <div className="rounded-3xl border p-5 backdrop-blur-xl" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
         <div className="flex items-center gap-3">
           <div className="grid h-11 w-11 place-items-center rounded-2xl text-primary-foreground" style={{ background: "linear-gradient(135deg,#10b981,#059669)" }}>
@@ -91,25 +197,51 @@ export function ProphetsLibrary({ lang, onBack }: { lang: Lang; onBack: () => vo
             <p className="text-xs text-muted-foreground">{L(`${PROPHETS.length} پێغەمبەر`, `${PROPHETS.length} نبياً`, `${PROPHETS.length} prophets`)}</p>
           </div>
         </div>
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder={L("گەڕان...", "بحث...", "Search...")}
-          className="mt-3 w-full rounded-xl border px-3 py-2 outline-none focus:border-primary"
-          style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
-        />
+
+        <div className="relative mt-3">
+          <Search className="absolute end-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            value={q}
+            onChange={(ev) => setQ(ev.target.value)}
+            placeholder={L("گەڕان...", "بحث...", "Search...")}
+            className="w-full rounded-xl border px-3 pe-10 py-2 outline-none focus:border-primary"
+            style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
+          />
+        </div>
+
+        <div className="mt-3 flex gap-1.5">
+          {([
+            { id: "quran" as SortMode, label: L("بەپێی قورئان", "ترتيب القرآن", "Qur'anic order") },
+            { id: "az" as SortMode, label: L("A–Z", "أ–ي", "A–Z") },
+          ]).map((o) => (
+            <button
+              key={o.id}
+              onClick={() => setSort(o.id)}
+              className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${sort === o.id ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              style={{
+                background: sort === o.id ? "var(--gradient-gold)" : "transparent",
+                borderColor: sort === o.id ? "transparent" : "var(--glass-border)",
+              }}
+            >
+              {o.label}
+            </button>
+          ))}
+        </div>
       </div>
-      <div className="grid gap-2">
+
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
         {filtered.map((p) => (
           <button
             key={p.id}
-            onClick={() => setOpenId(p.id)}
-            className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 backdrop-blur-xl hover:border-primary/50 transition text-start"
+            onClick={() => { setOpenId(p.id); setTab("bio"); }}
+            className="flex items-center justify-between gap-3 rounded-2xl border px-4 py-3 backdrop-blur-xl hover:border-primary/50 hover:-translate-y-0.5 transition-all text-start"
             style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
           >
             <div className="min-w-0">
-              <p className="font-semibold" style={{ fontFamily: "var(--font-display)" }}>{t(p.name)}</p>
-              {p.people && <p className="text-xs text-muted-foreground truncate">{t(p.people)}</p>}
+              <p className="font-semibold truncate" style={{ fontFamily: "var(--font-display)" }}>{t(p.name)}</p>
+              <p className="text-xs text-muted-foreground truncate">
+                {p.people ? t(p.people) : PROPHET_STORIES[p.id] ? L("چیرۆکی تەواو", "قصة كاملة", "Full story") : p.name.en}
+              </p>
             </div>
             <ChevronRight className="h-4 w-4 text-primary shrink-0" />
           </button>
