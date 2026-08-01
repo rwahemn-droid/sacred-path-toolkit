@@ -473,11 +473,20 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
     stopAudio();
   };
 
+  const stopWordSync = () => {
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+  };
+
   const stopAudio = () => {
+    stopWordSync();
     audioRef.current?.pause();
     audioRef.current = null;
     setPlayingIdx(null);
     setPlayAll(false);
+    setPaused(false);
     setActiveWord(null);
     if (listeningStartRef.current) {
       bumpListening((Date.now() - listeningStartRef.current) / 1000);
@@ -488,7 +497,27 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
     }
   };
 
+  // Pause / resume without losing position.
+  const togglePause = () => {
+    const a = audioRef.current;
+    if (!a) return;
+    if (a.paused) {
+      a.play().catch(() => {});
+      setPaused(false);
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        try { navigator.mediaSession.playbackState = "playing"; } catch { /* */ }
+      }
+    } else {
+      a.pause();
+      setPaused(true);
+      if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
+        try { navigator.mediaSession.playbackState = "paused"; } catch { /* */ }
+      }
+    }
+  };
+
   const playAyah = (idx: number, continueAll = false, loopRemaining?: number) => {
+    stopWordSync();
     audioRef.current?.pause();
     const ayah = arabic[idx];
     if (!ayah) return;
@@ -498,6 +527,7 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
     audio.playbackRate = speed;
     audioRef.current = audio;
     setPlayingIdx(idx);
+    setPaused(false);
     if (continueAll) setPlayAll(true);
     listeningStartRef.current = Date.now();
     markActive();
@@ -510,8 +540,8 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           artist: reciter.name,
           album: "IbadahPro",
         });
-        navigator.mediaSession.setActionHandler("pause", () => stopAudio());
-        navigator.mediaSession.setActionHandler("play", () => audio.play().catch(() => {}));
+        navigator.mediaSession.setActionHandler("pause", () => togglePause());
+        navigator.mediaSession.setActionHandler("play", () => togglePause());
         navigator.mediaSession.setActionHandler("nexttrack", () => {
           if (idx + 1 < arabic.length) playAyah(idx + 1, continueAll);
         });
@@ -526,19 +556,41 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
       ayahRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
     }, 100);
 
+    // Smooth word-by-word highlighting driven by requestAnimationFrame (60–120fps)
+    // instead of the coarse `timeupdate` event (~4fps).
     const ayahTiming = timings?.[ayah.numberInSurah];
     if (ayahTiming?.segments?.length) {
       const baseMs = ayahTiming.timestamp_from;
-      audio.addEventListener("timeupdate", () => {
-        const ms = audio.currentTime * 1000 + baseMs;
-        const seg = ayahTiming.segments.find((s) => ms >= s[1] && ms <= s[2]);
-        if (seg) setActiveWord({ ayahIdx: idx, wordIdx: seg[0] - 1 });
-      });
+      const segs = ayahTiming.segments;
+      let lastWord = -1;
+      const tick = () => {
+        if (audioRef.current !== audio) { rafRef.current = null; return; }
+        if (!audio.paused && !audio.ended) {
+          const ms = audio.currentTime * 1000 + baseMs;
+          let lo = 0, hi = segs.length - 1, found = -1;
+          while (lo <= hi) {
+            const mid = (lo + hi) >> 1;
+            const s = segs[mid];
+            if (ms < s[1]) hi = mid - 1;
+            else if (ms > s[2]) lo = mid + 1;
+            else { found = s[0] - 1; break; }
+          }
+          if (found >= 0 && found !== lastWord) {
+            lastWord = found;
+            setActiveWord({ ayahIdx: idx, wordIdx: found });
+            // Keep the highlighted word visible on long ayahs.
+            wordRefs.current[`${idx}-${found}`]?.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+          }
+        }
+        rafRef.current = requestAnimationFrame(tick);
+      };
+      rafRef.current = requestAnimationFrame(tick);
     } else {
       setActiveWord(null);
     }
 
     audio.addEventListener("ended", () => {
+      stopWordSync();
       setActiveWord(null);
       if (listeningStartRef.current) {
         bumpListening((Date.now() - listeningStartRef.current) / 1000);
@@ -550,15 +602,24 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
       }
       if (continueAll && idx + 1 < arabic.length) {
         playAyah(idx + 1, true);
-      } else {
+        return;
+      }
+      // End of surah: optionally roll straight into the next surah.
+      if (continueAll && autoNextSurah && sleep !== -1 && surah.number < 114 && onSelectSurah) {
+        pendingAutoplayRef.current = true;
         setPlayingIdx(null);
         setPlayAll(false);
-        if (sleep === -1) { stopAudio(); }
+        onSelectSurah(surah.number + 1);
+        return;
       }
+      setPlayingIdx(null);
+      setPlayAll(false);
+      if (sleep === -1) { stopAudio(); }
     });
 
     audio.addEventListener("error", () => {
       if (audioRef.current !== audio) return;
+      stopWordSync();
       setPlayingIdx(null);
       setPlayAll(false);
     });
@@ -575,6 +636,22 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   useEffect(() => {
     if (audioRef.current) audioRef.current.playbackRate = speed;
   }, [speed]);
+
+  // Reset playback when the surah changes; auto-start if we rolled over from
+  // the previous surah.
+  useEffect(() => {
+    stopAudio();
+    setActiveWord(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surah.number]);
+
+  useEffect(() => {
+    if (!pendingAutoplayRef.current) return;
+    if (arabic.length === 0) return;
+    pendingAutoplayRef.current = false;
+    playAyah(0, true);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [arabic.length, surah.number]);
 
   useEffect(() => () => stopAudio(), []);
 
