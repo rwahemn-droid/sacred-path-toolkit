@@ -401,6 +401,8 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const ayahRefs = useRef<(HTMLDivElement | null)[]>([]);
   const listeningStartRef = useRef<number | null>(null);
+  const wordRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const pendingAutoplayRef = useRef(false);
 
   // Save last-read position whenever a new ayah starts playing.
   useEffect(() => {
