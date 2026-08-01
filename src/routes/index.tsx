@@ -916,12 +916,12 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
                     <ScrollText className="h-3.5 w-3.5" /> {t.quran.tafsir}
                   </button>
                   <button
-                    onClick={() => (isActive ? stopAudio() : playAyah(i, true))}
+                    onClick={() => (isActive ? togglePause() : playAyah(i, true))}
                     className="h-9 w-9 rounded-full flex items-center justify-center border hover:border-primary/60 transition"
                     style={{ borderColor: "var(--glass-border)" }}
                     aria-label="play ayah"
                   >
-                    {isActive ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
+                    {isActive && !paused ? <Pause className="h-4 w-4 text-primary" /> : <Play className="h-4 w-4 text-primary" />}
                   </button>
                 </div>
               </div>
@@ -936,8 +936,18 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
                   return (
                     <span
                       key={`${a.number}-w-${wi}`}
-                      className="transition-colors"
-                      style={highlight ? { color: "oklch(0.92 0.18 95)", textShadow: "0 0 12px oklch(0.92 0.18 95 / 0.5)" } : undefined}
+                      ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
+                      className="rounded-md transition-all duration-150 ease-out"
+                      style={
+                        highlight
+                          ? {
+                              color: "oklch(0.95 0.19 95)",
+                              background: "oklch(0.92 0.18 95 / 0.14)",
+                              textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)",
+                              padding: "0 0.12em",
+                            }
+                          : undefined
+                      }
                     >
                       {w}{" "}
                     </span>
