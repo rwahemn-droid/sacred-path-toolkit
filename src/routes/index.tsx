@@ -687,14 +687,82 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
             </div>
           </button>
           <button
-            onClick={() => (playingIdx !== null ? stopAudio() : playAyah(0, true))}
+            onClick={() => (playingIdx !== null ? togglePause() : playAyah(0, true))}
             className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
             style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
             aria-label="play all"
           >
-            {playAll ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
+            {playingIdx !== null && !paused ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5" />}
           </button>
         </div>
+
+        {/* Transport: surah / ayah navigation */}
+        <div className="mt-3 flex items-center justify-between gap-1.5">
+          <button
+            onClick={() => { pendingAutoplayRef.current = playingIdx !== null; onSelectSurah?.(Math.max(1, surah.number - 1)); }}
+            disabled={surah.number <= 1}
+            className="h-10 w-10 rounded-xl border flex items-center justify-center disabled:opacity-30 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="previous surah"
+          >
+            <ChevronRight className="h-4 w-4 text-primary rtl:hidden" />
+            <ChevronLeft className="h-4 w-4 text-primary ltr:hidden" />
+          </button>
+          <button
+            onClick={() => playAyah(Math.max(0, (playingIdx ?? 0) - 1), true)}
+            className="h-10 flex-1 rounded-xl border flex items-center justify-center gap-1.5 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="previous ayah"
+          >
+            <SkipBack className="h-4 w-4 text-primary" />
+          </button>
+          <button
+            onClick={stopAudio}
+            className="h-10 w-10 rounded-xl border flex items-center justify-center hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="stop"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+          <button
+            onClick={() => playAyah(Math.min(arabic.length - 1, (playingIdx ?? -1) + 1), true)}
+            className="h-10 flex-1 rounded-xl border flex items-center justify-center gap-1.5 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="next ayah"
+          >
+            <SkipForward className="h-4 w-4 text-primary" />
+          </button>
+          <button
+            onClick={() => { pendingAutoplayRef.current = playingIdx !== null; onSelectSurah?.(Math.min(114, surah.number + 1)); }}
+            disabled={surah.number >= 114}
+            className="h-10 w-10 rounded-xl border flex items-center justify-center disabled:opacity-30 hover:border-primary/50 transition"
+            style={{ borderColor: "var(--glass-border)" }}
+            aria-label="next surah"
+          >
+            <ChevronLeft className="h-4 w-4 text-primary rtl:hidden" />
+            <ChevronRight className="h-4 w-4 text-primary ltr:hidden" />
+          </button>
+        </div>
+
+        {/* Auto-continue to next surah */}
+        <button
+          onClick={() => setAutoNextSurah((v) => !v)}
+          className="mt-2 w-full flex items-center justify-between rounded-xl border px-3 py-2 text-[12px] hover:border-primary/40 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <span className="text-muted-foreground">
+            {lang === "ar" ? "المتابعة إلى السورة التالية" : lang === "en" ? "Continue to next surah" : "بەردەوامبوون بۆ سوورەتی دواتر"}
+          </span>
+          <span
+            className="h-5 w-9 rounded-full relative transition"
+            style={{ background: autoNextSurah ? "var(--gradient-gold)" : "var(--glass-border)" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+              style={{ insetInlineStart: autoNextSurah ? "1.25rem" : "0.125rem" }}
+            />
+          </span>
+        </button>
 
         {/* Loop selector for memorization */}
         <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
