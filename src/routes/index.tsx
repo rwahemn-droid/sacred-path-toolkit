@@ -285,9 +285,24 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder={t.quran.searchPlaceholder}
-          className="w-full rounded-2xl border bg-transparent backdrop-blur-xl pe-11 ps-4 py-3 text-sm focus:outline-none focus:border-primary/50"
+          className="w-full rounded-2xl border bg-transparent backdrop-blur-xl pe-11 ps-14 py-3 text-sm focus:outline-none focus:border-primary/50"
           style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}
         />
+        {voice.supported && (
+          <button
+            type="button"
+            onClick={() => (voice.listening ? voice.stop() : voice.start())}
+            aria-label="voice search"
+            className="absolute start-2 top-1/2 -translate-y-1/2 h-9 w-9 rounded-xl flex items-center justify-center transition"
+            style={
+              voice.listening
+                ? { background: "var(--gradient-teal)", color: "var(--primary-foreground)" }
+                : { background: "var(--glass-bg)" }
+            }
+          >
+            {voice.listening ? <Mic className="h-4 w-4 animate-pulse" /> : <Mic className="h-4 w-4 text-muted-foreground" />}
+          </button>
+        )}
       </div>
 
       {bookmarked.length > 0 && !query && (
