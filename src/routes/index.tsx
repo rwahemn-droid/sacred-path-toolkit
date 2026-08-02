@@ -233,6 +233,16 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
     [surahs, bookmarks],
   );
 
+  // Voice search: spoken surah names/numbers open the surah directly
+  const voice = useVoiceSearch(lang, (spoken) => {
+    setQuery(spoken);
+    const hit = matchSurah(spoken, surahs ?? []);
+    if (hit) {
+      setQuery("");
+      setSelected(hit);
+    }
+  });
+
   // Resume last read (client-only to avoid hydration mismatch)
   const [lastRead, setLastRead] = useState<{ surah: number; name: string; ayah: number } | null>(null);
   useEffect(() => {
