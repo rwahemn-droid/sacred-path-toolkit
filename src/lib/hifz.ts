@@ -124,16 +124,14 @@ export function hifzStats(state: HifzState) {
   const ayahs = doneDays.reduce((acc, p) => acc + (p.to - p.from + 1), 0);
   const pct = state.plan.length ? Math.round((doneDays.length / state.plan.length) * 100) : 0;
 
-  const days = [...state.history].sort().reverse();
+  const days = new Set(state.history);
   let streak = 0;
-  let cursor = new Date();
-  for (const d of days) {
-    if (d === todayISO(cursor)) {
-      streak++;
-      cursor.setDate(cursor.getDate() - 1);
-    } else if (d === todayISO(new Date(cursor.getTime() - 0)) ) {
-      break;
-    }
+  const cursor = new Date();
+  // allow the streak to start yesterday if today has no activity yet
+  if (!days.has(todayISO(cursor))) cursor.setDate(cursor.getDate() - 1);
+  while (days.has(todayISO(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 1);
   }
 
   return { ayahs, days: doneDays.length, pct, streak, revisions: state.revisionCount };
