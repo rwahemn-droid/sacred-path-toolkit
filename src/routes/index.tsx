@@ -6,8 +6,9 @@ import {
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
   Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, Grid3x3,
-  SkipBack, SkipForward, ChevronLeft, ChevronRight,
+  SkipBack, SkipForward, ChevronLeft, ChevronRight, Mic,
 } from "lucide-react";
+import { useVoiceSearch, matchSurah } from "@/lib/voice-search";
 import { SplashScreen } from "@/components/SplashScreen";
 import { QiblaCompass } from "@/components/QiblaCompass";
 import { TafsirSheet } from "@/components/TafsirSheet";
