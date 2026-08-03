@@ -342,7 +342,17 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
         </div>
       )}
 
-      <h3 className="text-xs text-muted-foreground px-1">{t.quran.allSurahs} ({toLocaleDigits(filtered.length, lang)})</h3>
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-xs text-muted-foreground">{t.quran.allSurahs} ({toLocaleDigits(filtered.length, lang)})</h3>
+        <button
+          onClick={() => setShowOffline(true)}
+          className="h-8 px-3 rounded-full flex items-center gap-1.5 border text-[11px] text-primary hover:border-primary/60 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <Download className="h-3.5 w-3.5" />
+          {lang === "ar" ? "دون اتصال" : lang === "en" ? "Offline" : "ئۆفلاین"}
+        </button>
+      </div>
       {isLoading && <div className="text-center py-12 text-muted-foreground">{t.quran.loading}</div>}
       {isError && <div className="text-center py-12 text-destructive">{t.quran.error}</div>}
       <div className="grid gap-2">
