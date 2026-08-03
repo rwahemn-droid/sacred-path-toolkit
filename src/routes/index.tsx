@@ -28,6 +28,13 @@ import {
 } from "@/lib/settings";
 import { VERSES_OF_DAY } from "@/lib/verse-of-day";
 import { useStats, bumpListening, markActive } from "@/lib/stats";
+import { fetchWordByWord, type WbwWord } from "@/lib/wbw";
+import { WordSheet } from "@/components/WordSheet";
+import { ShareButton } from "@/components/ShareButton";
+import { OfflineManager } from "@/components/OfflineManager";
+import { awardXp } from "@/lib/gamify";
+import { addProgress } from "@/lib/planner";
+import { getOfflineSurah } from "@/lib/offline";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
