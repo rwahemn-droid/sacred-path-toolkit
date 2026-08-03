@@ -1090,6 +1090,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           onClose={() => setTafsirAyah(null)}
         />
       )}
+
+      {tappedWord && <WordSheet word={tappedWord} lang={lang} onClose={() => setTappedWord(null)} />}
+
     </div>
   );
 }
