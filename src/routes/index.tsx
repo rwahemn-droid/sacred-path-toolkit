@@ -930,6 +930,7 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           const isActive = playingIdx === i;
           const cleanText = stripBismillah(a.text, surah.number, a.numberInSurah);
           const words = cleanText.split(/\s+/).filter(Boolean);
+          const wbwWords: WbwWord[] | undefined = wbw?.[a.numberInSurah];
           const q = ayahQuery.trim();
           if (q) {
             const hay = stripArabicDiacritics(cleanText) + " " + (translation[i]?.text ?? "");
