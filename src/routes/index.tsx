@@ -472,6 +472,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["surah", surah.number, translationEdition],
     queryFn: async (): Promise<EditionData[]> => {
+      // Prefer the offline copy when it exists so the surah opens without network.
+      const cached = getOfflineSurah(surah.number, translationEdition);
+      if (cached) return cached as EditionData[];
       const res = await fetch(
         `https://api.alquran.cloud/v1/surah/${surah.number}/editions/quran-uthmani,${translationEdition}`,
       );
@@ -482,6 +485,15 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
 
   const arabic = data?.[0]?.ayahs ?? [];
   const translation = data?.[1]?.ayahs ?? [];
+
+  // Word-by-word data (meaning, transliteration, per-word audio)
+  const { data: wbw } = useQuery({
+    enabled: wbwMode && arabic.length > 0,
+    staleTime: Infinity,
+    queryKey: ["wbw", surah.number, lang === "ar" ? "ar" : "en"],
+    queryFn: () => fetchWordByWord(surah.number, lang === "ar" ? "ar" : "en"),
+  });
+
 
   const { data: timings } = useQuery({
     enabled: !!reciter.quranComId && arabic.length > 0,
