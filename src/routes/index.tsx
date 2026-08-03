@@ -6,7 +6,7 @@ import {
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
   Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, Grid3x3,
-  SkipBack, SkipForward, ChevronLeft, ChevronRight, Mic,
+  SkipBack, SkipForward, ChevronLeft, ChevronRight, Mic, Languages, Download,
 } from "lucide-react";
 import { useVoiceSearch, matchSurah } from "@/lib/voice-search";
 import { SplashScreen } from "@/components/SplashScreen";
