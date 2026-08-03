@@ -812,6 +812,29 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           </span>
         </button>
 
+        {/* Word-by-word mode */}
+        <button
+          onClick={() => setWbwMode((v) => !v)}
+          className="mt-2 w-full flex items-center justify-between rounded-xl border px-3 py-2 text-[12px] hover:border-primary/40 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <Languages className="h-3.5 w-3.5 text-primary" />
+            {lang === "ar" ? "كلمة بكلمة" : lang === "en" ? "Word by word" : "وشە بە وشە"}
+          </span>
+          <span
+            className="h-5 w-9 rounded-full relative transition"
+            style={{ background: wbwMode ? "var(--gradient-teal)" : "var(--glass-border)" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+              style={{ insetInlineStart: wbwMode ? "1.25rem" : "0.125rem" }}
+            />
+          </span>
+        </button>
+
+
+
         {/* Loop selector for memorization */}
         <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
           <Repeat className="h-3.5 w-3.5 text-primary shrink-0" />
