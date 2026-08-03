@@ -580,6 +580,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
     setPaused(false);
     if (continueAll) setPlayAll(true);
     listeningStartRef.current = Date.now();
+    // Reward reading progress: XP + planner goals
+    awardXp(2, "ayahsRead");
+    addProgress("quran", 1);
     markActive();
 
     // Lock-screen / media-session metadata.
