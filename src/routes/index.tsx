@@ -261,6 +261,9 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
     } catch { /* */ }
   }, []);
 
+  if (showOffline)
+    return <OfflineManager lang={lang} surahs={surahs ?? []} onBack={() => setShowOffline(false)} />;
+
   if (selected)
     return (
       <SurahDetail
@@ -274,6 +277,8 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
         lang={lang}
       />
     );
+
+
 
 
   return (
