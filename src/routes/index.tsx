@@ -212,6 +212,7 @@ function useBookmarks() {
 function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
   const [selected, setSelected] = useState<Surah | null>(null);
   const [query, setQuery] = useState("");
+  const [showOffline, setShowOffline] = useState(false);
   const { bookmarks, toggle } = useBookmarks();
 
   const { data: surahs, isLoading, isError } = useQuery({
