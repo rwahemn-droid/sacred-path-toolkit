@@ -425,6 +425,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   // Continue to the next surah automatically when this one finishes.
   const [autoNextSurah, setAutoNextSurah] = useState(true);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
+  // Word-by-word mode + the word tapped for its meaning sheet
+  const [wbwMode, setWbwMode] = useState(false);
+  const [tappedWord, setTappedWord] = useState<WbwWord | null>(null);
   const [tafsirAyah, setTafsirAyah] = useState<{ surah: number; ayah: number; text: string } | null>(null);
   const [ayahQuery, setAyahQuery] = useState("");
   const [speed, setSpeed] = useState<number>(1);
