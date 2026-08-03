@@ -955,6 +955,12 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
                   {toLocaleDigits(a.numberInSurah, lang)}
                 </div>
                 <div className="flex items-center gap-1.5">
+                  <ShareButton
+                    kind="verse"
+                    arabic={cleanText}
+                    translation={translation[i]?.text}
+                    reference={`${surah.englishName} ${surah.number}:${a.numberInSurah}`}
+                  />
                   <button
                     onClick={() => setTafsirAyah({ surah: surah.number, ayah: a.numberInSurah, text: cleanText })}
                     className="h-9 px-3 rounded-full flex items-center gap-1.5 border hover:border-primary/60 transition text-[11px] text-primary"
@@ -974,34 +980,68 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
                 </div>
               </div>
 
-              <p
-                className="leading-loose text-right"
-                dir="rtl"
-                style={{ fontFamily: arabicFontFamily, fontSize: `${arabicFontPx}px` }}
-              >
-                {words.map((w, wi) => {
-                  const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
-                  return (
-                    <span
-                      key={`${a.number}-w-${wi}`}
-                      ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
-                      className="rounded-md transition-all duration-150 ease-out"
-                      style={
-                        highlight
-                          ? {
-                              color: "oklch(0.95 0.19 95)",
-                              background: "oklch(0.92 0.18 95 / 0.14)",
-                              textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)",
-                              padding: "0 0.12em",
-                            }
-                          : undefined
-                      }
-                    >
-                      {w}{" "}
-                    </span>
-                  );
-                })}
-              </p>
+              {wbwMode && wbwWords ? (
+                <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
+                  {wbwWords.map((w, wi) => {
+                    const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
+                    return (
+                      <button
+                        key={`${a.number}-wbw-${wi}`}
+                        ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
+                        onClick={() => setTappedWord(w)}
+                        className="rounded-xl border px-2 py-1.5 text-center transition active:scale-95"
+                        style={{
+                          borderColor: highlight ? "oklch(0.92 0.18 95 / 0.6)" : "var(--glass-border)",
+                          background: highlight ? "oklch(0.92 0.18 95 / 0.14)" : "transparent",
+                        }}
+                      >
+                        <span
+                          className="block"
+                          style={{
+                            fontFamily: arabicFontFamily,
+                            fontSize: `${Math.round(arabicFontPx * 0.85)}px`,
+                            color: highlight ? "oklch(0.95 0.19 95)" : undefined,
+                          }}
+                        >
+                          {w.arabic}
+                        </span>
+                        <span className="block text-[10px] text-primary/80 mt-0.5" dir="ltr">{w.transliteration}</span>
+                        <span className="block text-[10px] text-muted-foreground" dir="ltr">{w.translation}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p
+                  className="leading-loose text-right"
+                  dir="rtl"
+                  style={{ fontFamily: arabicFontFamily, fontSize: `${arabicFontPx}px` }}
+                >
+                  {words.map((w, wi) => {
+                    const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
+                    return (
+                      <span
+                        key={`${a.number}-w-${wi}`}
+                        ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
+                        className="rounded-md transition-all duration-150 ease-out"
+                        style={
+                          highlight
+                            ? {
+                                color: "oklch(0.95 0.19 95)",
+                                background: "oklch(0.92 0.18 95 / 0.14)",
+                                textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)",
+                                padding: "0 0.12em",
+                              }
+                            : undefined
+                        }
+                      >
+                        {w}{" "}
+                      </span>
+                    );
+                  })}
+                </p>
+              )}
+
 
               {translation[i] && (
                 <p
