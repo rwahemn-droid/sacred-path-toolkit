@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked, Sun, Droplet, Brain, User, Compass, Moon, Scale, Users, ScrollText } from "lucide-react";
+import { Sparkles, Coins, CalendarDays, Flame, Star, BookOpen, ClipboardCheck, BookMarked, Sun, Droplet, Brain, User, Compass, Moon, Scale, Users, ScrollText, Target, Trophy, MapPin } from "lucide-react";
 import type { Lang, Dict } from "@/lib/i18n";
 import { MORE } from "@/lib/more-i18n";
 import { AIMufti } from "./AIMufti";
@@ -18,11 +18,14 @@ import { InheritanceCalculator } from "./InheritanceCalculator";
 import { ProphetsLibrary } from "./ProphetsLibrary";
 import { IslamicHistory } from "./IslamicHistory";
 import { MemorizationPlan } from "./MemorizationPlan";
+import { WorshipPlanner } from "./WorshipPlanner";
+import { Achievements } from "./Achievements";
+import { MosqueFinder } from "./MosqueFinder";
 
 type Sub =
   | "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith"
   | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan"
-  | "mirath" | "prophets" | "history" | "hifz";
+  | "mirath" | "prophets" | "history" | "hifz" | "planner" | "awards" | "mosques";
 
 export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const [sub, setSub] = useState<Sub>("hub");
@@ -45,6 +48,9 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   if (sub === "mirath") return <InheritanceCalculator lang={lang} onBack={back} />;
   if (sub === "prophets") return <ProphetsLibrary lang={lang} onBack={back} />;
   if (sub === "hifz") return <MemorizationPlan lang={lang} onBack={back} />;
+  if (sub === "planner") return <WorshipPlanner lang={lang} onBack={back} />;
+  if (sub === "awards") return <Achievements lang={lang} onBack={back} />;
+  if (sub === "mosques") return <MosqueFinder lang={lang} onBack={back} />;
   if (sub === "history") return <IslamicHistory lang={lang} onBack={back} />;
 
   const L = (ku: string, ar: string, en: string) => lang === "ar" ? ar : lang === "en" ? en : ku;
@@ -59,6 +65,9 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   }[] = [
     { id: "mufti",  title: m.cards.mufti.title,  desc: m.cards.mufti.desc,  icon: Sparkles,    bg: "linear-gradient(135deg,#a855f7,#6366f1)", category: m.categories.ai },
     { id: "hifz", title: L("حیفزی قورئان","حفظ القرآن","Memorization"), desc: L("پلان، پێداچوونەوە، تاقیکردنەوە","خطة، مراجعة، اختبار","Plan, revision, quiz"), icon: Brain, bg: "linear-gradient(135deg,#14b8a6,#0d9488)", category: m.categories.knowledge },
+    { id: "planner", title: L("پلانی عیبادەت","مخطط العبادة","Worship Planner"), desc: L("ئامانجی ڕۆژانە و هەفتانە","أهداف يومية وأسبوعية","Daily & weekly goals"), icon: Target, bg: "linear-gradient(135deg,#0ea5e9,#6366f1)", category: m.categories.tools },
+    { id: "awards", title: L("دەستکەوتەکان","الإنجازات","Achievements"), desc: L("XP، ئاست و نیشان","XP ومستويات وأوسمة","XP, levels, badges"), icon: Trophy, bg: "linear-gradient(135deg,#f59e0b,#ef4444)", category: m.categories.tools },
+    { id: "mosques", title: L("مزگەوتەکانی نزیک","المساجد القريبة","Mosque Finder"), desc: L("نەخشە و ڕێنمایی","خريطة وتوجيه","Map & navigation"), icon: MapPin, bg: "linear-gradient(135deg,#14b8a6,#059669)", category: m.categories.tools },
     { id: "prophets", title: L("پێغەمبەران","الأنبياء","Prophets"), desc: L("ژیاننامەی ٢٥ پێغەمبەر","سيرة ٢٥ نبياً","25 prophet biographies"), icon: Users, bg: "linear-gradient(135deg,#10b981,#059669)", category: m.categories.knowledge },
     { id: "history", title: L("مێژووی ئیسلامی","التاريخ الإسلامي","Islamic History"), desc: L("ڕووداوە گرنگەکان","أهم الأحداث","Key events timeline"), icon: ScrollText, bg: "linear-gradient(135deg,#f97316,#dc2626)", category: m.categories.knowledge },
     { id: "mirath", title: L("ژماردەی میرات","حاسبة الميراث","Inheritance"), desc: L("حوکمی فەرائیز","أحكام الفرائض","Faraid calculator"), icon: Scale, bg: "linear-gradient(135deg,#f59e0b,#d97706)", category: m.categories.tools },

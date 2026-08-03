@@ -6,7 +6,7 @@ import {
   Play, Pause, ChevronDown, Sunrise, Moon, Settings as SettingsIcon, Globe, MapPin, BookMarked,
   BookText, X, Calendar, VolumeX, Bell, Repeat, Compass, Type, ScrollText, CalendarCheck,
   Gauge, Timer, RotateCcw, Sparkles, Flame, Palette, Grid3x3,
-  SkipBack, SkipForward, ChevronLeft, ChevronRight, Mic,
+  SkipBack, SkipForward, ChevronLeft, ChevronRight, Mic, Languages, Download,
 } from "lucide-react";
 import { useVoiceSearch, matchSurah } from "@/lib/voice-search";
 import { SplashScreen } from "@/components/SplashScreen";
@@ -28,6 +28,13 @@ import {
 } from "@/lib/settings";
 import { VERSES_OF_DAY } from "@/lib/verse-of-day";
 import { useStats, bumpListening, markActive } from "@/lib/stats";
+import { fetchWordByWord, type WbwWord } from "@/lib/wbw";
+import { WordSheet } from "@/components/WordSheet";
+import { ShareButton } from "@/components/ShareButton";
+import { OfflineManager } from "@/components/OfflineManager";
+import { awardXp } from "@/lib/gamify";
+import { addProgress } from "@/lib/planner";
+import { getOfflineSurah } from "@/lib/offline";
 
 const KU_DIGITS = ["٠","١","٢","٣","٤","٥","٦","٧","٨","٩"];
 const toLocaleDigits = (n: number | string, lang: Lang) =>
@@ -205,6 +212,7 @@ function useBookmarks() {
 function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
   const [selected, setSelected] = useState<Surah | null>(null);
   const [query, setQuery] = useState("");
+  const [showOffline, setShowOffline] = useState(false);
   const { bookmarks, toggle } = useBookmarks();
 
   const { data: surahs, isLoading, isError } = useQuery({
@@ -253,6 +261,9 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
     } catch { /* */ }
   }, []);
 
+  if (showOffline)
+    return <OfflineManager lang={lang} surahs={surahs ?? []} onBack={() => setShowOffline(false)} />;
+
   if (selected)
     return (
       <SurahDetail
@@ -266,6 +277,8 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
         lang={lang}
       />
     );
+
+
 
 
   return (
@@ -329,7 +342,17 @@ function QuranView({ t, lang }: { t: Dict; lang: Lang }) {
         </div>
       )}
 
-      <h3 className="text-xs text-muted-foreground px-1">{t.quran.allSurahs} ({toLocaleDigits(filtered.length, lang)})</h3>
+      <div className="flex items-center justify-between px-1">
+        <h3 className="text-xs text-muted-foreground">{t.quran.allSurahs} ({toLocaleDigits(filtered.length, lang)})</h3>
+        <button
+          onClick={() => setShowOffline(true)}
+          className="h-8 px-3 rounded-full flex items-center gap-1.5 border text-[11px] text-primary hover:border-primary/60 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <Download className="h-3.5 w-3.5" />
+          {lang === "ar" ? "دون اتصال" : lang === "en" ? "Offline" : "ئۆفلاین"}
+        </button>
+      </div>
       {isLoading && <div className="text-center py-12 text-muted-foreground">{t.quran.loading}</div>}
       {isError && <div className="text-center py-12 text-destructive">{t.quran.error}</div>}
       <div className="grid gap-2">
@@ -418,6 +441,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   // Continue to the next surah automatically when this one finishes.
   const [autoNextSurah, setAutoNextSurah] = useState(true);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
+  // Word-by-word mode + the word tapped for its meaning sheet
+  const [wbwMode, setWbwMode] = useState(false);
+  const [tappedWord, setTappedWord] = useState<WbwWord | null>(null);
   const [tafsirAyah, setTafsirAyah] = useState<{ surah: number; ayah: number; text: string } | null>(null);
   const [ayahQuery, setAyahQuery] = useState("");
   const [speed, setSpeed] = useState<number>(1);
@@ -465,6 +491,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["surah", surah.number, translationEdition],
     queryFn: async (): Promise<EditionData[]> => {
+      // Prefer the offline copy when it exists so the surah opens without network.
+      const cached = getOfflineSurah(surah.number, translationEdition);
+      if (cached) return cached as EditionData[];
       const res = await fetch(
         `https://api.alquran.cloud/v1/surah/${surah.number}/editions/quran-uthmani,${translationEdition}`,
       );
@@ -475,6 +504,15 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
 
   const arabic = data?.[0]?.ayahs ?? [];
   const translation = data?.[1]?.ayahs ?? [];
+
+  // Word-by-word data (meaning, transliteration, per-word audio)
+  const { data: wbw } = useQuery({
+    enabled: wbwMode && arabic.length > 0,
+    staleTime: Infinity,
+    queryKey: ["wbw", surah.number, lang === "ar" ? "ar" : "en"],
+    queryFn: () => fetchWordByWord(surah.number, lang === "ar" ? "ar" : "en"),
+  });
+
 
   const { data: timings } = useQuery({
     enabled: !!reciter.quranComId && arabic.length > 0,
@@ -558,6 +596,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
     setPaused(false);
     if (continueAll) setPlayAll(true);
     listeningStartRef.current = Date.now();
+    // Reward reading progress: XP + planner goals
+    awardXp(2, "ayahsRead");
+    addProgress("quran", 1);
     markActive();
 
     // Lock-screen / media-session metadata.
@@ -790,6 +831,29 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           </span>
         </button>
 
+        {/* Word-by-word mode */}
+        <button
+          onClick={() => setWbwMode((v) => !v)}
+          className="mt-2 w-full flex items-center justify-between rounded-xl border px-3 py-2 text-[12px] hover:border-primary/40 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <span className="flex items-center gap-1.5 text-muted-foreground">
+            <Languages className="h-3.5 w-3.5 text-primary" />
+            {lang === "ar" ? "كلمة بكلمة" : lang === "en" ? "Word by word" : "وشە بە وشە"}
+          </span>
+          <span
+            className="h-5 w-9 rounded-full relative transition"
+            style={{ background: wbwMode ? "var(--gradient-teal)" : "var(--glass-border)" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+              style={{ insetInlineStart: wbwMode ? "1.25rem" : "0.125rem" }}
+            />
+          </span>
+        </button>
+
+
+
         {/* Loop selector for memorization */}
         <div className="mt-3 flex items-center gap-1.5 overflow-x-auto pb-1">
           <Repeat className="h-3.5 w-3.5 text-primary shrink-0" />
@@ -908,6 +972,7 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           const isActive = playingIdx === i;
           const cleanText = stripBismillah(a.text, surah.number, a.numberInSurah);
           const words = cleanText.split(/\s+/).filter(Boolean);
+          const wbwWords: WbwWord[] | undefined = wbw?.[a.numberInSurah];
           const q = ayahQuery.trim();
           if (q) {
             const hay = stripArabicDiacritics(cleanText) + " " + (translation[i]?.text ?? "");
@@ -933,6 +998,12 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
                   {toLocaleDigits(a.numberInSurah, lang)}
                 </div>
                 <div className="flex items-center gap-1.5">
+                  <ShareButton
+                    kind="verse"
+                    arabic={cleanText}
+                    translation={translation[i]?.text}
+                    reference={`${surah.englishName} ${surah.number}:${a.numberInSurah}`}
+                  />
                   <button
                     onClick={() => setTafsirAyah({ surah: surah.number, ayah: a.numberInSurah, text: cleanText })}
                     className="h-9 px-3 rounded-full flex items-center gap-1.5 border hover:border-primary/60 transition text-[11px] text-primary"
@@ -952,34 +1023,68 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
                 </div>
               </div>
 
-              <p
-                className="leading-loose text-right"
-                dir="rtl"
-                style={{ fontFamily: arabicFontFamily, fontSize: `${arabicFontPx}px` }}
-              >
-                {words.map((w, wi) => {
-                  const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
-                  return (
-                    <span
-                      key={`${a.number}-w-${wi}`}
-                      ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
-                      className="rounded-md transition-all duration-150 ease-out"
-                      style={
-                        highlight
-                          ? {
-                              color: "oklch(0.95 0.19 95)",
-                              background: "oklch(0.92 0.18 95 / 0.14)",
-                              textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)",
-                              padding: "0 0.12em",
-                            }
-                          : undefined
-                      }
-                    >
-                      {w}{" "}
-                    </span>
-                  );
-                })}
-              </p>
+              {wbwMode && wbwWords ? (
+                <div className="flex flex-wrap gap-2 justify-end" dir="rtl">
+                  {wbwWords.map((w, wi) => {
+                    const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
+                    return (
+                      <button
+                        key={`${a.number}-wbw-${wi}`}
+                        ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
+                        onClick={() => setTappedWord(w)}
+                        className="rounded-xl border px-2 py-1.5 text-center transition active:scale-95"
+                        style={{
+                          borderColor: highlight ? "oklch(0.92 0.18 95 / 0.6)" : "var(--glass-border)",
+                          background: highlight ? "oklch(0.92 0.18 95 / 0.14)" : "transparent",
+                        }}
+                      >
+                        <span
+                          className="block"
+                          style={{
+                            fontFamily: arabicFontFamily,
+                            fontSize: `${Math.round(arabicFontPx * 0.85)}px`,
+                            color: highlight ? "oklch(0.95 0.19 95)" : undefined,
+                          }}
+                        >
+                          {w.arabic}
+                        </span>
+                        <span className="block text-[10px] text-primary/80 mt-0.5" dir="ltr">{w.transliteration}</span>
+                        <span className="block text-[10px] text-muted-foreground" dir="ltr">{w.translation}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <p
+                  className="leading-loose text-right"
+                  dir="rtl"
+                  style={{ fontFamily: arabicFontFamily, fontSize: `${arabicFontPx}px` }}
+                >
+                  {words.map((w, wi) => {
+                    const highlight = isActive && activeWord?.ayahIdx === i && activeWord?.wordIdx === wi;
+                    return (
+                      <span
+                        key={`${a.number}-w-${wi}`}
+                        ref={(el) => { wordRefs.current[`${i}-${wi}`] = el; }}
+                        className="rounded-md transition-all duration-150 ease-out"
+                        style={
+                          highlight
+                            ? {
+                                color: "oklch(0.95 0.19 95)",
+                                background: "oklch(0.92 0.18 95 / 0.14)",
+                                textShadow: "0 0 14px oklch(0.92 0.18 95 / 0.55)",
+                                padding: "0 0.12em",
+                              }
+                            : undefined
+                        }
+                      >
+                        {w}{" "}
+                      </span>
+                    );
+                  })}
+                </p>
+              )}
+
 
               {translation[i] && (
                 <p
@@ -1004,6 +1109,9 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           onClose={() => setTafsirAyah(null)}
         />
       )}
+
+      {tappedWord && <WordSheet word={tappedWord} lang={lang} onClose={() => setTappedWord(null)} />}
+
     </div>
   );
 }
