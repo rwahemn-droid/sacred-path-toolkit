@@ -439,7 +439,21 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   const [paused, setPaused] = useState(false);
   const rafRef = useRef<number | null>(null);
   // Continue to the next surah automatically when this one finishes.
-  const [autoNextSurah, setAutoNextSurah] = useState(true);
+  const [autoNextSurah, setAutoNextSurah] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("ibadah:auto-next") !== "0";
+  });
+  // Repeat the whole surah from the start when it ends.
+  const [repeatSurah, setRepeatSurah] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ibadah:repeat-surah") === "1";
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ibadah:auto-next", autoNextSurah ? "1" : "0");
+      localStorage.setItem("ibadah:repeat-surah", repeatSurah ? "1" : "0");
+    } catch { /* */ }
+  }, [autoNextSurah, repeatSurah]);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   // Word-by-word mode + the word tapped for its meaning sheet
   const [wbwMode, setWbwMode] = useState(false);
@@ -455,6 +469,8 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   const listeningStartRef = useRef<number | null>(null);
   const wordRefs = useRef<Record<string, HTMLSpanElement | null>>({});
   const pendingAutoplayRef = useRef(false);
+  // Prefetched next-ayah audio element (kept alive so the browser caches it).
+  const preloadRef = useRef<HTMLAudioElement | null>(null);
 
   // Save last-read position whenever a new ayah starts playing.
   useEffect(() => {
@@ -587,19 +603,34 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
     audioRef.current?.pause();
     const ayah = arabic[idx];
     if (!ayah) return;
-    const remaining =
-      loopRemaining ?? (continueAll ? 1 : loopCount === 0 ? Infinity : loopCount);
+    // Repeat-verse applies in continuous mode too, so memorisation loops work
+    // while the surah plays through.
+    const remaining = loopRemaining ?? (loopCount === 0 ? Infinity : loopCount);
     const audio = new Audio(ayahAudioUrl(reciter, surah.number, ayah.numberInSurah));
+    audio.preload = "auto";
     audio.playbackRate = speed;
     audioRef.current = audio;
     setPlayingIdx(idx);
     setPaused(false);
     if (continueAll) setPlayAll(true);
     listeningStartRef.current = Date.now();
-    // Reward reading progress: XP + planner goals
-    awardXp(2, "ayahsRead");
-    addProgress("quran", 1);
-    markActive();
+    // Remember exactly where playback is, so the surah resumes here next time.
+    try {
+      localStorage.setItem(`ibadah:pos:${surah.number}`, String(idx));
+    } catch { /* */ }
+    // Warm the next ayah so playback is gapless.
+    const nextAyah = arabic[idx + 1];
+    if (nextAyah) {
+      const pre = new Audio(ayahAudioUrl(reciter, surah.number, nextAyah.numberInSurah));
+      pre.preload = "auto";
+      preloadRef.current = pre;
+    }
+    // Reward reading progress only the first time an ayah plays (not on repeats).
+    if (loopRemaining === undefined) {
+      awardXp(2, "ayahsRead");
+      addProgress("quran", 1);
+      markActive();
+    }
 
     // Lock-screen / media-session metadata.
     if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
@@ -673,7 +704,11 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
         playAyah(idx + 1, true);
         return;
       }
-      // End of surah: optionally roll straight into the next surah.
+      // End of surah: repeat it, or roll straight into the next surah.
+      if (continueAll && repeatSurah && sleep !== -1) {
+        playAyah(0, true);
+        return;
+      }
       if (continueAll && autoNextSurah && sleep !== -1 && surah.number < 114 && onSelectSurah) {
         pendingAutoplayRef.current = true;
         setPlayingIdx(null);
@@ -686,9 +721,14 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
       if (sleep === -1) { stopAudio(); }
     });
 
+    // A single missing/failed ayah file must not kill the whole recitation.
     audio.addEventListener("error", () => {
       if (audioRef.current !== audio) return;
       stopWordSync();
+      if (continueAll && idx + 1 < arabic.length) {
+        playAyah(idx + 1, true);
+        return;
+      }
       setPlayingIdx(null);
       setPlayAll(false);
     });
@@ -754,7 +794,16 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
             </div>
           </button>
           <button
-            onClick={() => (playingIdx !== null ? togglePause() : playAyah(0, true))}
+            onClick={() => {
+              if (playingIdx !== null) { togglePause(); return; }
+              // Resume where this surah was left off.
+              let start = 0;
+              try {
+                const saved = Number(localStorage.getItem(`ibadah:pos:${surah.number}`));
+                if (Number.isFinite(saved) && saved > 0 && saved < arabic.length) start = saved;
+              } catch { /* */ }
+              playAyah(start, true);
+            }}
             className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
             style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
             aria-label="play all"
@@ -830,6 +879,28 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
             />
           </span>
         </button>
+
+        {/* Repeat the whole surah */}
+        <button
+          onClick={() => setRepeatSurah((v) => !v)}
+          className="mt-2 w-full flex items-center justify-between rounded-xl border px-3 py-2 text-[12px] hover:border-primary/40 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <span className="text-muted-foreground">
+            {lang === "ar" ? "تكرار السورة" : lang === "en" ? "Repeat surah" : "دووبارەکردنەوەی سوورەت"}
+          </span>
+          <span
+            className="h-5 w-9 rounded-full relative transition"
+            style={{ background: repeatSurah ? "var(--gradient-gold)" : "var(--glass-border)" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+              style={{ insetInlineStart: repeatSurah ? "1.25rem" : "0.125rem" }}
+            />
+          </span>
+        </button>
+
+
 
         {/* Word-by-word mode */}
         <button
