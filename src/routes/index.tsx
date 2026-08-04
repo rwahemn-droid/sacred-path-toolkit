@@ -702,7 +702,11 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
         playAyah(idx + 1, true);
         return;
       }
-      // End of surah: optionally roll straight into the next surah.
+      // End of surah: repeat it, or roll straight into the next surah.
+      if (continueAll && repeatSurah && sleep !== -1) {
+        playAyah(0, true);
+        return;
+      }
       if (continueAll && autoNextSurah && sleep !== -1 && surah.number < 114 && onSelectSurah) {
         pendingAutoplayRef.current = true;
         setPlayingIdx(null);
@@ -715,9 +719,14 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
       if (sleep === -1) { stopAudio(); }
     });
 
+    // A single missing/failed ayah file must not kill the whole recitation.
     audio.addEventListener("error", () => {
       if (audioRef.current !== audio) return;
       stopWordSync();
+      if (continueAll && idx + 1 < arabic.length) {
+        playAyah(idx + 1, true);
+        return;
+      }
       setPlayingIdx(null);
       setPlayAll(false);
     });
