@@ -439,7 +439,21 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
   const [paused, setPaused] = useState(false);
   const rafRef = useRef<number | null>(null);
   // Continue to the next surah automatically when this one finishes.
-  const [autoNextSurah, setAutoNextSurah] = useState(true);
+  const [autoNextSurah, setAutoNextSurah] = useState(() => {
+    if (typeof window === "undefined") return true;
+    return localStorage.getItem("ibadah:auto-next") !== "0";
+  });
+  // Repeat the whole surah from the start when it ends.
+  const [repeatSurah, setRepeatSurah] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ibadah:repeat-surah") === "1";
+  });
+  useEffect(() => {
+    try {
+      localStorage.setItem("ibadah:auto-next", autoNextSurah ? "1" : "0");
+      localStorage.setItem("ibadah:repeat-surah", repeatSurah ? "1" : "0");
+    } catch { /* */ }
+  }, [autoNextSurah, repeatSurah]);
   const [activeWord, setActiveWord] = useState<{ ayahIdx: number; wordIdx: number } | null>(null);
   // Word-by-word mode + the word tapped for its meaning sheet
   const [wbwMode, setWbwMode] = useState(false);
