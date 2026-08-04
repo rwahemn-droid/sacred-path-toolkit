@@ -880,6 +880,28 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
           </span>
         </button>
 
+        {/* Repeat the whole surah */}
+        <button
+          onClick={() => setRepeatSurah((v) => !v)}
+          className="mt-2 w-full flex items-center justify-between rounded-xl border px-3 py-2 text-[12px] hover:border-primary/40 transition"
+          style={{ borderColor: "var(--glass-border)" }}
+        >
+          <span className="text-muted-foreground">
+            {lang === "ar" ? "تكرار السورة" : lang === "en" ? "Repeat surah" : "دووبارەکردنەوەی سوورەت"}
+          </span>
+          <span
+            className="h-5 w-9 rounded-full relative transition"
+            style={{ background: repeatSurah ? "var(--gradient-gold)" : "var(--glass-border)" }}
+          >
+            <span
+              className="absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all"
+              style={{ insetInlineStart: repeatSurah ? "1.25rem" : "0.125rem" }}
+            />
+          </span>
+        </button>
+
+
+
         {/* Word-by-word mode */}
         <button
           onClick={() => setWbwMode((v) => !v)}
