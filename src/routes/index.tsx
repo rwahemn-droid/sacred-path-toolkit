@@ -601,19 +601,34 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
     audioRef.current?.pause();
     const ayah = arabic[idx];
     if (!ayah) return;
-    const remaining =
-      loopRemaining ?? (continueAll ? 1 : loopCount === 0 ? Infinity : loopCount);
+    // Repeat-verse applies in continuous mode too, so memorisation loops work
+    // while the surah plays through.
+    const remaining = loopRemaining ?? (loopCount === 0 ? Infinity : loopCount);
     const audio = new Audio(ayahAudioUrl(reciter, surah.number, ayah.numberInSurah));
+    audio.preload = "auto";
     audio.playbackRate = speed;
     audioRef.current = audio;
     setPlayingIdx(idx);
     setPaused(false);
     if (continueAll) setPlayAll(true);
     listeningStartRef.current = Date.now();
-    // Reward reading progress: XP + planner goals
-    awardXp(2, "ayahsRead");
-    addProgress("quran", 1);
-    markActive();
+    // Remember exactly where playback is, so the surah resumes here next time.
+    try {
+      localStorage.setItem(`ibadah:pos:${surah.number}`, String(idx));
+    } catch { /* */ }
+    // Warm the next ayah so playback is gapless.
+    const nextAyah = arabic[idx + 1];
+    if (nextAyah) {
+      const pre = new Audio(ayahAudioUrl(reciter, surah.number, nextAyah.numberInSurah));
+      pre.preload = "auto";
+      preloadRef.current = pre;
+    }
+    // Reward reading progress only the first time an ayah plays (not on repeats).
+    if (loopRemaining === undefined) {
+      awardXp(2, "ayahsRead");
+      addProgress("quran", 1);
+      markActive();
+    }
 
     // Lock-screen / media-session metadata.
     if (typeof navigator !== "undefined" && "mediaSession" in navigator) {
