@@ -794,7 +794,16 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
             </div>
           </button>
           <button
-            onClick={() => (playingIdx !== null ? togglePause() : playAyah(0, true))}
+            onClick={() => {
+              if (playingIdx !== null) { togglePause(); return; }
+              // Resume where this surah was left off.
+              let start = 0;
+              try {
+                const saved = Number(localStorage.getItem(`ibadah:pos:${surah.number}`));
+                if (Number.isFinite(saved) && saved > 0 && saved < arabic.length) start = saved;
+              } catch { /* */ }
+              playAyah(start, true);
+            }}
             className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 transition active:scale-95"
             style={{ background: "var(--gradient-gold)", color: "var(--primary-foreground)" }}
             aria-label="play all"
