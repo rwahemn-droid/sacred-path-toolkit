@@ -128,15 +128,14 @@ export async function fetchMosques(
   signal?: AbortSignal,
 ): Promise<Mosque[]> {
   const r = Math.round(radiusKm * 1000);
-  const around = `(around:${r},${center.lat},${center.lon})`;
-  [out:json][timeout:45];
+  const q = `
+[out:json][timeout:45];
 (
   nwr["amenity"="place_of_worship"]["religion"="muslim"]${around};
   nwr["building"="mosque"]${around};
 );
-out center tags;`;
-
-  const elements = await overpass(q, signal);
+out center tags;
+`;  const elements = await overpass(q, signal);
   const seen = new Set<string>();
 
 console.log("Mosques found:", elements.length);
