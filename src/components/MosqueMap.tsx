@@ -64,7 +64,8 @@ export function MosqueMap({ center, mosques, selectedId, onSelect }: Props) {
     });
     leaflet.marker([center.lat, center.lon], { icon: userIcon, zIndexOffset: 1000 }).addTo(layer);
 
-    for (const m of mosques) {
+    // Cap markers for smooth panning on dense city centres.
+    for (const m of mosques.slice(0, 80)) {
       const icon = leaflet.divIcon({
         className: "",
         html: `<div style="width:26px;height:26px;border-radius:50% 50% 50% 4px;transform:rotate(45deg);display:grid;place-items:center;background:linear-gradient(135deg,#0d9488,#14b8a6);border:2px solid rgba(255,255,255,.85)"></div>`,
