@@ -138,6 +138,8 @@ out center tags;`;
 
   const elements = await overpass(q, signal);
   const seen = new Set<string>();
+
+console.log("Mosques found:", elements.length);
   const list: Mosque[] = [];
 
   for (const e of elements) {
