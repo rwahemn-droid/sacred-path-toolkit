@@ -129,7 +129,7 @@ export async function fetchMosques(
 ): Promise<Mosque[]> {
   const r = Math.round(radiusKm * 1000);
   const around = `(around:${r},${center.lat},${center.lon})`;
-  const q = `[out:json][timeout:45];
+  [out:json][timeout:10];
 (
   nwr["amenity"="place_of_worship"]["religion"="muslim"]${around};
   nwr["building"="mosque"]${around};
