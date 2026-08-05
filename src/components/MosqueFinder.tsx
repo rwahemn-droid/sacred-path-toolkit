@@ -361,7 +361,7 @@ export function MosqueFinder({ lang, onBack }: { lang: Lang; onBack: () => void 
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{m.name}</p>
               {m.address && <p className="text-[11px] text-muted-foreground truncate">{m.address}</p>}
-              <p className="text-[11px] text-muted-foreground flex items-center gap-2">
+              <p className="text-[11px] text-muted-foreground flex flex-wrap items-center gap-x-2">
                 <span>{fmtDist(m.dist)}</span>
                 {m.openNow !== null && (
                   <span className={m.openNow ? "text-emerald-400" : "text-destructive"}>
