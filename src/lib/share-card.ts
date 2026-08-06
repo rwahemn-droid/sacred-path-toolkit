@@ -90,15 +90,20 @@ export async function renderShareCard(input: ShareCardInput): Promise<Blob> {
 export async function shareCard(input: ShareCardInput) {
   const blob = await renderShareCard(input);
   const file = new File([blob], "ibadahpro.png", { type: "image/png" });
-  const nav = navigator as Navigator & { canShare?: (d: ShareData) => boolean };
-  if (nav.canShare?.({ files: [file] })) {
-    try {
-      await navigator.share({ files: [file], text: input.reference ?? "IbadahPro" });
+
+  try {
+    if (navigator.share) {
+      await navigator.share({
+        files: [file],
+        title: "IbadahPro",
+        text: input.reference ?? "IbadahPro",
+      });
       return;
-    } catch {
-      /* fall through to download */
     }
+  } catch {
+    // Fall back to download
   }
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
