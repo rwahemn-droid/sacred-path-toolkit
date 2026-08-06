@@ -15,10 +15,11 @@ export type Mosque = {
 
 export type LatLon = { lat: number; lon: number };
 
+// Only worldwide mirrors. (overpass.osm.ch is Switzerland-only and returns empty results.)
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
 const CACHE_KEY = "ibadah:mosques:cache:v1";
@@ -107,8 +108,9 @@ function buildAddress(tags: Record<string, string>) {
   return parts.join("، ");
 }
 
-/** Query all mirrors in parallel and take the first success (much faster than sequential fallback). */
+/** Query all mirrors in parallel and take the first non-empty success (faster than sequential fallback). */
 async function overpass(query: string, signal?: AbortSignal): Promise<OsmElement[]> {
+  let sawEmpty = false;
   const attempts = OVERPASS_ENDPOINTS.map(async (url) => {
     const res = await fetch(url, {
       method: "POST",
@@ -118,15 +120,23 @@ async function overpass(query: string, signal?: AbortSignal): Promise<OsmElement
     });
     if (!res.ok) throw new Error(`Overpass ${res.status}`);
     const json = (await res.json()) as { elements?: OsmElement[] };
-    return json.elements ?? [];
+    const elements = json.elements ?? [];
+    // An empty answer may just be a partial/regional mirror — prefer another mirror.
+    if (elements.length === 0) {
+      sawEmpty = true;
+      throw new Error("Overpass empty");
+    }
+    return elements;
   });
   try {
     return await Promise.any(attempts);
   } catch (e) {
     if (signal?.aborted) throw e;
+    if (sawEmpty) return []; // genuinely no mosques in this area
     throw new Error("Overpass unreachable");
   }
 }
+
 
 
 const FRESH_MS = 6 * 60 * 60 * 1000;
