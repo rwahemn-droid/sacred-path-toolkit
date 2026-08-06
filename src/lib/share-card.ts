@@ -94,9 +94,9 @@ export async function shareCard(input: ShareCardInput) {
   try {
     if (navigator.share) {
       await navigator.share({
+        files: [file],
         title: "IbadahPro",
         text: input.reference ?? "IbadahPro",
-        files: [file],
       });
       return;
     }
