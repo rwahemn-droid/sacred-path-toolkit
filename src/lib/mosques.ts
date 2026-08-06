@@ -15,10 +15,11 @@ export type Mosque = {
 
 export type LatLon = { lat: number; lon: number };
 
+// Only worldwide mirrors. (overpass.osm.ch is Switzerland-only and returns empty results.)
 const OVERPASS_ENDPOINTS = [
   "https://overpass-api.de/api/interpreter",
   "https://overpass.kumi.systems/api/interpreter",
-  "https://overpass.osm.ch/api/interpreter",
+  "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
 ];
 
 const CACHE_KEY = "ibadah:mosques:cache:v1";
