@@ -107,26 +107,27 @@ function buildAddress(tags: Record<string, string>) {
   return parts.join("، ");
 }
 
+/** Query all mirrors in parallel and take the first success (much faster than sequential fallback). */
 async function overpass(query: string, signal?: AbortSignal): Promise<OsmElement[]> {
-  let lastErr: unknown = null;
-  for (const url of OVERPASS_ENDPOINTS) {
-    try {
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: `data=${encodeURIComponent(query)}`,
-        signal,
-      });
-      if (!res.ok) throw new Error(`Overpass ${res.status}`);
-      const json = (await res.json()) as { elements?: OsmElement[] };
-      return json.elements ?? [];
-    } catch (e) {
-      if (signal?.aborted) throw e;
-      lastErr = e;
-    }
+  const attempts = OVERPASS_ENDPOINTS.map(async (url) => {
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: `data=${encodeURIComponent(query)}`,
+      signal,
+    });
+    if (!res.ok) throw new Error(`Overpass ${res.status}`);
+    const json = (await res.json()) as { elements?: OsmElement[] };
+    return json.elements ?? [];
+  });
+  try {
+    return await Promise.any(attempts);
+  } catch (e) {
+    if (signal?.aborted) throw e;
+    throw new Error("Overpass unreachable");
   }
-  throw lastErr instanceof Error ? lastErr : new Error("Overpass unreachable");
 }
+
 
 /** Fetch every mosque within `radiusKm` of `center`, sorted by distance. */
 export async function fetchMosques(
