@@ -38,7 +38,10 @@ export function haversine(a: LatLon, b: LatLon) {
 export function isOpenNow(spec: string | null | undefined, now = new Date()): boolean | null {
   if (!spec) return null;
   const s = spec.trim().toLowerCase();
+  if (!s) return null;
   if (s === "24/7") return true;
+  // Anything we cannot understand (sunrise/sunset, prayer times, comments) → unknown.
+  if (/[a-z]/.test(s.replace(/mo|tu|we|th|fr|sa|su|ph|sh|off|open|closed|am|pm/g, ""))) return null;
   const DAYS = ["su", "mo", "tu", "we", "th", "fr", "sa"];
   const today = DAYS[now.getDay()]!;
   const mins = now.getHours() * 60 + now.getMinutes();
@@ -46,10 +49,11 @@ export function isOpenNow(spec: string | null | undefined, now = new Date()): bo
 
   for (const rule of s.split(";")) {
     const r = rule.trim();
-    if (!r || r.includes("off")) continue;
+    if (!r) continue;
     const timeMatches = [...r.matchAll(/(\d{1,2}):(\d{2})\s*-\s*(\d{1,2}):(\d{2})/g)];
-    if (timeMatches.length === 0) continue;
-    const dayPart = r.slice(0, r.indexOf(timeMatches[0]![0])).trim();
+    const dayPart = (timeMatches.length ? r.slice(0, r.indexOf(timeMatches[0]![0])) : r)
+      .replace(/\boff\b|\bclosed\b|\bopen\b/g, "")
+      .trim();
     let dayOk = dayPart === "";
     if (!dayOk) {
       for (const token of dayPart.split(",")) {
@@ -69,6 +73,9 @@ export function isOpenNow(spec: string | null | undefined, now = new Date()): bo
       }
     }
     if (!dayOk) continue;
+    // "Mo-Fr off" style rule: today is explicitly closed.
+    if (/\boff\b|\bclosed\b/.test(r)) return false;
+    if (timeMatches.length === 0) continue;
     matchedAnyRule = true;
     for (const m of timeMatches) {
       const start = Number(m[1]) * 60 + Number(m[2]);
@@ -80,6 +87,7 @@ export function isOpenNow(spec: string | null | undefined, now = new Date()): bo
   }
   return matchedAnyRule ? false : null;
 }
+
 
 type OsmElement = {
   type: string;
