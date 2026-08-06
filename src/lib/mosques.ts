@@ -192,16 +192,18 @@ export async function fetchMosques(
     // De-duplicate: same normalised name nearby, or same ~55 m grid cell.
     const norm = rawName.toLowerCase().replace(/[\s\u064b-\u065f.,'"-]/g, "");
     const cell = `${lat.toFixed(3)},${lon.toFixed(3)}`;
-    const dupIdx = (norm ? byName.get(norm) : undefined) ?? byCell.get(cell);
+    const nameIdx = norm ? byName.get(norm) : undefined;
+    const nameDup =
+      nameIdx !== undefined && haversine(entry, list[nameIdx]!) < 0.4 ? nameIdx : undefined;
+    const dupIdx = nameDup ?? byCell.get(cell);
     if (dupIdx !== undefined) {
       const prev = list[dupIdx]!;
-      const better =
-        (rawName ? 1 : 0) - (prev.name === fallbackName ? 0 : 1) > 0 ||
-        (entry.address && !prev.address);
+      const better = (rawName && prev.name === fallbackName) || (!!entry.address && !prev.address);
       if (better) list[dupIdx] = { ...prev, ...entry };
       else if (!prev.phone && entry.phone) prev.phone = entry.phone;
       continue;
     }
+
     const idx = list.push(entry) - 1;
     if (norm) byName.set(norm, idx);
     byCell.set(cell, idx);
