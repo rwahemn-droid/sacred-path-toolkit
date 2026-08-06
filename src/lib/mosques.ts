@@ -129,6 +129,8 @@ async function overpass(query: string, signal?: AbortSignal): Promise<OsmElement
 }
 
 
+const FRESH_MS = 6 * 60 * 60 * 1000;
+
 /** Fetch every mosque within `radiusKm` of `center`, sorted by distance. */
 export async function fetchMosques(
   center: LatLon,
@@ -136,43 +138,45 @@ export async function fetchMosques(
   fallbackName: string,
   signal?: AbortSignal,
 ): Promise<Mosque[]> {
+  // Fast path: a recent cache for (nearly) the same centre & radius.
+  const cached = loadCache();
+  if (
+    cached &&
+    cached.radiusKm === radiusKm &&
+    Date.now() - cached.at < FRESH_MS &&
+    haversine(cached.center, center) < 0.3 &&
+    cached.items.length
+  ) {
+    return cached.items
+      .map((m) => ({ ...m, dist: haversine(center, m), openNow: isOpenNow(m.openingHours) }))
+      .sort((a, b) => a.dist - b.dist);
+  }
+
   const r = Math.round(radiusKm * 1000);
-const around = `(around:${r},${center.lat},${center.lon})`;
+  const around = `(around:${r},${center.lat},${center.lon})`;
+  const q = `[out:json][timeout:25];(nwr["amenity"="place_of_worship"]["religion"="muslim"]${around};nwr["building"="mosque"]${around};);out center tags;`;
 
-const q = `
-[out:json][timeout:10];
-(
-  nwr["amenity"="place_of_worship"]["religion"="muslim"]${around};
-  nwr["building"="mosque"]${around};
-);
-out center tags;
-`;
-
-const elements = await overpass(q, signal);  const seen = new Set<string>();
-
-console.log("Mosques found:", elements.length);
+  const elements = await overpass(q, signal);
   const list: Mosque[] = [];
+  const byName = new Map<string, number>(); // name → index in list
+  const byCell = new Map<string, number>(); // ~55 m grid cell → index in list
 
   for (const e of elements) {
     const lat = e.lat ?? e.center?.lat;
     const lon = e.lon ?? e.center?.lon;
     if (lat == null || lon == null) continue;
     const tags = e.tags ?? {};
-    const name =
+    if (tags["religion"] && tags["religion"] !== "muslim") continue;
+    const rawName =
       tags["name"] ||
       tags["name:ckb"] ||
       tags["name:ar"] ||
       tags["name:en"] ||
       tags["official_name"] ||
-      fallbackName;
-    // De-duplicate: same name at (almost) the same spot, or same coordinates.
-    const key = `${name.toLowerCase()}@${lat.toFixed(3)},${lon.toFixed(3)}`;
-    const coordKey = `${lat.toFixed(4)},${lon.toFixed(4)}`;
-    if (seen.has(key) || seen.has(coordKey)) continue;
-    seen.add(key);
-    seen.add(coordKey);
+      "";
+    const name = rawName || fallbackName;
     const hours = tags["opening_hours"] ?? null;
-    list.push({
+    const entry: Mosque = {
       id: `${e.type}/${e.id}`,
       name,
       address: buildAddress(tags),
@@ -182,11 +186,30 @@ console.log("Mosques found:", elements.length);
       openNow: isOpenNow(hours),
       openingHours: hours,
       phone: tags["phone"] ?? tags["contact:phone"] ?? null,
-    });
+    };
+    if (entry.dist > radiusKm * 1.05) continue;
+
+    // De-duplicate: same normalised name nearby, or same ~55 m grid cell.
+    const norm = rawName.toLowerCase().replace(/[\s\u064b-\u065f.,'"-]/g, "");
+    const cell = `${lat.toFixed(3)},${lon.toFixed(3)}`;
+    const dupIdx = (norm && byName.get(norm)) ?? byCell.get(cell);
+    if (dupIdx !== undefined) {
+      const prev = list[dupIdx]!;
+      const better =
+        (rawName ? 1 : 0) - (prev.name === fallbackName ? 0 : 1) > 0 ||
+        (entry.address && !prev.address);
+      if (better) list[dupIdx] = { ...prev, ...entry };
+      else if (!prev.phone && entry.phone) prev.phone = entry.phone;
+      continue;
+    }
+    const idx = list.push(entry) - 1;
+    if (norm) byName.set(norm, idx);
+    byCell.set(cell, idx);
   }
 
   return list.sort((a, b) => a.dist - b.dist);
 }
+
 
 export type GeoPlace = { name: string; lat: number; lon: number };
 
