@@ -423,6 +423,25 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
   useEffect(() => stop, []);
   useEffect(() => { stop(); }, [i]);
 
+  // --- Quiz ---
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [qi, setQi] = useState(0);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
+  const [quizDone, setQuizDone] = useState(false);
+  useEffect(() => { setQuizOpen(false); setQi(0); setPicked(null); setScore(0); setQuizDone(false); }, [i]);
+
+  const startQuiz = () => { setQuizOpen(true); setQi(0); setPicked(null); setScore(0); setQuizDone(false); };
+  const pick = (q: Q, k: number) => {
+    if (picked !== null) return;
+    setPicked(k);
+    if (k === q.c) setScore((s) => s + 1);
+  };
+  const nextQ = (total: number) => {
+    if (qi + 1 >= total) setQuizDone(true);
+    else { setQi((n) => n + 1); setPicked(null); }
+  };
+
   const play = (key: string, url: string, restart = false) => {
     let a = audioRef.current;
     if (!a) { a = new Audio(); audioRef.current = a; a.onended = () => setPlaying(null); }
