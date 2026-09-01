@@ -595,7 +595,7 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span className="flex items-center gap-1.5 font-semibold" style={{ color: lesson.color }}>
                   <Brain className="h-3.5 w-3.5" />
-                  {L(["کوێز", "اختبار", "Quiz"])}
+                  {L(["تاقیکردنەوە", "اختبار", "Quiz"])}
                 </span>
                 <span>{qi + 1} / {total}</span>
               </div>
