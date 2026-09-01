@@ -636,7 +636,7 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
             </div>
           );
         })()}
-
+<button
           className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm"
           style={{ borderColor: "var(--glass-border)", background: isDone ? `${lesson.color}22` : undefined }}>
           {isDone ? <CheckCircle2 className="h-4 w-4" style={{ color: lesson.color }} /> : <Circle className="h-4 w-4" />}
