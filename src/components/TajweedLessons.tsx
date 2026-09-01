@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 
@@ -211,6 +211,170 @@ const LESSONS: Lesson[] = [
   },
 ];
 
+type Q = { q: Tri; o: Tri[]; c: number; e: Tri };
+const Q3 = (q: Tri, o: Tri[], c: number, e: Tri): Q => ({ q, o, c, e });
+
+const QUIZ: Record<string, Q[]> = {
+  "intro-makharij": [
+    Q3(["مەخرەج واتە چی؟", "ما هو المخرج؟", "What is a makhraj?"],
+      [["شوێنی دەرچوونی پیت", "موضع خروج الحرف", "The point where a letter is articulated"],
+       ["ڕەنگی پیت", "لون الحرف", "The color of a letter"],
+       ["ژمارەی ئایەت", "رقم الآية", "The verse number"]], 0,
+      ["مەخرەج ئەو شوێنەیە کە پیت لێی دەردەچێت.", "المخرج هو موضع خروج الحرف.", "Makhraj is the articulation point of a letter."]),
+    Q3(["پیتی (ح) لە کوێوە دەردەچێت؟", "من أين يخرج حرف (ح)؟", "Where does (ح) come from?"],
+      [["لێو", "الشفتان", "The lips"], ["گەروو", "الحلق", "The throat"], ["لووت", "الخيشوم", "The nose"]], 1,
+      ["(ح) لە پیتەکانی گەرووە.", "(ح) من حروف الحلق.", "(ح) is a throat letter."]),
+    Q3(["بۆچی مەخرەج گرنگە؟", "لماذا المخرج مهم؟", "Why does makhraj matter?"],
+      [["بۆ خێرایی خوێندنەوە", "لسرعة القراءة", "For faster reading"],
+       ["بۆ پاراستنی مانا", "لحفظ المعنى", "To preserve the meaning"],
+       ["بۆ دەنگی بەرز", "لرفع الصوت", "To raise the voice"]], 1,
+      ["گۆڕینی مەخرەج مانا دەگۆڕێت.", "تغيير المخرج يغيّر المعنى.", "A wrong makhraj changes the meaning."]),
+  ],
+  "noon-sakinah-idhhar": [
+    Q3(["ئیظهار لەگەڵ چ پیتێک دێت؟", "مع أي حروف يكون الإظهار؟", "Idhhār occurs with which letters?"],
+      [["پیتەکانی گەروو", "حروف الحلق", "Throat letters"], ["ی ر م ل و ن", "ي ر م ل و ن", "ي ر م ل و ن"], ["ب", "الباء", "ب"]], 0,
+      ["(ء ه ع ح غ خ) پیتەکانی ئیظهارن.", "حروف الإظهار: ء ه ع ح غ خ.", "The idhhār letters are ء ه ع ح غ خ."]),
+    Q3(["لە «مِنْ حَكِيمٍ» چ حوکمێکە؟", "ما الحكم في «مِنْ حَكِيمٍ»؟", "Which rule is in «مِنْ حَكِيمٍ»?"],
+      [["ئیخفا", "الإخفاء", "Ikhfāʾ"], ["ئیظهار", "الإظهار", "Idhhār"], ["ئیقلاب", "الإقلاب", "Iqlāb"]], 1,
+      ["دوای نوون (ح)ی گەروو هاتووە.", "جاء بعد النون حرف الحاء الحلقي.", "The throat letter ح follows the nūn."]),
+    Q3(["ئیظهار غونەی هەیە؟", "هل في الإظهار غنّة؟", "Does idhhār have ghunnah?"],
+      [["بەڵێ", "نعم", "Yes"], ["نەخێر", "لا", "No"]], 1,
+      ["نوون بە ڕوونی بێ غونە دەخوێنرێت.", "تُنطق النون واضحة بلا غنّة.", "The nūn is clear, without nasalization."]),
+  ],
+  idgham: [
+    Q3(["پیتەکانی ئیدغام کامانەن؟", "ما حروف الإدغام؟", "Which are the idghām letters?"],
+      [["ی ر م ل و ن", "ي ر م ل و ن", "ي ر م ل و ن"], ["ء ه ع ح غ خ", "ء ه ع ح غ خ", "ء ه ع ح غ خ"], ["ق ط ب ج د", "ق ط ب ج د", "ق ط ب ج د"]], 0,
+      ["(یرملون) پیتەکانی ئیدغامن.", "حروف الإدغام مجموعة في (يرملون).", "They are gathered in (yarmalūn)."]),
+    Q3(["ئیدغام لەگەڵ (ل ر) چۆنە؟", "الإدغام مع (ل ر) كيف؟", "Idghām with (ل ر) is…"],
+      [["بە غونە", "بغنّة", "With ghunnah"], ["بێ غونە", "بغير غنّة", "Without ghunnah"]], 1,
+      ["(ل ر) ئیدغامی بێ غونەن.", "(ل ر) إدغام بلا غنّة.", "(ل ر) merge without nasalization."]),
+    Q3(["«مَنْ يَعْمَلْ» چ حوکمێکە؟", "ما حكم «مَنْ يَعْمَلْ»؟", "Which rule is «مَنْ يَعْمَلْ»?"],
+      [["ئیدغام بە غونە", "إدغام بغنّة", "Idghām with ghunnah"], ["ئیظهار", "الإظهار", "Idhhār"], ["قەلقەلە", "القلقلة", "Qalqalah"]], 0,
+      ["(ی) لە (ینمو)یە، بە غونەوە.", "الياء من (ينمو) فتُدغم بغنّة.", "ي is from ينمو, so it merges with ghunnah."]),
+  ],
+  iqlab: [
+    Q3(["ئیقلاب لەگەڵ چ پیتێکە؟", "الإقلاب مع أي حرف؟", "Iqlāb happens with which letter?"],
+      [["م", "الميم", "م"], ["ب", "الباء", "ب"], ["ن", "النون", "ن"]], 1,
+      ["تەنها لەگەڵ (ب).", "يكون مع الباء فقط.", "Only with (ب)."]),
+    Q3(["نوون دەگۆڕدرێت بۆ چی؟", "إلى ماذا تُقلب النون؟", "The nūn turns into…"],
+      [["میم", "ميم", "Mīm"], ["لام", "لام", "Lām"], ["ڕا", "راء", "Rāʾ"]], 0,
+      ["بۆ میمی شاراوە لەگەڵ غونە.", "تُقلب ميماً مخفاة مع غنّة.", "Into a hidden mīm with ghunnah."]),
+    Q3(["«مِنْ بَعْدِ» چییە؟", "ما حكم «مِنْ بَعْدِ»؟", "«مِنْ بَعْدِ» is…"],
+      [["ئیدغام", "إدغام", "Idghām"], ["ئیقلاب", "إقلاب", "Iqlāb"], ["ئیظهار", "إظهار", "Idhhār"]], 1,
+      ["دوای نوون (ب) هاتووە.", "جاء بعد النون حرف الباء.", "A ب follows the nūn."]),
+  ],
+  ikhfa: [
+    Q3(["ژمارەی پیتەکانی ئیخفا چەندە؟", "كم عدد حروف الإخفاء؟", "How many ikhfāʾ letters?"],
+      [["٦", "٦", "6"], ["١٥", "١٥", "15"], ["٥", "٥", "5"]], 1,
+      ["١٥ پیت ماوەتەوە بۆ ئیخفا.", "حروف الإخفاء خمسة عشر.", "Fifteen letters remain for ikhfāʾ."]),
+    Q3(["«مِنْ شَرِّ» چ حوکمێکە؟", "ما حكم «مِنْ شَرِّ»؟", "Which rule is in «مِنْ شَرِّ»?"],
+      [["ئیدغام", "إدغام", "Idghām"], ["ئیخفا", "إخفاء", "Ikhfāʾ"], ["ئیقلاب", "إقلاب", "Iqlāb"], ["قەلقەلە", "قلقلة", "Qalqalah"]], 1,
+      ["(ش) لە پیتەکانی ئیخفایە.", "الشين من حروف الإخفاء.", "ش is one of the ikhfāʾ letters."]),
+    Q3(["غونەی ئیخفا چەند حەرەکەیە؟", "كم مقدار غنّة الإخفاء؟", "How long is the ikhfāʾ ghunnah?"],
+      [["دوو حەرەکە", "حركتان", "Two counts"], ["شەش حەرەکە", "ست حركات", "Six counts"], ["بێ غونە", "بلا غنّة", "No ghunnah"]], 0,
+      ["بە ڕێژەی دوو حەرەکە.", "بمقدار حركتين.", "About two counts."]),
+  ],
+  "meem-sakinah": [
+    Q3(["میمی ساکن چەند حوکمی هەیە؟", "كم حكماً للميم الساكنة؟", "How many rules for mīm sākinah?"],
+      [["٢", "٢", "2"], ["٣", "٣", "3"], ["٤", "٤", "4"]], 1,
+      ["ئیخفا، ئیدغام، ئیظهار.", "إخفاء وإدغام وإظهار.", "Ikhfāʾ, idghām and idhhār."]),
+    Q3(["«تَرْمِيهِمْ بِحِجَارَةٍ» چییە؟", "ما حكم «تَرْمِيهِمْ بِحِجَارَةٍ»؟", "«تَرْمِيهِمْ بِحِجَارَةٍ» is…"],
+      [["ئیخفای شەفەوی", "إخفاء شفوي", "Labial ikhfāʾ"], ["ئیظهاری شەفەوی", "إظهار شفوي", "Labial idhhār"], ["ئیقلاب", "إقلاب", "Iqlāb"]], 0,
+      ["میمی ساکن پێش (ب).", "ميم ساكنة قبل الباء.", "Mīm sākinah before ب."]),
+    Q3(["میمی ساکن پێش میم چییە؟", "ميم ساكنة قبل ميم؟", "Mīm sākinah before mīm is…"],
+      [["ئیدغامی مثلین", "إدغام مثلين", "Idghām of like letters"], ["ئیظهار", "إظهار", "Idhhār"], ["قەلقەلە", "قلقلة", "Qalqalah"]], 0,
+      ["دوو میم دەتوێنەوە بە غونە.", "تُدغم الميمان بغنّة.", "The two mīms merge with ghunnah."]),
+  ],
+  ghunnah: [
+    Q3(["غونە لە کوێوە دەردەچێت؟", "من أين تخرج الغنّة؟", "Ghunnah comes from…"],
+      [["گەروو", "الحلق", "The throat"], ["لووت (خەیشوم)", "الخيشوم", "The nasal passage"], ["زمان", "اللسان", "The tongue"]], 1,
+      ["غونە دەنگی لووتە.", "الغنّة صوت من الخيشوم.", "Ghunnah is a nasal sound."]),
+    Q3(["کام پیت غونەی موشەددەدی هەیە؟", "أي حرف له غنّة مشدّدة؟", "Which letters carry doubled ghunnah?"],
+      [["ن و م", "النون والميم", "Nūn and mīm"], ["ل و ر", "اللام والراء", "Lām and rāʾ"], ["ق و ط", "القاف والطاء", "Qāf and ṭāʾ"]], 0,
+      ["هەر نوون و میمی شەددەدار.", "كل نون وميم مشدّدة.", "Any doubled nūn or mīm."]),
+    Q3(["«إِنَّ» چەند حەرەکە غونەی هەیە؟", "كم حركة غنّة «إِنَّ»؟", "How long is the ghunnah in «إِنَّ»?"],
+      [["دوو حەرەکە", "حركتان", "Two counts"], ["چوار حەرەکە", "أربع حركات", "Four counts"]], 0,
+      ["غونەی موشەددەد دوو حەرەکەیە.", "مقدارها حركتان.", "It is held two counts."]),
+  ],
+  qalqalah: [
+    Q3(["پیتەکانی قەلقەلە کامانەن؟", "ما حروف القلقلة؟", "Which are the qalqalah letters?"],
+      [["ق ط ب ج د", "ق ط ب ج د", "ق ط ب ج د"], ["ی ر م ل و ن", "ي ر م ل و ن", "ي ر م ل و ن"], ["ء ه ع ح", "ء ه ع ح", "ء ه ع ح"]], 0,
+      ["کۆکراونەتەوە لە (قطب جد).", "مجموعة في (قطب جد).", "Gathered in (quṭb jad)."]),
+    Q3(["قەلقەلە کەی ڕوودەدات؟", "متى تقع القلقلة؟", "When does qalqalah occur?"],
+      [["کاتێک پیتەکە ساکن بێت", "إذا سكن الحرف", "When the letter has sukūn"], ["کاتێک حەرەکەی هەبێت", "إذا تحرك الحرف", "When the letter is voweled"]], 0,
+      ["تەنها لەگەڵ سوکوون.", "تكون مع السكون فقط.", "Only with sukūn."]),
+    Q3(["«الْفَلَقْ» لە کۆتایی چییە؟", "آخر «الْفَلَقْ» ما حكمه؟", "The end of «الْفَلَقْ» is…"],
+      [["مەدد", "مدّ", "Madd"], ["قەلقەلە", "قلقلة", "Qalqalah"], ["ئیخفا", "إخفاء", "Ikhfāʾ"]], 1,
+      ["(ق)ی ساکن لە وەقفدا.", "القاف ساكنة عند الوقف.", "The qāf is sākin when stopping."]),
+  ],
+  "madd-tabii": [
+    Q3(["مەددی سروشتی چەند حەرەکەیە؟", "كم حركة المدّ الطبيعي؟", "Natural madd is how many counts?"],
+      [["٢", "٢", "2"], ["٤", "٤", "4"], ["٦", "٦", "6"]], 0,
+      ["دوو حەرەکە.", "حركتان.", "Two counts."]),
+    Q3(["پیتەکانی مەدد کامانەن؟", "ما حروف المدّ؟", "The madd letters are…"],
+      [["ا و ی", "ا و ي", "ا و ي"], ["ن م", "ن م", "ن م"], ["ب ج د", "ب ج د", "ب ج د"]], 0,
+      ["ئەلف، واو، یا.", "الألف والواو والياء.", "Alif, wāw, yāʾ."]),
+    Q3(["کەی مەدد سروشتی نامێنێت؟", "متى لا يبقى المدّ طبيعياً؟", "When is it no longer natural?"],
+      [["ئەگەر هەمزە یان سوکوون بێت", "إذا جاء همز أو سكون", "If a hamzah or sukūn follows"], ["ئەگەر شەددە نەبێت", "إذا لم تأتِ شدّة", "If no shaddah follows"]], 0,
+      ["ئەوکات دەبێتە مەددی فەرعی.", "حينها يصير مدّاً فرعياً.", "Then it becomes a secondary madd."]),
+  ],
+  "madd-muttasil": [
+    Q3(["مەددی موتەصیل چەند حەرەکەیە؟", "كم حركة المدّ المتّصل؟", "Madd muttaṣil is…"],
+      [["٢", "٢", "2"], ["٤–٥", "٤–٥", "4–5"], ["٦", "٦", "6"]], 1,
+      ["چوار بۆ پێنج حەرەکە.", "أربع أو خمس حركات.", "Four to five counts."]),
+    Q3(["مەرجی موتەصیل چییە؟", "ما شرط المتّصل؟", "The condition for muttaṣil is…"],
+      [["هەمزە لە هەمان وشەدا", "الهمز في الكلمة نفسها", "Hamzah in the same word"], ["هەمزە لە وشەی دواتر", "الهمز في الكلمة التالية", "Hamzah in the next word"]], 0,
+      ["پیتی مەدد و هەمزە پێکەوە لە یەک وشەدان.", "حرف المدّ والهمز في كلمة واحدة.", "Madd letter and hamzah share one word."]),
+    Q3(["«جَاءَ» چ مەددێکە؟", "ما مدّ «جَاءَ»؟", "«جَاءَ» is which madd?"],
+      [["سروشتی", "طبيعي", "Natural"], ["موتەصیل", "متّصل", "Muttaṣil"], ["لازم", "لازم", "Lāzim"]], 1,
+      ["هەمزە دوای ئەلف لە یەک وشەدا.", "همز بعد الألف في كلمة واحدة.", "Hamzah after alif in one word."]),
+  ],
+  "madd-lazim": [
+    Q3(["مەددی لازم چەند حەرەکەیە؟", "كم حركة المدّ اللازم؟", "Madd lāzim is…"],
+      [["٢", "٢", "2"], ["٦", "٦", "6"], ["٤", "٤", "4"]], 1,
+      ["شەش حەرەکە.", "ست حركات.", "Six counts."]),
+    Q3(["دوای پیتی مەدد چی دێت؟", "ماذا يأتي بعد حرف المدّ؟", "What follows the madd letter?"],
+      [["سوکوونی جێگیر یان شەددە", "سكون أصلي أو شدّة", "Permanent sukūn or shaddah"], ["هەمزە", "همز", "Hamzah"]], 0,
+      ["ئەمە جیای دەکاتەوە لە موتەصیل.", "وهذا يميّزه عن المتّصل.", "That distinguishes it from muttaṣil."]),
+    Q3(["«الضَّالِّينَ» چییە؟", "ما حكم «الضَّالِّينَ»؟", "«الضَّالِّينَ» is…"],
+      [["مەددی لازم", "مدّ لازم", "Madd lāzim"], ["مەددی سروشتی", "مدّ طبيعي", "Natural madd"]], 0,
+      ["دوای ئەلف شەددە هاتووە.", "جاءت شدّة بعد الألف.", "A shaddah follows the alif."]),
+  ],
+  "lam-shamsiyyah": [
+    Q3(["لامی شەمسی چۆنە؟", "اللام الشمسية كيف تُنطق؟", "Solar lām is…"],
+      [["بە ڕوونی دەخوێنرێت", "تُنطق ظاهرة", "Pronounced clearly"], ["دەتوێتەوە", "تُدغم", "Assimilated"]], 1,
+      ["نانووسرێت بەڵکو دەتوێتەوە.", "تُدغم في الحرف بعدها.", "It merges into the next letter."]),
+    Q3(["«الشَّمْسُ» کام لامە؟", "«الشَّمْسُ» أي لام؟", "«الشَّمْسُ» has which lām?"],
+      [["شەمسی", "شمسية", "Solar"], ["قەمەری", "قمرية", "Lunar"]], 0,
+      ["(ش) پیتێکی شەمسییە.", "الشين حرف شمسي.", "ش is a solar letter."]),
+    Q3(["«الْقَمَرُ» کام لامە؟", "«الْقَمَرُ» أي لام؟", "«الْقَمَرُ» has which lām?"],
+      [["شەمسی", "شمسية", "Solar"], ["قەمەری", "قمرية", "Lunar"]], 1,
+      ["لام بە سوکوون بە ڕوونی دەخوێنرێت.", "اللام ساكنة وتُنطق ظاهرة.", "The lām is clear with sukūn."]),
+  ],
+  tafkhim: [
+    Q3(["پیتەکانی ئیستیعلا کامانەن؟", "ما حروف الاستعلاء؟", "The heavy letters are…"],
+      [["خص ضغط قظ", "خص ضغط قظ", "خص ضغط قظ"], ["یرملون", "ينمو", "yarmalūn"], ["قطب جد", "قطب جد", "quṭb jad"]], 0,
+      ["ئەمانە هەمیشە تەفخیم دەکرێن.", "هذه تُفخّم دائماً.", "These are always pronounced heavy."]),
+    Q3(["تەرقیق واتە چی؟", "ما معنى الترقيق؟", "Tarqīq means…"],
+      [["ئەستوورکردن", "التفخيم", "Making heavy"], ["باریککردن", "تنحيف الحرف", "Making light"]], 1,
+      ["دەنگ باریک دەکرێتەوە.", "ينحف الصوت.", "The sound is made thin."]),
+    Q3(["لە «الصِّرَاطَ» (ص) چۆنە؟", "الصاد في «الصِّرَاطَ»؟", "The ص in «الصِّرَاطَ» is…"],
+      [["ئەستوور", "مفخّمة", "Heavy"], ["باریک", "مرقّقة", "Light"]], 0,
+      ["(ص) پیتێکی ئیستیعلایە.", "الصاد من حروف الاستعلاء.", "ص is an elevated letter."]),
+  ],
+  waqf: [
+    Q3(["نیشانەی (لا) چی دەگەیەنێت؟", "ماذا تعني علامة (لا)؟", "The mark (لا) means…"],
+      [["ڕاوەستان باشە", "الوقف أولى", "Better to stop"], ["ڕاوەستان نابێت", "لا تقف", "Do not stop"]], 1,
+      ["ڕاوەستان لێرە مانا تێک دەدات.", "الوقف هنا يخلّ بالمعنى.", "Stopping here harms the meaning."]),
+    Q3(["نیشانەی (م) چییە؟", "ما علامة (م)؟", "The mark (م) means…"],
+      [["وەقفی پێویست", "وقف لازم", "Necessary stop"], ["وەقفی ڕێگەپێدراو", "وقف جائز", "Permissible stop"]], 0,
+      ["(م) واتە وەقفی لازم.", "(م) تعني الوقف اللازم.", "(م) marks an obligatory stop."]),
+    Q3(["بۆچی وەقف گرنگە؟", "لماذا الوقف مهم؟", "Why is waqf important?"],
+      [["بۆ پاراستنی مانا", "لحفظ المعنى", "To preserve meaning"], ["بۆ خێرایی", "للسرعة", "For speed"]], 0,
+      ["وەقفی هەڵە مانا دەگۆڕێت.", "الوقف الخاطئ يغيّر المعنى.", "A wrong stop changes the meaning."]),
+  ],
+};
+
 export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => void }) {
   const L = (t: Tri) => (lang === "ar" ? t[1] : lang === "en" ? t[2] : t[0]);
   const rtl = lang === "ar" || lang === "ku";
@@ -258,6 +422,25 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
   // stop when leaving the lesson view or switching lesson
   useEffect(() => stop, []);
   useEffect(() => { stop(); }, [i]);
+
+  // --- Quiz ---
+  const [quizOpen, setQuizOpen] = useState(false);
+  const [qi, setQi] = useState(0);
+  const [picked, setPicked] = useState<number | null>(null);
+  const [score, setScore] = useState(0);
+  const [quizDone, setQuizDone] = useState(false);
+  useEffect(() => { setQuizOpen(false); setQi(0); setPicked(null); setScore(0); setQuizDone(false); }, [i]);
+
+  const startQuiz = () => { setQuizOpen(true); setQi(0); setPicked(null); setScore(0); setQuizDone(false); };
+  const pick = (q: Q, k: number) => {
+    if (picked !== null) return;
+    setPicked(k);
+    if (k === q.c) setScore((s) => s + 1);
+  };
+  const nextQ = (total: number) => {
+    if (qi + 1 >= total) setQuizDone(true);
+    else { setQi((n) => n + 1); setPicked(null); }
+  };
 
   const play = (key: string, url: string, restart = false) => {
     let a = audioRef.current;
@@ -360,7 +543,100 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
           ))}
         </div>
 
-        <button onClick={toggle}
+        {/* Mini Quiz */}
+        {(() => {
+          const qs = QUIZ[lesson.id] ?? [];
+          if (qs.length === 0) return null;
+          if (!quizOpen)
+            return (
+              <button onClick={startQuiz}
+                className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-colors active:scale-[0.98]"
+                style={{ borderColor: "var(--glass-border)", color: lesson.color }}>
+                <Brain className="h-4 w-4" />
+                {L(["کوێز بکە", "ابدأ الاختبار", "Start Quiz"])}
+              </button>
+            );
+          const total = qs.length;
+          if (quizDone) {
+            const pctQ = Math.round((score / total) * 100);
+            const passed = pctQ >= 70;
+            return (
+              <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: "var(--glass-border)" }}>
+                <p className="text-2xl font-bold" style={{ color: passed ? "#22c55e" : "#ef4444" }}>{score} / {total}</p>
+                <p className="text-sm text-muted-foreground mt-1">{pctQ}%</p>
+                {passed ? (
+                  <p className="mt-2 flex items-center justify-center gap-1.5 text-sm font-semibold text-green-500">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {L(["وانە تەواو بوو", "اكتمل الدرس", "Lesson Completed"])}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {L(["دووبارە هەوڵ بدەرەوە بۆ ٧٠٪ یان زیاتر", "أعد المحاولة للوصول إلى ٧٠٪ أو أكثر", "Try again to reach 70% or more"])}
+                  </p>
+                )}
+                <div className="mt-3 flex gap-2">
+                  <button onClick={startQuiz}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-primary-foreground text-sm"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    <RotateCcw className="h-4 w-4" />
+                    {L(["دووبارە کوێز", "إعادة الاختبار", "Retry Quiz"])}
+                  </button>
+                  <button onClick={() => setQuizOpen(false)}
+                    className="flex-1 py-2 rounded-xl border text-sm" style={{ borderColor: "var(--glass-border)" }}>
+                    {L(["داخستن", "إغلاق", "Close"])}
+                  </button>
+                </div>
+              </div>
+            );
+          }
+          const q = qs[qi];
+          return (
+            <div className="mt-4 rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--glass-border)" }}>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5 font-semibold" style={{ color: lesson.color }}>
+                  <Brain className="h-3.5 w-3.5" />
+                  {L(["کوێز", "اختبار", "Quiz"])}
+                </span>
+                <span>{qi + 1} / {total}</span>
+              </div>
+              <p className="text-sm font-medium leading-relaxed">{L(q.q)}</p>
+              <div className="space-y-2">
+                {q.o.map((opt, k) => {
+                  const isPick = picked === k;
+                  const isRight = picked !== null && k === q.c;
+                  const isWrong = isPick && k !== q.c;
+                  return (
+                    <button key={k} onClick={() => pick(q, k)} disabled={picked !== null}
+                      className="w-full text-start px-3 py-2 rounded-lg border text-sm transition-colors disabled:cursor-default"
+                      style={{
+                        borderColor: isRight ? "#22c55e" : isWrong ? "#ef4444" : "var(--glass-border)",
+                        background: isRight ? "#22c55e22" : isWrong ? "#ef444422" : undefined,
+                      }}>
+                      {L(opt)}
+                    </button>
+                  );
+                })}
+              </div>
+              {picked !== null && (
+                <div className="space-y-2 animate-in fade-in duration-200">
+                  <p className={`flex items-center gap-1.5 text-sm font-semibold ${picked === q.c ? "text-green-500" : "text-red-500"}`}>
+                    {picked === q.c ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                    {picked === q.c
+                      ? L(["ڕاستە", "إجابة صحيحة", "Correct"])
+                      : L(["هەڵەیە", "إجابة خاطئة", "Incorrect"])}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{L(q.e)}</p>
+                  <button onClick={() => nextQ(total)}
+                    className="w-full py-2 rounded-xl text-primary-foreground text-sm"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    {qi + 1 >= total ? L(["بینینی ئەنجام", "عرض النتيجة", "See Result"]) : L(["پرسیاری دواتر", "السؤال التالي", "Next Question"])}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
           className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm"
           style={{ borderColor: "var(--glass-border)", background: isDone ? `${lesson.color}22` : undefined }}>
           {isDone ? <CheckCircle2 className="h-4 w-4" style={{ color: lesson.color }} /> : <Circle className="h-4 w-4" />}
