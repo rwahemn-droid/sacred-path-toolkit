@@ -245,6 +245,30 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
   const toggle = () => save(isDone ? done.filter((d) => d !== lesson.id) : [...done, lesson.id], i);
   const pct = Math.round((done.length / LESSONS.length) * 100);
 
+  // --- Stage 1 audio ---
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState<string | null>(null);
+  const reciter = RECITERS.find((r) => r.id === DEFAULT_RECITER_ID) ?? RECITERS[0];
+
+  const stop = () => {
+    const a = audioRef.current;
+    if (a) { a.pause(); a.src = ""; }
+    setPlaying(null);
+  };
+  // stop when leaving the lesson view or switching lesson
+  useEffect(() => stop, []);
+  useEffect(() => { stop(); }, [i]);
+
+  const play = (key: string, url: string, restart = false) => {
+    let a = audioRef.current;
+    if (!a) { a = new Audio(); audioRef.current = a; a.onended = () => setPlaying(null); }
+    if (playing === key && !restart) { a.pause(); setPlaying(null); return; }
+    if (a.src !== url) a.src = url;
+    a.currentTime = 0;
+    void a.play().then(() => setPlaying(key)).catch(() => setPlaying(null));
+  };
+
+
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
       <div className="flex items-center gap-2">
