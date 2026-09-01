@@ -579,7 +579,7 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
                     className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-primary-foreground text-sm"
                     style={{ background: "var(--gradient-gold)" }}>
                     <RotateCcw className="h-4 w-4" />
-                    {L([دووبارە تاقیکردنەوە, "إعادة الاختبار", "Retry Quiz"])}
+                 {L(["إعادة الاختبار", "دووبارە تاقیکردنەوە", "Retry Quiz"])}
                   </button>
                   <button onClick={() => setQuizOpen(false)}
                     className="flex-1 py-2 rounded-xl border text-sm" style={{ borderColor: "var(--glass-border)" }}>
