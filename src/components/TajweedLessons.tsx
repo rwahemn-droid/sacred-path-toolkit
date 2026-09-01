@@ -334,6 +334,28 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
                 )}
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground text-center">{L(ex.ref)}</p>
+              {(() => {
+                const key = `${lesson.id}-${k}`;
+                const url = ayahAudioUrl(reciter, ex.a[0], ex.a[1]);
+                const on = playing === key;
+                return (
+                  <div className="mt-2 flex items-center justify-center gap-2">
+                    <button onClick={() => play(key, url)}
+                      className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors active:scale-95"
+                      style={{ borderColor: "var(--glass-border)", color: lesson.color, background: on ? `${lesson.color}22` : undefined }}>
+                      {on ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      {on ? L(["وەستان", "إيقاف مؤقت", "Pause"]) : L(["گوێ بگرە", "استمع", "Listen"])}
+                    </button>
+                    <button onClick={() => play(key, url, true)}
+                      className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors active:scale-95"
+                      style={{ borderColor: "var(--glass-border)" }}>
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {L(["دووبارە", "إعادة", "Repeat"])}
+                    </button>
+                  </div>
+                );
+              })()}
+
             </div>
           ))}
         </div>
