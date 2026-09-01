@@ -553,7 +553,7 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
                 className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-colors active:scale-[0.98]"
                 style={{ borderColor: "var(--glass-border)", color: lesson.color }}>
                 <Brain className="h-4 w-4" />
-                 {L(["ابدأ الاختبار", "تاقیکردنەوە دەست پێ بکە", "Start Quiz"])}
+                 {L(["\u062a\u0627\u0642\u06cc\u06a9\u0631\u062f\u0646\u06d5\u0648\u06d5 \u062f\u06d5\u0633\u062a \u067e\u06ce \u0628\u06a9\u06d5", "\u0627\u0628\u062f\u0623 \u0627\u0644\u0627\u062e\u062a\u0628\u0627\u0631", "Start Quiz"])}
               </button>
             );
           const total = qs.length;
