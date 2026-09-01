@@ -543,7 +543,100 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
           ))}
         </div>
 
-        <button onClick={toggle}
+        {/* Mini Quiz */}
+        {(() => {
+          const qs = QUIZ[lesson.id] ?? [];
+          if (qs.length === 0) return null;
+          if (!quizOpen)
+            return (
+              <button onClick={startQuiz}
+                className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-colors active:scale-[0.98]"
+                style={{ borderColor: "var(--glass-border)", color: lesson.color }}>
+                <Brain className="h-4 w-4" />
+                {L(["کوێز بکە", "ابدأ الاختبار", "Start Quiz"])}
+              </button>
+            );
+          const total = qs.length;
+          if (quizDone) {
+            const pctQ = Math.round((score / total) * 100);
+            const passed = pctQ >= 70;
+            return (
+              <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: "var(--glass-border)" }}>
+                <p className="text-2xl font-bold" style={{ color: passed ? "#22c55e" : "#ef4444" }}>{score} / {total}</p>
+                <p className="text-sm text-muted-foreground mt-1">{pctQ}%</p>
+                {passed ? (
+                  <p className="mt-2 flex items-center justify-center gap-1.5 text-sm font-semibold text-green-500">
+                    <CheckCircle2 className="h-4 w-4" />
+                    {L(["وانە تەواو بوو", "اكتمل الدرس", "Lesson Completed"])}
+                  </p>
+                ) : (
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {L(["دووبارە هەوڵ بدەرەوە بۆ ٧٠٪ یان زیاتر", "أعد المحاولة للوصول إلى ٧٠٪ أو أكثر", "Try again to reach 70% or more"])}
+                  </p>
+                )}
+                <div className="mt-3 flex gap-2">
+                  <button onClick={startQuiz}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-primary-foreground text-sm"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    <RotateCcw className="h-4 w-4" />
+                    {L(["دووبارە کوێز", "إعادة الاختبار", "Retry Quiz"])}
+                  </button>
+                  <button onClick={() => setQuizOpen(false)}
+                    className="flex-1 py-2 rounded-xl border text-sm" style={{ borderColor: "var(--glass-border)" }}>
+                    {L(["داخستن", "إغلاق", "Close"])}
+                  </button>
+                </div>
+              </div>
+            );
+          }
+          const q = qs[qi];
+          return (
+            <div className="mt-4 rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--glass-border)" }}>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5 font-semibold" style={{ color: lesson.color }}>
+                  <Brain className="h-3.5 w-3.5" />
+                  {L(["کوێز", "اختبار", "Quiz"])}
+                </span>
+                <span>{qi + 1} / {total}</span>
+              </div>
+              <p className="text-sm font-medium leading-relaxed">{L(q.q)}</p>
+              <div className="space-y-2">
+                {q.o.map((opt, k) => {
+                  const isPick = picked === k;
+                  const isRight = picked !== null && k === q.c;
+                  const isWrong = isPick && k !== q.c;
+                  return (
+                    <button key={k} onClick={() => pick(q, k)} disabled={picked !== null}
+                      className="w-full text-start px-3 py-2 rounded-lg border text-sm transition-colors disabled:cursor-default"
+                      style={{
+                        borderColor: isRight ? "#22c55e" : isWrong ? "#ef4444" : "var(--glass-border)",
+                        background: isRight ? "#22c55e22" : isWrong ? "#ef444422" : undefined,
+                      }}>
+                      {L(opt)}
+                    </button>
+                  );
+                })}
+              </div>
+              {picked !== null && (
+                <div className="space-y-2 animate-in fade-in duration-200">
+                  <p className={`flex items-center gap-1.5 text-sm font-semibold ${picked === q.c ? "text-green-500" : "text-red-500"}`}>
+                    {picked === q.c ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                    {picked === q.c
+                      ? L(["ڕاستە", "إجابة صحيحة", "Correct"])
+                      : L(["هەڵەیە", "إجابة خاطئة", "Incorrect"])}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{L(q.e)}</p>
+                  <button onClick={() => nextQ(total)}
+                    className="w-full py-2 rounded-xl text-primary-foreground text-sm"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    {qi + 1 >= total ? L(["بینینی ئەنجام", "عرض النتيجة", "See Result"]) : L(["پرسیاری دواتر", "السؤال التالي", "Next Question"])}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
           className="mt-4 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm"
           style={{ borderColor: "var(--glass-border)", background: isDone ? `${lesson.color}22` : undefined }}>
           {isDone ? <CheckCircle2 className="h-4 w-4" style={{ color: lesson.color }} /> : <Circle className="h-4 w-4" />}
