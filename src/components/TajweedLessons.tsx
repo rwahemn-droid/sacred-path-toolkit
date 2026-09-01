@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
+import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 
 type Tri = [string, string, string]; // ku, ar, en
-type Example = { parts: { t: string; hl?: boolean }[]; ref: Tri };
+type Example = { parts: { t: string; hl?: boolean }[]; ref: Tri; a: [number, number] };
 type Lesson = { id: string; name: Tri; desc: Tri; color: string; examples: Example[] };
 
 const STORE = "tajweed-progress-v1";
 
 const p = (t: string) => ({ t });
 const h = (t: string) => ({ t, hl: true });
+
 
 const LESSONS: Lesson[] = [
   {
