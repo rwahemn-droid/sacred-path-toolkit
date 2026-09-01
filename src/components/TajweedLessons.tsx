@@ -1,15 +1,17 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
+import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 
 type Tri = [string, string, string]; // ku, ar, en
-type Example = { parts: { t: string; hl?: boolean }[]; ref: Tri };
+type Example = { parts: { t: string; hl?: boolean }[]; ref: Tri; a: [number, number] };
 type Lesson = { id: string; name: Tri; desc: Tri; color: string; examples: Example[] };
 
 const STORE = "tajweed-progress-v1";
 
 const p = (t: string) => ({ t });
 const h = (t: string) => ({ t, hl: true });
+
 
 const LESSONS: Lesson[] = [
   {
@@ -22,8 +24,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#38bdf8",
     examples: [
-      { parts: [p("قُلْ هُوَ اللَّهُ أَ"), h("حَ"), p("دٌ")], ref: ["ئیخلاص ١", "الإخلاص ١", "Al-Ikhlas 1"] },
-      { parts: [h("ع"), p("َمَّ يَتَسَاءَلُونَ")], ref: ["نەبە ١", "النبأ ١", "An-Naba 1"] },
+      { parts: [p("قُلْ هُوَ اللَّهُ أَ"), h("حَ"), p("دٌ")], ref: ["ئیخلاص ١", "الإخلاص ١", "Al-Ikhlas 1"], a: [112, 1] },
+      { parts: [h("ع"), p("َمَّ يَتَسَاءَلُونَ")], ref: ["نەبە ١", "النبأ ١", "An-Naba 1"], a: [78, 1] },
     ],
   },
   {
@@ -36,8 +38,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#22c55e",
     examples: [
-      { parts: [p("مِ"), h("نْ ح"), p("َكِيمٍ حَمِيدٍ")], ref: ["فوسسیلەت ٤٢", "فصلت ٤٢", "Fussilat 42"] },
-      { parts: [p("يَنْ"), h("ئ"), p("َوْنَ")], ref: ["ئەنعام ٢٦", "الأنعام ٢٦", "Al-Anʿam 26"] },
+      { parts: [p("مِ"), h("نْ ح"), p("َكِيمٍ حَمِيدٍ")], ref: ["فوسسیلەت ٤٢", "فصلت ٤٢", "Fussilat 42"], a: [41, 42] },
+      { parts: [p("يَنْ"), h("ئ"), p("َوْنَ")], ref: ["ئەنعام ٢٦", "الأنعام ٢٦", "Al-Anʿam 26"], a: [6, 26] },
     ],
   },
   {
@@ -50,8 +52,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#a855f7",
     examples: [
-      { parts: [p("مَ"), h("نْ يَ"), p("عْمَلْ")], ref: ["زەلزەلە ٧", "الزلزلة ٧", "Az-Zalzalah 7"] },
-      { parts: [p("مِ"), h("نْ رَ"), p("بِّهِمْ")], ref: ["بەقەرە ٥", "البقرة ٥", "Al-Baqarah 5"] },
+      { parts: [p("مَ"), h("نْ يَ"), p("عْمَلْ")], ref: ["زەلزەلە ٧", "الزلزلة ٧", "Az-Zalzalah 7"], a: [99, 7] },
+      { parts: [p("مِ"), h("نْ رَ"), p("بِّهِمْ")], ref: ["بەقەرە ٥", "البقرة ٥", "Al-Baqarah 5"], a: [2, 5] },
     ],
   },
   {
@@ -64,8 +66,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#f97316",
     examples: [
-      { parts: [p("مِ"), h("نْ بَ"), p("عْدِ")], ref: ["بەقەرە ٢٧", "البقرة ٢٧", "Al-Baqarah 27"] },
-      { parts: [p("سَمِيعٌ"), h(" بَ"), p("صِيرٌ")], ref: ["ئیسرا ١", "الإسراء ١", "Al-Isra 1"] },
+      { parts: [p("مِ"), h("نْ بَ"), p("عْدِ")], ref: ["بەقەرە ٢٧", "البقرة ٢٧", "Al-Baqarah 27"], a: [2, 27] },
+      { parts: [p("سَمِيعٌ"), h(" بَ"), p("صِيرٌ")], ref: ["ئیسرا ١", "الإسراء ١", "Al-Isra 1"], a: [17, 1] },
     ],
   },
   {
@@ -78,8 +80,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#eab308",
     examples: [
-      { parts: [p("أَ"), h("نْ ت"), p("َقُولُوا")], ref: ["مائیدە ١٩", "المائدة ١٩", "Al-Maidah 19"] },
-      { parts: [p("مِ"), h("نْ ش"), p("َرِّ")], ref: ["فەلەق ٢", "الفلق ٢", "Al-Falaq 2"] },
+      { parts: [p("أَ"), h("نْ ت"), p("َقُولُوا")], ref: ["مائیدە ١٩", "المائدة ١٩", "Al-Maidah 19"], a: [5, 19] },
+      { parts: [p("مِ"), h("نْ ش"), p("َرِّ")], ref: ["فەلەق ٢", "الفلق ٢", "Al-Falaq 2"], a: [113, 2] },
     ],
   },
   {
@@ -92,8 +94,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#06b6d4",
     examples: [
-      { parts: [p("تَرْمِيهِ"), h("مْ بِ"), p("حِجَارَةٍ")], ref: ["فیل ٤", "الفيل ٤", "Al-Fil 4"] },
-      { parts: [p("لَهُ"), h("مْ مَ"), p("ا يَشَاءُونَ")], ref: ["زومەر ٣٤", "الزمر ٣٤", "Az-Zumar 34"] },
+      { parts: [p("تَرْمِيهِ"), h("مْ بِ"), p("حِجَارَةٍ")], ref: ["فیل ٤", "الفيل ٤", "Al-Fil 4"], a: [105, 4] },
+      { parts: [p("لَهُ"), h("مْ مَ"), p("ا يَشَاءُونَ")], ref: ["زومەر ٣٤", "الزمر ٣٤", "Az-Zumar 34"], a: [39, 34] },
     ],
   },
   {
@@ -106,8 +108,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#ec4899",
     examples: [
-      { parts: [p("إِ"), h("نَّ"), p(" الْإِنسَانَ")], ref: ["عەسر ٢", "العصر ٢", "Al-ʿAsr 2"] },
-      { parts: [h("ثُمَّ"), p(" كَلَّا سَوْفَ تَعْلَمُونَ")], ref: ["تەکاسور ٤", "التكاثر ٤", "At-Takathur 4"] },
+      { parts: [p("إِ"), h("نَّ"), p(" الْإِنسَانَ")], ref: ["عەسر ٢", "العصر ٢", "Al-ʿAsr 2"], a: [103, 2] },
+      { parts: [h("ثُمَّ"), p(" كَلَّا سَوْفَ تَعْلَمُونَ")], ref: ["تەکاسور ٤", "التكاثر ٤", "At-Takathur 4"], a: [102, 4] },
     ],
   },
   {
@@ -120,8 +122,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#ef4444",
     examples: [
-      { parts: [p("قُلْ أَعُوذُ بِرَ"), h("بِّ"), p(" الْفَلَ"), h("قْ")], ref: ["فەلەق ١", "الفلق ١", "Al-Falaq 1"] },
-      { parts: [p("وَتَ"), h("بَّ"), p("")], ref: ["مەسەد ١", "المسد ١", "Al-Masad 1"] },
+      { parts: [p("قُلْ أَعُوذُ بِرَ"), h("بِّ"), p(" الْفَلَ"), h("قْ")], ref: ["فەلەق ١", "الفلق ١", "Al-Falaq 1"], a: [113, 1] },
+      { parts: [p("وَتَ"), h("بَّ"), p("")], ref: ["مەسەد ١", "المسد ١", "Al-Masad 1"], a: [111, 1] },
     ],
   },
   {
@@ -134,8 +136,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#14b8a6",
     examples: [
-      { parts: [p("قَ"), h("ا"), p("لَ نُ"), h("و"), p("حٌ")], ref: ["نوح", "نوح", "Nuh"] },
-      { parts: [p("الرَّحْمَ"), h("ٰ"), p("نِ الرَّحِ"), h("ي"), p("مِ")], ref: ["فاتیحە ٣", "الفاتحة ٣", "Al-Fatiha 3"] },
+      { parts: [p("قَ"), h("ا"), p("لَ نُ"), h("و"), p("حٌ")], ref: ["نوح", "نوح", "Nuh"], a: [71, 1] },
+      { parts: [p("الرَّحْمَ"), h("ٰ"), p("نِ الرَّحِ"), h("ي"), p("مِ")], ref: ["فاتیحە ٣", "الفاتحة ٣", "Al-Fatiha 3"], a: [1, 3] },
     ],
   },
   {
@@ -148,8 +150,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#8b5cf6",
     examples: [
-      { parts: [p("وَالسَّمَ"), h("اءِ"), p(" ذَاتِ الْبُرُوجِ")], ref: ["بوروج ١", "البروج ١", "Al-Buruj 1"] },
-      { parts: [p("جَ"), h("اءَ"), p(" نَصْرُ اللَّهِ")], ref: ["نەسر ١", "النصر ١", "An-Nasr 1"] },
+      { parts: [p("وَالسَّمَ"), h("اءِ"), p(" ذَاتِ الْبُرُوجِ")], ref: ["بوروج ١", "البروج ١", "Al-Buruj 1"], a: [85, 1] },
+      { parts: [p("جَ"), h("اءَ"), p(" نَصْرُ اللَّهِ")], ref: ["نەسر ١", "النصر ١", "An-Nasr 1"], a: [110, 1] },
     ],
   },
   {
@@ -162,8 +164,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#f43f5e",
     examples: [
-      { parts: [p("وَلَا "), h("الضَّالِّينَ")], ref: ["فاتیحە ٧", "الفاتحة ٧", "Al-Fatiha 7"] },
-      { parts: [h("الم")], ref: ["بەقەرە ١", "البقرة ١", "Al-Baqarah 1"] },
+      { parts: [p("وَلَا "), h("الضَّالِّينَ")], ref: ["فاتیحە ٧", "الفاتحة ٧", "Al-Fatiha 7"], a: [1, 7] },
+      { parts: [h("الم")], ref: ["بەقەرە ١", "البقرة ١", "Al-Baqarah 1"], a: [2, 1] },
     ],
   },
   {
@@ -176,8 +178,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#0ea5e9",
     examples: [
-      { parts: [p("ا"), h("لشَّ"), p("مْسُ")], ref: ["شەمس ١", "الشمس ١", "Ash-Shams 1"] },
-      { parts: [p("ا"), h("لْقَ"), p("مَرُ")], ref: ["قەمەر ١", "القمر ١", "Al-Qamar 1"] },
+      { parts: [p("ا"), h("لشَّ"), p("مْسُ")], ref: ["شەمس ١", "الشمس ١", "Ash-Shams 1"], a: [91, 1] },
+      { parts: [p("ا"), h("لْقَ"), p("مَرُ")], ref: ["قەمەر ١", "القمر ١", "Al-Qamar 1"], a: [54, 1] },
     ],
   },
   {
@@ -190,8 +192,8 @@ const LESSONS: Lesson[] = [
     ],
     color: "#d97706",
     examples: [
-      { parts: [p("ا"), h("لصِّرَ"), p("اطَ الْمُسْتَقِيمَ")], ref: ["فاتیحە ٦", "الفاتحة ٦", "Al-Fatiha 6"] },
-      { parts: [h("اللَّهُ"), p(" لَا إِلَٰهَ إِلَّا هُوَ")], ref: ["بەقەرە ٢٥٥", "البقرة ٢٥٥", "Al-Baqarah 255"] },
+      { parts: [p("ا"), h("لصِّرَ"), p("اطَ الْمُسْتَقِيمَ")], ref: ["فاتیحە ٦", "الفاتحة ٦", "Al-Fatiha 6"], a: [1, 6] },
+      { parts: [h("اللَّهُ"), p(" لَا إِلَٰهَ إِلَّا هُوَ")], ref: ["بەقەرە ٢٥٥", "البقرة ٢٥٥", "Al-Baqarah 255"], a: [2, 255] },
     ],
   },
   {
@@ -204,7 +206,7 @@ const LESSONS: Lesson[] = [
     ],
     color: "#64748b",
     examples: [
-      { parts: [p("الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ"), h(" ۝")], ref: ["فاتیحە ٢", "الفاتحة ٢", "Al-Fatiha 2"] },
+      { parts: [p("الْحَمْدُ لِلَّهِ رَبِّ الْعَالَمِينَ"), h(" ۝")], ref: ["فاتیحە ٢", "الفاتحة ٢", "Al-Fatiha 2"], a: [1, 2] },
     ],
   },
 ];
@@ -242,6 +244,30 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
   const isDone = done.includes(lesson.id);
   const toggle = () => save(isDone ? done.filter((d) => d !== lesson.id) : [...done, lesson.id], i);
   const pct = Math.round((done.length / LESSONS.length) * 100);
+
+  // --- Stage 1 audio ---
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [playing, setPlaying] = useState<string | null>(null);
+  const reciter = RECITERS.find((r) => r.id === DEFAULT_RECITER_ID) ?? RECITERS[0];
+
+  const stop = () => {
+    const a = audioRef.current;
+    if (a) { a.pause(); a.src = ""; }
+    setPlaying(null);
+  };
+  // stop when leaving the lesson view or switching lesson
+  useEffect(() => stop, []);
+  useEffect(() => { stop(); }, [i]);
+
+  const play = (key: string, url: string, restart = false) => {
+    let a = audioRef.current;
+    if (!a) { a = new Audio(); audioRef.current = a; a.onended = () => setPlaying(null); }
+    if (playing === key && !restart) { a.pause(); setPlaying(null); return; }
+    if (a.src !== url) a.src = url;
+    a.currentTime = 0;
+    void a.play().then(() => setPlaying(key)).catch(() => setPlaying(null));
+  };
+
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
@@ -308,6 +334,28 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
                 )}
               </p>
               <p className="mt-1 text-[11px] text-muted-foreground text-center">{L(ex.ref)}</p>
+              {(() => {
+                const key = `${lesson.id}-${k}`;
+                const url = ayahAudioUrl(reciter, ex.a[0], ex.a[1]);
+                const on = playing === key;
+                return (
+                  <div className="mt-2 flex items-center justify-center gap-2">
+                    <button onClick={() => play(key, url)}
+                      className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition-colors active:scale-95"
+                      style={{ borderColor: "var(--glass-border)", color: lesson.color, background: on ? `${lesson.color}22` : undefined }}>
+                      {on ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                      {on ? L(["وەستان", "إيقاف مؤقت", "Pause"]) : L(["گوێ بگرە", "استمع", "Listen"])}
+                    </button>
+                    <button onClick={() => play(key, url, true)}
+                      className="flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors active:scale-95"
+                      style={{ borderColor: "var(--glass-border)" }}>
+                      <RotateCcw className="h-3.5 w-3.5" />
+                      {L(["دووبارە", "إعادة", "Repeat"])}
+                    </button>
+                  </div>
+                );
+              })()}
+
             </div>
           ))}
         </div>
