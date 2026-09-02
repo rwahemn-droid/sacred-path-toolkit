@@ -480,6 +480,65 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
     else { setPi((n) => n + 1); setPPicked(null); }
   };
 
+  // --- Stage 4: Voice Practice (MediaRecorder, temporary in-browser) ---
+  const [vpOpen, setVpOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recUrl, setRecUrl] = useState<string | null>(null);
+  const [recPlaying, setRecPlaying] = useState(false);
+  const [micErr, setMicErr] = useState(false);
+  const mrRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopRecording = () => {
+    mrRef.current?.state === "recording" && mrRef.current.stop();
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setRecording(false);
+  };
+  const closeVoice = () => {
+    stopRecording();
+    recAudioRef.current?.pause();
+    setRecPlaying(false);
+    if (recUrl) URL.revokeObjectURL(recUrl);
+    setRecUrl(null);
+    setMicErr(false);
+    setVpOpen(false);
+  };
+  useEffect(() => () => closeVoice(), []);
+  useEffect(() => { closeVoice(); }, [i]);
+
+  const startRecording = async () => {
+    stop();
+    recAudioRef.current?.pause();
+    setRecPlaying(false);
+    if (recUrl) { URL.revokeObjectURL(recUrl); setRecUrl(null); }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      mr.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      mr.onstop = () => setRecUrl(URL.createObjectURL(new Blob(chunks, { type: mr.mimeType })));
+      mrRef.current = mr;
+      streamRef.current = stream;
+      mr.start();
+      setRecording(true);
+      setMicErr(false);
+    } catch {
+      setMicErr(true);
+    }
+  };
+
+  const playMine = () => {
+    if (!recUrl) return;
+    let a = recAudioRef.current;
+    if (!a) { a = new Audio(); recAudioRef.current = a; a.onended = () => setRecPlaying(false); }
+    if (recPlaying) { a.pause(); setRecPlaying(false); return; }
+    if (a.src !== recUrl) a.src = recUrl;
+    a.currentTime = 0;
+    void a.play().then(() => setRecPlaying(true)).catch(() => setRecPlaying(false));
+  };
+
   const play = (key: string, url: string, restart = false) => {
     let a = audioRef.current;
     if (!a) { a = new Audio(); audioRef.current = a; a.onended = () => setPlaying(null); }
