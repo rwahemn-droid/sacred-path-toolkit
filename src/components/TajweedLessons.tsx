@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle, Target } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 
@@ -440,6 +440,44 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
   const nextQ = (total: number) => {
     if (qi + 1 >= total) setQuizDone(true);
     else { setQi((n) => n + 1); setPicked(null); }
+  };
+
+  // --- Stage 3: Practice Mode ---
+  type PQ = { ex: Example; opts: Tri[]; c: number; e: Tri };
+  const buildPractice = (ls: Lesson, lsIdx: number): PQ[] => {
+    const others = LESSONS.filter((l) => l.id !== ls.id);
+    const mk = (ex: Example, k: number): PQ => {
+      const w1 = others[(lsIdx * 2 + k) % others.length].name;
+      let w2 = others[(lsIdx * 2 + k + 5) % others.length].name;
+      if (w2 === w1) w2 = others[(lsIdx * 2 + k + 6) % others.length].name;
+      const base = [ls.name, w1, w2];
+      const rot = k % 3;
+      const opts = rot === 0 ? base : rot === 1 ? [base[1], base[0], base[2]] : [base[2], base[1], base[0]];
+      return { ex, opts, c: opts.indexOf(ls.name), e: ls.desc };
+    };
+    const items = ls.examples.map((ex, k) => mk(ex, k));
+    let k = items.length + 2;
+    while (items.length < 3) { items.push(mk(ls.examples[items.length % ls.examples.length], k)); k++; }
+    return items.slice(0, 5);
+  };
+  const practice = buildPractice(lesson, i);
+
+  const [pracOpen, setPracOpen] = useState(false);
+  const [pi, setPi] = useState(0);
+  const [pPicked, setPPicked] = useState<number | null>(null);
+  const [pScore, setPScore] = useState(0);
+  const [pracDone, setPracDone] = useState(false);
+  useEffect(() => { setPracOpen(false); setPi(0); setPPicked(null); setPScore(0); setPracDone(false); }, [i]);
+
+  const startPractice = () => { stop(); setPracOpen(true); setPi(0); setPPicked(null); setPScore(0); setPracDone(false); };
+  const pPick = (q: PQ, k: number) => {
+    if (pPicked !== null) return;
+    setPPicked(k);
+    if (k === q.c) setPScore((s) => s + 1);
+  };
+  const pNext = (total: number) => {
+    if (pi + 1 >= total) setPracDone(true);
+    else { setPi((n) => n + 1); setPPicked(null); }
   };
 
   const play = (key: string, url: string, restart = false) => {
