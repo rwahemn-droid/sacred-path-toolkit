@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle, Target, Mic, Square } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 
@@ -480,6 +480,65 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
     else { setPi((n) => n + 1); setPPicked(null); }
   };
 
+  // --- Stage 4: Voice Practice (MediaRecorder, temporary in-browser) ---
+  const [vpOpen, setVpOpen] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const [recUrl, setRecUrl] = useState<string | null>(null);
+  const [recPlaying, setRecPlaying] = useState(false);
+  const [micErr, setMicErr] = useState(false);
+  const mrRef = useRef<MediaRecorder | null>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const recAudioRef = useRef<HTMLAudioElement | null>(null);
+
+  const stopRecording = () => {
+    mrRef.current?.state === "recording" && mrRef.current.stop();
+    streamRef.current?.getTracks().forEach((t) => t.stop());
+    streamRef.current = null;
+    setRecording(false);
+  };
+  const closeVoice = () => {
+    stopRecording();
+    recAudioRef.current?.pause();
+    setRecPlaying(false);
+    if (recUrl) URL.revokeObjectURL(recUrl);
+    setRecUrl(null);
+    setMicErr(false);
+    setVpOpen(false);
+  };
+  useEffect(() => () => closeVoice(), []);
+  useEffect(() => { closeVoice(); }, [i]);
+
+  const startRecording = async () => {
+    stop();
+    recAudioRef.current?.pause();
+    setRecPlaying(false);
+    if (recUrl) { URL.revokeObjectURL(recUrl); setRecUrl(null); }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      const chunks: BlobPart[] = [];
+      mr.ondataavailable = (e) => { if (e.data.size) chunks.push(e.data); };
+      mr.onstop = () => setRecUrl(URL.createObjectURL(new Blob(chunks, { type: mr.mimeType })));
+      mrRef.current = mr;
+      streamRef.current = stream;
+      mr.start();
+      setRecording(true);
+      setMicErr(false);
+    } catch {
+      setMicErr(true);
+    }
+  };
+
+  const playMine = () => {
+    if (!recUrl) return;
+    let a = recAudioRef.current;
+    if (!a) { a = new Audio(); recAudioRef.current = a; a.onended = () => setRecPlaying(false); }
+    if (recPlaying) { a.pause(); setRecPlaying(false); return; }
+    if (a.src !== recUrl) a.src = recUrl;
+    a.currentTime = 0;
+    void a.play().then(() => setRecPlaying(true)).catch(() => setRecPlaying(false));
+  };
+
   const play = (key: string, url: string, restart = false) => {
     let a = audioRef.current;
     if (!a) { a = new Audio(); audioRef.current = a; a.onended = () => setPlaying(null); }
@@ -766,6 +825,90 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
                     {pi + 1 >= total ? L(["بینینی ئەنجام", "عرض النتيجة", "See Result"]) : L(["دواتر", "التالي", "Next"])}
                   </button>
                 </div>
+              )}
+            </div>
+          );
+        })()}
+
+        {/* Stage 4: Voice Practice */}
+        {(() => {
+          const ex = lesson.examples[0];
+          if (!ex) return null;
+          if (!vpOpen)
+            return (
+              <button onClick={() => { setVpOpen(true); }}
+                className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-colors active:scale-[0.98]"
+                style={{ borderColor: "var(--glass-border)", color: lesson.color }}>
+                <Mic className="h-4 w-4" />
+                {L(["ڕاهێنانی دەنگ", "تدريب الصوت", "Voice Practice"])}
+              </button>
+            );
+          const vpKey = `vp-${lesson.id}`;
+          const vpUrl = ayahAudioUrl(reciter, ex.a[0], ex.a[1]);
+          const reciterOn = playing === vpKey;
+          return (
+            <div className="mt-4 rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--glass-border)" }}>
+              <div className="flex items-center justify-between text-xs">
+                <span className="flex items-center gap-1.5 font-semibold" style={{ color: lesson.color }}>
+                  <Mic className="h-3.5 w-3.5" />
+                  {L(["ڕاهێنانی دەنگ", "تدريب الصوت", "Voice Practice"])}
+                </span>
+                <button onClick={closeVoice} className="text-muted-foreground hover:text-foreground">
+                  {L(["داخستن", "إغلاق", "Close"])}
+                </button>
+              </div>
+              <p className="font-display text-2xl leading-loose text-center" dir="rtl">
+                {ex.parts.map((part, k) =>
+                  part.hl ? (
+                    <span key={k} className="rounded px-0.5" style={{ color: lesson.color, background: `${lesson.color}22` }}>{part.t}</span>
+                  ) : (
+                    <span key={k}>{part.t}</span>
+                  )
+                )}
+              </p>
+              <p className="text-[11px] text-muted-foreground text-center">{L(ex.ref)}</p>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button onClick={() => play(vpKey, vpUrl)}
+                  className="flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition-colors active:scale-95"
+                  style={{ borderColor: "var(--glass-border)", color: lesson.color, background: reciterOn ? `${lesson.color}22` : undefined }}>
+                  {reciterOn ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  {L(["گوێ لە قاری بگرە", "استمع إلى القارئ", "Listen to Reciter"])}
+                </button>
+                {recording ? (
+                  <button onClick={stopRecording}
+                    className="flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium text-red-500 transition-colors active:scale-95"
+                    style={{ borderColor: "#ef4444", background: "#ef444422" }}>
+                    <Square className="h-3.5 w-3.5 animate-pulse" />
+                    {L(["وەستان", "إيقاف", "Stop"])}
+                  </button>
+                ) : (
+                  <button onClick={startRecording}
+                    className="flex items-center justify-center gap-1.5 py-2 rounded-xl border text-xs font-medium transition-colors active:scale-95"
+                    style={{ borderColor: "var(--glass-border)" }}>
+                    <Mic className="h-3.5 w-3.5" />
+                    {recUrl ? L(["دووبارە تۆمار بکە", "سجل مرة أخرى", "Record Again"]) : L(["دەنگ تۆمار بکە", "تسجيل الصوت", "Record"])}
+                  </button>
+                )}
+              </div>
+              {recording && (
+                <p className="flex items-center justify-center gap-1.5 text-xs text-red-500 animate-pulse">
+                  <span className="h-2 w-2 rounded-full bg-red-500" />
+                  {L(["تۆمارکردن چالاکە…", "جارٍ التسجيل…", "Recording…"])}
+                </p>
+              )}
+              {micErr && (
+                <p className="text-center text-xs text-red-500">
+                  {L(["مۆڵەتی مایکرۆفۆن نەدرا", "لم يتم منح إذن الميكروفون", "Microphone permission was not granted"])}
+                </p>
+              )}
+              {recUrl && !recording && (
+                <button onClick={playMine}
+                  className="w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-primary-foreground text-xs font-medium transition-colors active:scale-[0.98]"
+                  style={{ background: "var(--gradient-gold)" }}>
+                  {recPlaying ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  {L(["گوێ لە تۆمارەکەم بگرە", "استمع إلى تسجيلي", "Play My Recording"])}
+                </button>
               )}
             </div>
           );
