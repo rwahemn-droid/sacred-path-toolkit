@@ -560,7 +560,28 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
         <h2 className="font-semibold flex-1">{L(["فێربوونی تەجوید", "تعلّم التجويد", "Learn Tajweed"])}</h2>
         <GraduationCap className="h-5 w-5 text-primary" />
       </div>
+<div className="grid grid-cols-2 gap-2">
+  <div
+    className="rounded-xl border p-3 text-center text-sm font-semibold"
+    style={{
+      background: "var(--glass-bg)",
+      borderColor: "var(--glass-border)",
+    }}
+  >
+    ⭐ <span dir="ltr">{xp} XP</span>
+  </div>
 
+  <div
+    className="rounded-xl border p-3 text-center text-sm font-semibold"
+    style={{
+      background: "var(--glass-bg)",
+      borderColor: "var(--glass-border)",
+    }}
+  >
+    🔥 <span dir="ltr">{streak}</span>{" "}
+    {L(["ڕۆژ", "يوم", "day"])}
+  </div>
+</div>
       {/* Intro */}
       <div className="rounded-2xl border p-4 backdrop-blur-xl" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
         <p className="text-sm text-muted-foreground leading-relaxed">
