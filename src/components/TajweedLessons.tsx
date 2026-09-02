@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle, Target } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 
@@ -442,6 +442,44 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
     else { setQi((n) => n + 1); setPicked(null); }
   };
 
+  // --- Stage 3: Practice Mode ---
+  type PQ = { ex: Example; opts: Tri[]; c: number; e: Tri };
+  const buildPractice = (ls: Lesson, lsIdx: number): PQ[] => {
+    const others = LESSONS.filter((l) => l.id !== ls.id);
+    const mk = (ex: Example, k: number): PQ => {
+      const w1 = others[(lsIdx * 2 + k) % others.length].name;
+      let w2 = others[(lsIdx * 2 + k + 5) % others.length].name;
+      if (w2 === w1) w2 = others[(lsIdx * 2 + k + 6) % others.length].name;
+      const base = [ls.name, w1, w2];
+      const rot = k % 3;
+      const opts = rot === 0 ? base : rot === 1 ? [base[1], base[0], base[2]] : [base[2], base[1], base[0]];
+      return { ex, opts, c: opts.indexOf(ls.name), e: ls.desc };
+    };
+    const items = ls.examples.map((ex, k) => mk(ex, k));
+    let k = items.length + 2;
+    while (items.length < 3) { items.push(mk(ls.examples[items.length % ls.examples.length], k)); k++; }
+    return items.slice(0, 5);
+  };
+  const practice = buildPractice(lesson, i);
+
+  const [pracOpen, setPracOpen] = useState(false);
+  const [pi, setPi] = useState(0);
+  const [pPicked, setPPicked] = useState<number | null>(null);
+  const [pScore, setPScore] = useState(0);
+  const [pracDone, setPracDone] = useState(false);
+  useEffect(() => { setPracOpen(false); setPi(0); setPPicked(null); setPScore(0); setPracDone(false); }, [i]);
+
+  const startPractice = () => { stop(); setPracOpen(true); setPi(0); setPPicked(null); setPScore(0); setPracDone(false); };
+  const pPick = (q: PQ, k: number) => {
+    if (pPicked !== null) return;
+    setPPicked(k);
+    if (k === q.c) setPScore((s) => s + 1);
+  };
+  const pNext = (total: number) => {
+    if (pi + 1 >= total) setPracDone(true);
+    else { setPi((n) => n + 1); setPPicked(null); }
+  };
+
   const play = (key: string, url: string, restart = false) => {
     let a = audioRef.current;
     if (!a) { a = new Audio(); audioRef.current = a; a.onended = () => setPlaying(null); }
@@ -636,6 +674,103 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
             </div>
           );
         })()}
+
+        {/* Practice Mode */}
+        {(() => {
+          if (practice.length === 0) return null;
+          if (!pracOpen)
+            return (
+              <button onClick={startPractice}
+                className="mt-3 w-full flex items-center justify-center gap-2 py-2 rounded-xl border text-sm font-medium transition-colors active:scale-[0.98]"
+                style={{ borderColor: "var(--glass-border)", color: lesson.color }}>
+                <Target className="h-4 w-4" />
+                {L(["ڕاهێنان", "تدرّب", "Practice"])}
+              </button>
+            );
+          const total = practice.length;
+          if (pracDone) {
+            const pctP = Math.round((pScore / total) * 100);
+            return (
+              <div className="mt-4 rounded-xl border p-4 text-center" style={{ borderColor: "var(--glass-border)" }}>
+                <p className="text-sm font-semibold" style={{ color: lesson.color }}>
+                  {L(["ڕاهێنان تەواو بوو", "اكتمل التدريب", "Practice Complete"])}
+                </p>
+                <p className="mt-1 text-2xl font-bold" style={{ color: pScore / total >= 0.7 ? "#22c55e" : "#ef4444" }}>{pScore} / {total}</p>
+                <p className="text-sm text-muted-foreground mt-1">{pctP}%</p>
+                <div className="mt-3 flex gap-2">
+                  <button onClick={startPractice}
+                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl text-primary-foreground text-sm"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    <RotateCcw className="h-4 w-4" />
+                    {L(["دووبارە ڕاهێنان", "تدرّب مجدداً", "Practice Again"])}
+                  </button>
+                  <button onClick={() => setPracOpen(false)}
+                    className="flex-1 py-2 rounded-xl border text-sm" style={{ borderColor: "var(--glass-border)" }}>
+                    {L(["داخستن", "إغلاق", "Close"])}
+                  </button>
+                </div>
+              </div>
+            );
+          }
+          const q = practice[pi];
+          return (
+            <div className="mt-4 rounded-xl border p-4 space-y-3" style={{ borderColor: "var(--glass-border)" }}>
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5 font-semibold" style={{ color: lesson.color }}>
+                  <Target className="h-3.5 w-3.5" />
+                  {L(["ڕاهێنان", "تدريب", "Practice"])}
+                </span>
+                <span>{pi + 1} / {total}</span>
+              </div>
+              <p className="font-display text-2xl leading-loose text-center" dir="rtl">
+                {q.ex.parts.map((part, k) =>
+                  part.hl ? (
+                    <span key={k} className="rounded px-0.5" style={{ color: lesson.color, background: `${lesson.color}22` }}>{part.t}</span>
+                  ) : (
+                    <span key={k}>{part.t}</span>
+                  )
+                )}
+              </p>
+              <p className="text-sm font-medium leading-relaxed text-center">
+                {L(["کام حوکمی تەجوید لە بەشی ڕەنگکراودا بەکارهاتووە؟", "أي حكم تجويدي ورد في الجزء الملوّن؟", "Which Tajweed rule is used in the highlighted part?"])}
+              </p>
+              <div className="space-y-2">
+                {q.opts.map((opt, k) => {
+                  const isPick = pPicked === k;
+                  const isRight = pPicked !== null && k === q.c;
+                  const isWrong = isPick && k !== q.c;
+                  return (
+                    <button key={k} onClick={() => pPick(q, k)} disabled={pPicked !== null}
+                      className="w-full text-start px-3 py-2 rounded-lg border text-sm transition-colors disabled:cursor-default"
+                      style={{
+                        borderColor: isRight ? "#22c55e" : isWrong ? "#ef4444" : "var(--glass-border)",
+                        background: isRight ? "#22c55e22" : isWrong ? "#ef444422" : undefined,
+                      }}>
+                      {L(opt)}
+                    </button>
+                  );
+                })}
+              </div>
+              {pPicked !== null && (
+                <div className="space-y-2 animate-in fade-in duration-200">
+                  <p className={`flex items-center gap-1.5 text-sm font-semibold ${pPicked === q.c ? "text-green-500" : "text-red-500"}`}>
+                    {pPicked === q.c ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
+                    {pPicked === q.c
+                      ? L(["ڕاستە", "إجابة صحيحة", "Correct"])
+                      : L(["هەڵەیە", "إجابة خاطئة", "Incorrect"])}
+                  </p>
+                  <p className="text-xs text-muted-foreground leading-relaxed">{L(q.e)}</p>
+                  <button onClick={() => pNext(total)}
+                    className="w-full py-2 rounded-xl text-primary-foreground text-sm"
+                    style={{ background: "var(--gradient-gold)" }}>
+                    {pi + 1 >= total ? L(["بینینی ئەنجام", "عرض النتيجة", "See Result"]) : L(["دواتر", "التالي", "Next"])}
+                  </button>
+                </div>
+              )}
+            </div>
+          );
+        })()}
+
 <button
   type="button"
   onClick={toggle}
