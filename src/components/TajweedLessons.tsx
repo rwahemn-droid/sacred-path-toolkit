@@ -396,7 +396,30 @@ const [lastActiveDate, setLastActiveDate] = useState<string | null>(null);
       }
     } catch { /* ignore */ }
   }, []);
+useEffect(() => {
+  try {
+    const savedXp = Number(localStorage.getItem(XP_STORE) || "0");
+    setXp(Number.isFinite(savedXp) ? savedXp : 0);
 
+    const rawStreak = localStorage.getItem(STREAK_STORE);
+
+    if (rawStreak) {
+      const data = JSON.parse(rawStreak);
+
+      setStreak(
+        typeof data.streak === "number" ? data.streak : 0
+      );
+
+      setLastActiveDate(
+        typeof data.lastActiveDate === "string"
+          ? data.lastActiveDate
+          : null
+      );
+    }
+  } catch {
+    // ignore
+  }
+}, []);
 const registerActivity = (points: number) => {
   setXp((currentXp) => {
     const nextXp = currentXp + points;
