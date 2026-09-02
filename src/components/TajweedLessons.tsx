@@ -477,7 +477,10 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
     if (k === q.c) setPScore((s) => s + 1);
   };
   const pNext = (total: number) => {
-    if (pi + 1 >= total) setPracDone(true);
+    if (pi + 1 >= total) {
+  setPracDone(true);
+  registerActivity(10);
+}
     else { setPi((n) => n + 1); setPPicked(null); }
   };
 
