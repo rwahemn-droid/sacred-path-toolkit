@@ -397,6 +397,42 @@ const [lastActiveDate, setLastActiveDate] = useState<string | null>(null);
     } catch { /* ignore */ }
   }, []);
 
+const registerActivity = (points: number) => {
+  setXp((currentXp) => {
+    const nextXp = currentXp + points;
+    localStorage.setItem("tajweed-xp-v1", String(nextXp));
+    return nextXp;
+  });
+
+  const now = new Date();
+
+  const dateKey = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+      d.getDate()
+    ).padStart(2, "0")}`;
+
+  const today = dateKey(now);
+
+  if (lastActiveDate === today) return;
+
+  const yesterdayDate = new Date(now);
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterday = dateKey(yesterdayDate);
+
+  const nextStreak = lastActiveDate === yesterday ? streak + 1 : 1;
+
+  setStreak(nextStreak);
+  setLastActiveDate(today);
+
+  localStorage.setItem(
+    "tajweed-streak-v1",
+    JSON.stringify({
+      streak: nextStreak,
+      lastActiveDate: today,
+    })
+  );
+};
+
   const save = (nextDone: string[], last: number) => {
     setDone(nextDone);
     try { localStorage.setItem(STORE, JSON.stringify({ done: nextDone, last })); } catch { /* ignore */ }
