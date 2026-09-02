@@ -383,7 +383,9 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
 
   const [i, setI] = useState(0);
   const [done, setDone] = useState<string[]>([]);
-
+const [xp, setXp] = useState(0);
+const [streak, setStreak] = useState(0);
+const [lastActiveDate, setLastActiveDate] = useState<string | null>(null);
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORE);
