@@ -447,7 +447,9 @@ const registerActivity = (points: number) => {
   const isDone = done.includes(lesson.id);
   const toggle = () => save(isDone ? done.filter((d) => d !== lesson.id) : [...done, lesson.id], i);
   const pct = Math.round((done.length / LESSONS.length) * 100);
-
+const level = Math.floor(xp / 100) + 1;
+const xpInLevel = xp % 100;
+const levelProgress = Math.round((xpInLevel / 100) * 100);   
   // --- Stage 1 audio ---
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [playing, setPlaying] = useState<string | null>(null);
@@ -622,6 +624,32 @@ const registerActivity = (points: number) => {
     🔥 <span dir="ltr">{streak}</span>{" "}
     {L(["ڕۆژ", "يوم", "day"])}
   </div>
+  <div
+  className="col-span-2 rounded-xl border p-3"
+  style={{
+    background: "var(--glass-bg)",
+    borderColor: "var(--glass-border)",
+  }}
+>
+  <div className="flex items-center justify-between text-sm font-semibold mb-2">
+    <span>{L(["ئاست", "المستوى", "Level"])}</span>
+    <span dir="ltr">Level {level}</span>
+  </div>
+
+  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+    <div
+      className="h-full rounded-full transition-all duration-500"
+      style={{
+        width: `${levelProgress}%`,
+        background: "var(--gradient-gold)",
+      }}
+    />
+  </div>
+
+  <div className="mt-2 text-xs text-muted-foreground text-center" dir="ltr">
+    {xpInLevel} / 100 XP
+  </div>
+</div>
 </div>
       {/* Intro */}
       <div className="rounded-2xl border p-4 backdrop-blur-xl" style={{ background: "var(--glass-bg)", borderColor: "var(--glass-border)" }}>
