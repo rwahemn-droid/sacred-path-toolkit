@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle, Target } from "lucide-react";
+import { ArrowLeft, ArrowRight, GraduationCap, CheckCircle2, Circle, Play, Pause, RotateCcw, Brain, XCircle, Target, Mic, Square } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl } from "@/lib/reciters";
 
