@@ -559,13 +559,18 @@ const levelProgress = Math.round((xpInLevel / 100) * 100);
   const mrRef = useRef<MediaRecorder | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const recAudioRef = useRef<HTMLAudioElement | null>(null);
+const stopRecording = () => {
+  const wasRecording = mrRef.current?.state === "recording";
 
-  const stopRecording = () => {
-    mrRef.current?.state === "recording" && mrRef.current.stop();
-    streamRef.current?.getTracks().forEach((t) => t.stop());
-    streamRef.current = null;
-    setRecording(false);
-  };
+  if (wasRecording) {
+    mrRef.current?.stop();
+    registerActivity(10);
+  }
+
+  streamRef.current?.getTracks().forEach((t) => t.stop());
+  streamRef.current = null;
+  setRecording(false);
+};
   const closeVoice = () => {
     stopRecording();
     recAudioRef.current?.pause();
