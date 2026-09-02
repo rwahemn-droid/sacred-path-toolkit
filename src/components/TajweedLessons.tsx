@@ -8,7 +8,8 @@ type Example = { parts: { t: string; hl?: boolean }[]; ref: Tri; a: [number, num
 type Lesson = { id: string; name: Tri; desc: Tri; color: string; examples: Example[] };
 
 const STORE = "tajweed-progress-v1";
-
+const XP_STORE = "tajweed-xp-v1";
+const STREAK_STORE = "tajweed-streak-v1";
 const p = (t: string) => ({ t });
 const h = (t: string) => ({ t, hl: true });
 
