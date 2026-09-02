@@ -439,7 +439,10 @@ export function TajweedLessons({ lang, onBack }: { lang: Lang; onBack: () => voi
     if (k === q.c) setScore((s) => s + 1);
   };
   const nextQ = (total: number) => {
-    if (qi + 1 >= total) setQuizDone(true);
+  if (qi + 1 >= total) {
+  setQuizDone(true);
+  registerActivity(10);
+}
     else { setQi((n) => n + 1); setPicked(null); }
   };
 
