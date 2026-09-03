@@ -379,7 +379,7 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   const loading = phase === "cam" || phase === "face";
 
   return (
-    <div className="fixed inset-0 z-50 bg-black" dir="ltr">
+    <div className="fixed inset-0 z-[60] h-dvh bg-black" dir="ltr">
       <div ref={wrapRef} className="relative h-full w-full overflow-hidden">
         <video
           ref={videoRef}
