@@ -381,7 +381,7 @@ function stopLiveHifz() {
           </button>
         </div>
       </div>
-{hideQuran && (
+
   <button
     onClick={liveListening ? stopLiveHifz : startLiveHifz}
     className={`${btn} w-full ${
@@ -392,7 +392,7 @@ function stopLiveHifz() {
     <Mic className="h-4 w-4" />
     {liveListening ? "Stop Hifz Listening" : "Start Hifz Listening"}
   </button>
-)}
+
       {/* Listen */}
       <button onClick={listening ? stopListening : listen} className={`${btn} w-full`} style={style}>
         <Volume2 className="h-4 w-4" />
