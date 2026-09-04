@@ -1191,18 +1191,108 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
 type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string };
 type HijriDate = { day: string; month: { ar: string; en: string; number: number }; year: string };
 
-// Use the API's calculated times directly (Muslim World League). No manual offset.
-const PRAYER_OFFSET_MIN = 0;
-function adjustTime(hhmm: string, offset = PRAYER_OFFSET_MIN) {
+// Times come straight from the calculation API. No manual minute offsets.
+function adjustTime(hhmm: string) {
   if (!hhmm || hhmm.length < 4) return hhmm;
-  if (offset === 0) return hhmm.slice(0, 5);
-  const [hStr, mStr] = hhmm.split(":");
-  let total = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0) + offset;
-  total = ((total % 1440) + 1440) % 1440;
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  return hhmm.slice(0, 5);
 }
+
+// Local calendar day key (NOT UTC) that also flips exactly at local midnight,
+// and re-checks whenever the app is re-opened / resumed.
+function useLocalDayKey() {
+  const dayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  const [key, setKey] = useState(dayKey);
+  useEffect(() => {
+    let timer: number;
+    const schedule = () => {
+      setKey(dayKey());
+      const n = new Date();
+      const midnight = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
+      timer = window.setTimeout(schedule, midnight.getTime() - n.getTime());
+    };
+    schedule();
+    const onWake = () => {
+      if (document.visibilityState === "visible") {
+        setKey(dayKey());
+        window.clearTimeout(timer);
+        schedule();
+      }
+    };
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("focus", onWake);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("focus", onWake);
+    };
+  }, []);
+  return key;
+}
+
+// Live device location with saved fallback; recalculates only on significant moves.
+const COORDS_KEY = "ibadah:coords";
+type Coords = { lat: number; lon: number };
+
+function distKm(a: Coords, b: Coords) {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLon = ((b.lon - a.lon) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function useDeviceLocation() {
+  const [coords, setCoords] = useState<Coords | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(COORDS_KEY);
+      return raw ? (JSON.parse(raw) as Coords) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    const accept = (p: GeolocationPosition) => {
+      const next = { lat: p.coords.latitude, lon: p.coords.longitude };
+      setCoords((prev) => {
+        // Keep the saved location unless the user really moved (> 10 km).
+        if (prev && distKm(prev, next) < 10) return prev;
+        try { localStorage.setItem(COORDS_KEY, JSON.stringify(next)); } catch { /* */ }
+        return next;
+      });
+    };
+    // Permission denied / unavailable -> silently keep saved coords (or city fallback).
+    navigator.geolocation.getCurrentPosition(accept, () => {}, {
+      enableHighAccuracy: false,
+      timeout: 15000,
+      maximumAge: 10 * 60 * 1000,
+    });
+    const id = navigator.geolocation.watchPosition(accept, () => {}, {
+      enableHighAccuracy: false,
+      maximumAge: 10 * 60 * 1000,
+      timeout: 30000,
+    });
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
+
+  return coords;
+}
+
+function deviceTz(fallback: string) {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 
 // Tick every second for live clock + countdown.
 function useNow(intervalMs = 1000) {
