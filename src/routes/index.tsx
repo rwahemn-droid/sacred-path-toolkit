@@ -1337,24 +1337,31 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   const adhanRef = useRef<HTMLAudioElement | null>(null);
   const now = useNow(1000);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const dayKey = useLocalDayKey();
+  const gps = useDeviceLocation();
+  const lat = gps?.lat ?? city.lat;
+  const lon = gps?.lon ?? city.lon;
+  const tz = gps ? deviceTz(city.tz) : city.tz;
+
   const { data, isLoading } = useQuery({
-    queryKey: ["prayer", city.id, school, todayStr],
+    queryKey: ["prayer", lat.toFixed(3), lon.toFixed(3), tz, school, dayKey],
     queryFn: async (): Promise<{ timings: PrayerTimings; hijri: HijriDate; weekdayIdx: number }> => {
-      const d = new Date();
-      const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
+      const [y, m, dd] = dayKey.split("-");
+      const dateStr = `${dd}-${m}-${y}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,4,12,12,11,3,0,-10,0`,
+        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(tz)}`,
       );
       const json = await res.json();
       return {
         timings: json.data.timings,
         hijri: json.data.date.hijri,
-        weekdayIdx: d.getDay(),
+        weekdayIdx: new Date(Number(y), Number(m) - 1, Number(dd)).getDay(),
       };
     },
     staleTime: 1000 * 60 * 60 * 6,
     gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: true,
+
   });
 
   const toggleNotify = async (id: string) => {
