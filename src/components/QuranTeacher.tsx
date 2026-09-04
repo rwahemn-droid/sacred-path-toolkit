@@ -34,7 +34,14 @@ type Ayah = { number: number; text: string; numberInSurah: number };
 
 const RECITER_KEY = "ibadah:reciter";
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
-
+function normalizeArabic(text: string) {
+  return text
+    .replace(/[\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/ـ/g, "")
+    .replace(/[ٱأإآ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .trim();
+}
 export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void }) {
   const rtl = lang === "ar" || lang === "ku" || lang === "bad";
   const BackIcon = rtl ? ArrowRight : ArrowLeft;
@@ -48,7 +55,9 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [listening, setListening] = useState(false);
   const [micError, setMicError] = useState(false);
-
+const [recognizedWords, setRecognizedWords] = useState(0);
+const [liveListening, setLiveListening] = useState(false);
+const recognitionRef = useRef<any>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const playerRef = useRef<HTMLAudioElement | null>(null);
@@ -124,7 +133,88 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
     playerRef.current?.pause();
     setListening(false);
   }
+function startLiveHifz() {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
 
+  if (!SpeechRecognition) {
+    setMicError(true);
+    return;
+  }
+
+  const currentAyah = ayahs?.find(
+    (a) => a.numberInSurah === ayahNum
+  );
+
+  if (!currentAyah) return;
+
+  const expectedWords = normalizeArabic(currentAyah.text)
+    .split(/\s+/)
+    .filter(Boolean);
+
+  setRecognizedWords(0);
+  setMicError(false);
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "ar-SA";
+  recognition.continuous = true;
+  recognition.interimResults = true;
+
+  recognition.onstart = () => {
+    setLiveListening(true);
+  };
+
+  recognition.onend = () => {
+    setLiveListening(false);
+  };
+
+  recognition.onerror = () => {
+    setLiveListening(false);
+    setMicError(true);
+  };
+
+  recognition.onresult = (event: any) => {
+    let transcript = "";
+
+    for (let i = 0; i < event.results.length; i++) {
+      transcript += " " + event.results[i][0].transcript;
+    }
+
+    const heardWords = normalizeArabic(transcript)
+      .split(/\s+/)
+      .filter(Boolean);
+
+    let matched = 0;
+    let heardIndex = 0;
+
+    for (
+      let expectedIndex = 0;
+      expectedIndex < expectedWords.length &&
+      heardIndex < heardWords.length;
+    ) {
+      if (
+        heardWords[heardIndex] === expectedWords[expectedIndex]
+      ) {
+        matched++;
+        expectedIndex++;
+      }
+
+      heardIndex++;
+    }
+
+    setRecognizedWords(matched);
+  };
+
+  recognitionRef.current = recognition;
+  recognition.start();
+}
+
+function stopLiveHifz() {
+  recognitionRef.current?.stop();
+  setLiveListening(false);
+}
   async function startRecording() {
     setMicError(false);
     try {
@@ -244,7 +334,22 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
                             : "hover:bg-primary/10"
                       }`}
                     >
-                      <span className={hideQuran ? "invisible" : ""}>{a.text}</span>
+                      {hideQuran && active ? (
+  <>
+    {a.text.split(/\s+/).map((word, index) => (
+      <span
+        key={index}
+        className={index < recognizedWords ? "visible" : "invisible"}
+      >
+        {word}{" "}
+      </span>
+    ))}
+  </>
+) : (
+  <span className={hideQuran ? "invisible" : ""}>
+    {a.text}
+  </span>
+)}
                       <span className={`mx-1 inline-grid h-7 w-7 place-items-center rounded-full border align-middle text-sm ${active && !hideQuran ? "border-primary text-primary" : "border-muted-foreground/40 text-muted-foreground"}`}>
                         {toArDigits(a.numberInSurah)}
                       </span>
@@ -276,7 +381,18 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
           </button>
         </div>
       </div>
-
+{hideQuran && (
+  <button
+    onClick={liveListening ? stopLiveHifz : startLiveHifz}
+    className={`${btn} w-full ${
+      liveListening ? "text-red-500 animate-pulse" : "text-primary"
+    }`}
+    style={style}
+  >
+    <Mic className="h-4 w-4" />
+    {liveListening ? "Stop Hifz Listening" : "Start Hifz Listening"}
+  </button>
+)}
       {/* Listen */}
       <button onClick={listening ? stopListening : listen} className={`${btn} w-full`} style={style}>
         <Volume2 className="h-4 w-4" />
