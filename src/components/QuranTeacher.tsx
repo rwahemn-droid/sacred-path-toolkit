@@ -328,7 +328,7 @@ function stopLiveHifz() {
                       onClick={() => setAyahNum(a.numberInSurah)}
                       className={`cursor-pointer rounded-lg px-0.5 transition-colors ${
                         hideQuran
-                        ? "text-transparent select-none"
+                        ? "select-none"
                           : active
                             ? "bg-primary/20 text-primary"
                             : "hover:bg-primary/10"
