@@ -226,7 +226,7 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
           ) : (
             <div className={hideQuran ? "select-none" : ""}>
               {surahNum !== 9 && (
-                <p className={`font-amiri text-center text-2xl leading-loose mb-4 transition ${hideQuran ? "blur-md opacity-40" : ""}`}>{BISMILLAH}</p>
+                <p className={`font-amiri text-center text-2xl leading-loose mb-4 transition ${hideQuran ? "text-transparent select-none" : ""}`}>{BISMILLAH}</p>
               )}
               <p className="font-amiri text-[1.7rem] leading-[2.6] text-justify">
                 {ayahs.map((a) => {
@@ -238,7 +238,7 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
                       onClick={() => setAyahNum(a.numberInSurah)}
                       className={`cursor-pointer rounded-lg px-0.5 transition-colors ${
                         hideQuran
-                          ? `blur-md opacity-40 ${active ? "bg-primary/15" : ""}`
+                        ? `text-transparent select-none ${active ? "bg-primary/15" : ""}`
                           : active
                             ? "bg-primary/20 text-primary"
                             : "hover:bg-primary/10"
