@@ -238,7 +238,7 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
                       onClick={() => setAyahNum(a.numberInSurah)}
                       className={`cursor-pointer rounded-lg px-0.5 transition-colors ${
                         hideQuran
-                        ? `text-transparent select-none ${active ? "bg-primary/15" : ""}`
+                        ? "text-transparent select-none"
                           : active
                             ? "bg-primary/20 text-primary"
                             : "hover:bg-primary/10"
