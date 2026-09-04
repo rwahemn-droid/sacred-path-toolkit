@@ -1569,6 +1569,9 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
           t={t}
           lang={lang}
           city={city}
+          lat={lat}
+          lon={lon}
+          tz={tz}
           school={school}
           onClose={() => setMonthlyOpen(false)}
         />
@@ -1588,17 +1591,17 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
 }
 
 function MonthlyTimes({
-  t, lang, city, school, onClose,
-}: { t: Dict; lang: Lang; city: ReturnType<typeof findCity>; school: 0 | 1; onClose: () => void }) {
+  t, lang, city, lat, lon, tz, school, onClose,
+}: { t: Dict; lang: Lang; city: ReturnType<typeof findCity>; lat: number; lon: number; tz: string; school: 0 | 1; onClose: () => void }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1); // 1-12
 
   const { data, isLoading } = useQuery({
-    queryKey: ["calendar", city.id, school, year, month],
+    queryKey: ["calendar", lat.toFixed(3), lon.toFixed(3), tz, school, year, month],
     queryFn: async () => {
       const res = await fetch(
-        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,4,12,12,11,3,0,-10,0`,
+        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${lat}&longitude=${lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(tz)}`,
       );
       const json = await res.json();
       return json.data as Array<{ timings: Record<string, string>; date: { gregorian: { date: string; day: string } } }>;
