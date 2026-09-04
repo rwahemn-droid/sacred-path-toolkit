@@ -28,7 +28,7 @@ import { QuranTeacher } from "./QuranTeacher";
 type Sub =
   | "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith"
   | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan"
-  | "mirath" | "prophets" | "history" | "hifz" | "planner" | "awards" | "mosques" | "tajweed" | "filter";
+  | "mirath" | "prophets" | "history" | "hifz" | "planner" | "awards" | "mosques" | "tajweed" | "filter" | "teacher";
 
 export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const [sub, setSub] = useState<Sub>("hub");
@@ -36,6 +36,7 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const back = () => setSub("hub");
 
   if (sub === "mufti") return <AIMufti lang={lang} t={t} onBack={back} />;
+  if (sub === "teacher") return <QuranTeacher lang={lang} onBack={back} />;
   if (sub === "asma") return <AsmaAllah lang={lang} t={t} onBack={back} />;
   if (sub === "zakat") return <ZakatCalculator lang={lang} t={t} onBack={back} />;
   if (sub === "events") return <IslamicEvents lang={lang} t={t} onBack={back} />;
