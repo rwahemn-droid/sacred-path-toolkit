@@ -1349,7 +1349,7 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
       const [y, m, dd] = dayKey.split("-");
       const dateStr = `${dd}-${m}-${y}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(tz)}`,
+    `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(tz)}&tune=0,-8,7,10,1,4,0,6,0`
       );
       const json = await res.json();
       return {
