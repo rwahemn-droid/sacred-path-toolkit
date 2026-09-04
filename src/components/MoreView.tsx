@@ -23,11 +23,12 @@ import { Achievements } from "./Achievements";
 import { MosqueFinder } from "./MosqueFinder";
 import { TajweedLessons } from "./TajweedLessons";
 import { MuslimFilter } from "./MuslimFilter";
+import { QuranTeacher } from "./QuranTeacher";
 
 type Sub =
   | "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith"
   | "prayer" | "khatm" | "adhkar" | "wudhu" | "salah" | "tawaf" | "ramadan"
-  | "mirath" | "prophets" | "history" | "hifz" | "planner" | "awards" | "mosques" | "tajweed" | "filter";
+  | "mirath" | "prophets" | "history" | "hifz" | "planner" | "awards" | "mosques" | "tajweed" | "filter" | "teacher";
 
 export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const [sub, setSub] = useState<Sub>("hub");
@@ -35,6 +36,7 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
   const back = () => setSub("hub");
 
   if (sub === "mufti") return <AIMufti lang={lang} t={t} onBack={back} />;
+  if (sub === "teacher") return <QuranTeacher lang={lang} onBack={back} />;
   if (sub === "asma") return <AsmaAllah lang={lang} t={t} onBack={back} />;
   if (sub === "zakat") return <ZakatCalculator lang={lang} t={t} onBack={back} />;
   if (sub === "events") return <IslamicEvents lang={lang} t={t} onBack={back} />;
@@ -68,6 +70,7 @@ export function MoreView({ lang, t }: { lang: Lang; t: Dict }) {
     category: string;
   }[] = [
     { id: "mufti",  title: m.cards.mufti.title,  desc: m.cards.mufti.desc,  icon: Sparkles,    bg: "linear-gradient(135deg,#a855f7,#6366f1)", category: m.categories.ai },
+    { id: "teacher", title: L("مامۆستای قورئان","معلّم القرآن","Quran Teacher"), desc: L("گوێگرتن و تۆمارکردنی خوێندنەوە","استمع وسجّل تلاوتك","Listen & record your recitation"), icon: GraduationCap, bg: "linear-gradient(135deg,#059669,#10b981)", category: m.categories.knowledge },
     { id: "filter", title: L("فلتەری موسڵمان","فلتر المسلم","Muslim Filter"), desc: L("کامێرا و ئایەتی قورئان","كاميرا وآيات القرآن","AR camera with Quran verses"), icon: ScanFace, bg: "linear-gradient(135deg,#8b5cf6,#ec4899)", category: m.categories.tools },
     { id: "hifz", title: L("حیفزی قورئان","حفظ القرآن","Memorization"), desc: L("پلان، پێداچوونەوە، تاقیکردنەوە","خطة، مراجعة، اختبار","Plan, revision, quiz"), icon: Brain, bg: "linear-gradient(135deg,#14b8a6,#0d9488)", category: m.categories.knowledge },
     { id: "planner", title: L("پلانی عیبادەت","مخطط العبادة","Worship Planner"), desc: L("ئامانجی ڕۆژانە و هەفتانە","أهداف يومية وأسبوعية","Daily & weekly goals"), icon: Target, bg: "linear-gradient(135deg,#0ea5e9,#6366f1)", category: m.categories.tools },
