@@ -1191,18 +1191,108 @@ function SurahDetail({ surah, onBack, onSelectSurah, t, lang }: { surah: Surah; 
 type PrayerTimings = { Fajr: string; Sunrise: string; Dhuhr: string; Asr: string; Maghrib: string; Isha: string };
 type HijriDate = { day: string; month: { ar: string; en: string; number: number }; year: string };
 
-// Use the API's calculated times directly (Muslim World League). No manual offset.
-const PRAYER_OFFSET_MIN = 0;
-function adjustTime(hhmm: string, offset = PRAYER_OFFSET_MIN) {
+// Times come straight from the calculation API. No manual minute offsets.
+function adjustTime(hhmm: string) {
   if (!hhmm || hhmm.length < 4) return hhmm;
-  if (offset === 0) return hhmm.slice(0, 5);
-  const [hStr, mStr] = hhmm.split(":");
-  let total = (parseInt(hStr, 10) || 0) * 60 + (parseInt(mStr, 10) || 0) + offset;
-  total = ((total % 1440) + 1440) % 1440;
-  const h = Math.floor(total / 60);
-  const m = total % 60;
-  return `${String(h).padStart(2, "0")}:${String(m).padStart(2, "0")}`;
+  return hhmm.slice(0, 5);
 }
+
+// Local calendar day key (NOT UTC) that also flips exactly at local midnight,
+// and re-checks whenever the app is re-opened / resumed.
+function useLocalDayKey() {
+  const dayKey = () => {
+    const d = new Date();
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+  const [key, setKey] = useState(dayKey);
+  useEffect(() => {
+    let timer: number;
+    const schedule = () => {
+      setKey(dayKey());
+      const n = new Date();
+      const midnight = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1, 0, 0, 5);
+      timer = window.setTimeout(schedule, midnight.getTime() - n.getTime());
+    };
+    schedule();
+    const onWake = () => {
+      if (document.visibilityState === "visible") {
+        setKey(dayKey());
+        window.clearTimeout(timer);
+        schedule();
+      }
+    };
+    document.addEventListener("visibilitychange", onWake);
+    window.addEventListener("focus", onWake);
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("visibilitychange", onWake);
+      window.removeEventListener("focus", onWake);
+    };
+  }, []);
+  return key;
+}
+
+// Live device location with saved fallback; recalculates only on significant moves.
+const COORDS_KEY = "ibadah:coords";
+type Coords = { lat: number; lon: number };
+
+function distKm(a: Coords, b: Coords) {
+  const R = 6371;
+  const dLat = ((b.lat - a.lat) * Math.PI) / 180;
+  const dLon = ((b.lon - a.lon) * Math.PI) / 180;
+  const s =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((a.lat * Math.PI) / 180) * Math.cos((b.lat * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(s));
+}
+
+function useDeviceLocation() {
+  const [coords, setCoords] = useState<Coords | null>(() => {
+    if (typeof window === "undefined") return null;
+    try {
+      const raw = localStorage.getItem(COORDS_KEY);
+      return raw ? (JSON.parse(raw) as Coords) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  useEffect(() => {
+    if (typeof navigator === "undefined" || !navigator.geolocation) return;
+    const accept = (p: GeolocationPosition) => {
+      const next = { lat: p.coords.latitude, lon: p.coords.longitude };
+      setCoords((prev) => {
+        // Keep the saved location unless the user really moved (> 10 km).
+        if (prev && distKm(prev, next) < 10) return prev;
+        try { localStorage.setItem(COORDS_KEY, JSON.stringify(next)); } catch { /* */ }
+        return next;
+      });
+    };
+    // Permission denied / unavailable -> silently keep saved coords (or city fallback).
+    navigator.geolocation.getCurrentPosition(accept, () => {}, {
+      enableHighAccuracy: false,
+      timeout: 15000,
+      maximumAge: 10 * 60 * 1000,
+    });
+    const id = navigator.geolocation.watchPosition(accept, () => {}, {
+      enableHighAccuracy: false,
+      maximumAge: 10 * 60 * 1000,
+      timeout: 30000,
+    });
+    return () => navigator.geolocation.clearWatch(id);
+  }, []);
+
+  return coords;
+}
+
+function deviceTz(fallback: string) {
+  try {
+    return Intl.DateTimeFormat().resolvedOptions().timeZone || fallback;
+  } catch {
+    return fallback;
+  }
+}
+
 
 // Tick every second for live clock + countdown.
 function useNow(intervalMs = 1000) {
@@ -1247,24 +1337,31 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
   const adhanRef = useRef<HTMLAudioElement | null>(null);
   const now = useNow(1000);
 
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const dayKey = useLocalDayKey();
+  const gps = useDeviceLocation();
+  const lat = gps?.lat ?? city.lat;
+  const lon = gps?.lon ?? city.lon;
+  const tz = gps ? deviceTz(city.tz) : city.tz;
+
   const { data, isLoading } = useQuery({
-    queryKey: ["prayer", city.id, school, todayStr],
+    queryKey: ["prayer", lat.toFixed(3), lon.toFixed(3), tz, school, dayKey],
     queryFn: async (): Promise<{ timings: PrayerTimings; hijri: HijriDate; weekdayIdx: number }> => {
-      const d = new Date();
-      const dateStr = `${String(d.getDate()).padStart(2, "0")}-${String(d.getMonth() + 1).padStart(2, "0")}-${d.getFullYear()}`;
+      const [y, m, dd] = dayKey.split("-");
+      const dateStr = `${dd}-${m}-${y}`;
       const res = await fetch(
-        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,4,12,12,11,3,0,-10,0`,
+        `https://api.aladhan.com/v1/timings/${dateStr}?latitude=${lat}&longitude=${lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(tz)}`,
       );
       const json = await res.json();
       return {
         timings: json.data.timings,
         hijri: json.data.date.hijri,
-        weekdayIdx: d.getDay(),
+        weekdayIdx: new Date(Number(y), Number(m) - 1, Number(dd)).getDay(),
       };
     },
     staleTime: 1000 * 60 * 60 * 6,
     gcTime: 1000 * 60 * 60 * 24,
+    refetchOnWindowFocus: true,
+
   });
 
   const toggleNotify = async (id: string) => {
@@ -1472,6 +1569,9 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
           t={t}
           lang={lang}
           city={city}
+          lat={lat}
+          lon={lon}
+          tz={tz}
           school={school}
           onClose={() => setMonthlyOpen(false)}
         />
@@ -1491,17 +1591,17 @@ function PrayerView({ t, lang, cityId, madhab }: { t: Dict; lang: Lang; cityId: 
 }
 
 function MonthlyTimes({
-  t, lang, city, school, onClose,
-}: { t: Dict; lang: Lang; city: ReturnType<typeof findCity>; school: 0 | 1; onClose: () => void }) {
+  t, lang, city, lat, lon, tz, school, onClose,
+}: { t: Dict; lang: Lang; city: ReturnType<typeof findCity>; lat: number; lon: number; tz: string; school: 0 | 1; onClose: () => void }) {
   const now = new Date();
   const [year, setYear] = useState(now.getFullYear());
   const [month, setMonth] = useState(now.getMonth() + 1); // 1-12
 
   const { data, isLoading } = useQuery({
-    queryKey: ["calendar", city.id, school, year, month],
+    queryKey: ["calendar", lat.toFixed(3), lon.toFixed(3), tz, school, year, month],
     queryFn: async () => {
       const res = await fetch(
-        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${city.lat}&longitude=${city.lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(city.tz)}&tune=0,4,12,12,11,3,0,-10,0`,
+        `https://api.aladhan.com/v1/calendar/${year}/${month}?latitude=${lat}&longitude=${lon}&method=14&school=${school}&timezonestring=${encodeURIComponent(tz)}`,
       );
       const json = await res.json();
       return json.data as Array<{ timings: Record<string, string>; date: { gregorian: { date: string; day: string } } }>;
