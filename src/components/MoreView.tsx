@@ -23,6 +23,7 @@ import { Achievements } from "./Achievements";
 import { MosqueFinder } from "./MosqueFinder";
 import { TajweedLessons } from "./TajweedLessons";
 import { MuslimFilter } from "./MuslimFilter";
+import { QuranTeacher } from "./QuranTeacher";
 
 type Sub =
   | "hub" | "mufti" | "asma" | "zakat" | "events" | "habits" | "hadith"

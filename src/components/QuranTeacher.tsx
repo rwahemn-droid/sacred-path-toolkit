@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, ArrowRight, Mic, Square, Play, Pause, RotateCcw, Volume2, GraduationCap } from "lucide-react";
+import { ArrowLeft, ArrowRight, Mic, Square, RotateCcw, Volume2, GraduationCap } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl, type Reciter } from "@/lib/reciters";
 
