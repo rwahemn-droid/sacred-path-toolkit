@@ -244,7 +244,7 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
                             : "hover:bg-primary/10"
                       }`}
                     >
-                      {a.text}
+                      <span className={hideQuran ? "invisible" : ""}>{a.text}</span>
                       <span className={`mx-1 inline-grid h-7 w-7 place-items-center rounded-full border align-middle text-sm ${active && !hideQuran ? "border-primary text-primary" : "border-muted-foreground/40 text-muted-foreground"}`}>
                         {toArDigits(a.numberInSurah)}
                       </span>
