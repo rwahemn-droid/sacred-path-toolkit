@@ -233,7 +233,7 @@ function startLiveHifz() {
       heardIndex++;
     }
 
-    setRecognizedWords(matched);
+    setRecognizedWords((prev) => Math.max(prev, matched));
   };
 
   recognitionRef.current = recognition;
@@ -307,7 +307,7 @@ function stopLiveHifz() {
         </div>
       </header>
 
-      <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-10">
+      <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#151515] px-3 py-4 sm:px-6">
         <div className="mx-auto w-full max-w-4xl">
           <div className="mb-5 flex items-center justify-center gap-3 text-primary/70">
             <span className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/40" />
