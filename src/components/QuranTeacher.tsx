@@ -132,7 +132,14 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
     setAudioDuration(0);
     a.onloadedmetadata = () => setAudioDuration(Number.isFinite(a.duration) ? a.duration : 0);
     a.ontimeupdate = () => setAudioProgress(a.currentTime);
-    a.onended = () => { setListening(false); setAudioProgress(a.duration || 0); };
+    a.onended = () => {
+  setListening(false);
+  setAudioProgress(a.duration || 0);
+
+  if (surah && ayahNum < surah.numberOfAyahs) {
+    setAyahNum(ayahNum + 1);
+  }
+};
     a.onerror = () => setListening(false);
     a.play().catch(() => setListening(false));
   }
