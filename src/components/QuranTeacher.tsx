@@ -284,7 +284,7 @@ function stopLiveHifz() {
 
   return (
     <section className="fixed inset-0 z-[60] flex h-dvh flex-col overflow-hidden bg-background text-foreground animate-in fade-in duration-300">
-      <header className="shrink-0 border-b border-white/10 bg-[#151515] px-3 pb-2 pt-[max(.75rem,env(safe-area-inset-top))]">
+      <header className="shrink-0 border-b border-white/[0.07] bg-[#111214] px-3 pb-2 pt-[max(.6rem,env(safe-area-inset-top))]">
         <div className="mx-auto flex w-full max-w-4xl items-center gap-2">
           <button onClick={onBack} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10" aria-label={t(S.back, lang)}>
             <BackIcon className="h-4 w-4" />
