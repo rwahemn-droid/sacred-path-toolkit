@@ -353,25 +353,26 @@ function stopLiveHifz() {
         </div>
       </main>
 
-      <footer className="shrink-0 border-t border-white/10 bg-[#151515] px-3 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto w-full max-w-xl space-y-2.5">
+      <footer className="shrink-0 border-t border-white/[0.07] bg-[#111214] px-3 pt-2 pb-[max(.6rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto w-full max-w-xl space-y-2">
           <div className="flex items-center gap-2">
             <label className="min-w-0 flex-1">
               <span className="sr-only">{t(S.reciter, lang)}</span>
-              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-9 w-full truncate rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-white/30">
-                {RECITERS.map((r) => <option key={r.id} value={r.id} className="bg-[#151515] text-white">{r.name}</option>)}
+              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-8 w-full truncate rounded-md border border-white/10 bg-white/[0.04] px-2 text-[11px] text-white/80 outline-none focus:border-teal-300/50">
+                {RECITERS.map((r) => <option key={r.id} value={r.id} className="bg-[#111214] text-white">{r.name}</option>)}
               </select>
             </label>
-            <span className="shrink-0 text-xs tabular-nums text-white/50">{ayahNum} / {total}</span>
+            <span className="shrink-0 text-[11px] tabular-nums text-white/40">{ayahNum} / {total}</span>
           </div>
 
-          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-1 w-full accent-teal-400" />
+          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-0.5 w-full accent-teal-400" />
 
-          <div className="flex items-center justify-center gap-4">
-            <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-10 w-10 place-items-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
-            <button onClick={replayAyah} className="grid h-10 w-10 place-items-center rounded-full text-white/80 transition hover:bg-white/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-5 w-5" /></button>
-            <button onClick={listening ? stopListening : listen} className="grid h-14 w-14 place-items-center rounded-full bg-teal-500 text-[#151515] shadow-lg shadow-teal-500/25 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-6 w-6" /> : <Play className="ms-0.5 h-6 w-6" />}</button>
-            <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-10 w-10 place-items-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
+          <div className="flex items-center justify-center gap-5 py-0.5">
+            <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
+            <button onClick={replayAyah} className="grid h-9 w-9 place-items-center rounded-full text-white/70 transition hover:bg-white/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-[18px] w-[18px]" /></button>
+            <button onClick={listening ? stopListening : listen} className="grid h-[52px] w-[52px] place-items-center rounded-full bg-teal-500 text-[#111214] shadow-lg shadow-teal-500/20 ring-1 ring-teal-300/40 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-[22px] w-[22px]" /> : <Play className="ms-0.5 h-[22px] w-[22px]" />}</button>
+            <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
+            <span className="w-9" aria-hidden="true" />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
