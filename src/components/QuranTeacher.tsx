@@ -336,12 +336,12 @@ function stopLiveHifz() {
                       key={a.numberInSurah}
                       ref={active ? currentAyahRef : undefined}
                       onClick={() => setAyahNum(a.numberInSurah)}
-                      className={`cursor-pointer rounded-sm transition-colors ${hideQuran ? "select-none" : active ? "bg-teal-400/10" : "hover:bg-white/[0.04]"}`}
+                      className={`cursor-pointer rounded-sm transition-colors ${hideQuran ? "select-none" : active ? "bg-sky-400/10" : "hover:bg-white/[0.04]"}`}
                     >
                       {hideQuran && active ? (
                         <>{a.text.split(/\s+/).map((word, index) => <span key={index} className={index < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)}</>
                       ) : <span className={hideQuran ? "invisible" : ""}>{a.text}</span>}
-                      <span className={`mx-1.5 inline-grid h-6 w-6 place-items-center rounded-full border align-middle text-[10px] leading-none ${active ? "border-teal-300/70 text-teal-200" : "border-white/15 text-white/45"}`}>
+                      <span className={`mx-1.5 inline-grid h-6 w-6 place-items-center rounded-full border align-middle text-[10px] leading-none ${active ? "border-sky-300/70 text-sky-200" : "border-white/15 text-white/45"}`}>
                         {toArDigits(a.numberInSurah)}
                       </span>
                     </span>
@@ -358,33 +358,33 @@ function stopLiveHifz() {
           <div className="flex items-center gap-2">
             <label className="min-w-0 flex-1">
               <span className="sr-only">{t(S.reciter, lang)}</span>
-              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-8 w-full truncate rounded-md border border-white/10 bg-white/[0.04] px-2 text-[11px] text-white/80 outline-none focus:border-teal-300/50">
+              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-8 w-full truncate rounded-md border border-white/10 bg-white/[0.04] px-2 text-[11px] text-white/80 outline-none focus:border-sky-300/50">
                 {RECITERS.map((r) => <option key={r.id} value={r.id} className="bg-[#111214] text-white">{r.name}</option>)}
               </select>
             </label>
             <span className="shrink-0 text-[11px] tabular-nums text-white/40">{ayahNum} / {total}</span>
           </div>
 
-          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-0.5 w-full accent-teal-400" />
+          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-0.5 w-full accent-sky-400" />
 
           <div className="flex items-center justify-center gap-5 py-0.5">
             <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
             <button onClick={replayAyah} className="grid h-9 w-9 place-items-center rounded-full text-white/70 transition hover:bg-white/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-[18px] w-[18px]" /></button>
-            <button onClick={listening ? stopListening : listen} className="grid h-[52px] w-[52px] place-items-center rounded-full bg-teal-500 text-[#111214] shadow-lg shadow-teal-500/20 ring-1 ring-teal-300/40 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-[22px] w-[22px]" /> : <Play className="ms-0.5 h-[22px] w-[22px]" />}</button>
+            <button onClick={listening ? stopListening : listen} className="grid h-[52px] w-[52px] place-items-center rounded-full bg-sky-500 text-[#111214] shadow-lg shadow-sky-500/20 ring-1 ring-sky-300/40 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-[22px] w-[22px]" /> : <Play className="ms-0.5 h-[22px] w-[22px]" />}</button>
             <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
             <span className="w-9" aria-hidden="true" />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => setHideQuran((v) => !v)} className={`${btn} ${hideQuran ? "border-teal-400/60 text-teal-300" : ""}`} aria-label={t(S.hifzMode, lang)}>
+            <button onClick={() => setHideQuran((v) => !v)} className={`${btn} ${hideQuran ? "border-sky-400/60 text-sky-300" : ""}`} aria-label={t(S.hifzMode, lang)}>
               {hideQuran ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}<span className="truncate">{hideQuran ? t(S.showQuran, lang) : t(S.hideQuran, lang)}</span>
             </button>
             {hideQuran ? (
-              <button onClick={liveListening ? stopLiveHifz : startLiveHifz} className={`${btn} ${liveListening ? "animate-pulse border-red-400/60 text-red-300" : "text-teal-300"}`}>
+              <button onClick={liveListening ? stopLiveHifz : startLiveHifz} className={`${btn} ${liveListening ? "animate-pulse border-red-400/60 text-red-300" : "text-sky-300"}`}>
                 {liveListening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}<span className="truncate">{liveListening ? t(S.stopRec, lang) : t(S.startRec, lang)}</span>
               </button>
             ) : !recording ? (
-              <button onClick={startRecording} className={`${btn} text-teal-300`}><Mic className="h-4 w-4" /><span className="truncate">{t(S.startRec, lang)}</span></button>
+              <button onClick={startRecording} className={`${btn} text-sky-300`}><Mic className="h-4 w-4" /><span className="truncate">{t(S.startRec, lang)}</span></button>
             ) : (
               <button onClick={stopRecording} className={`${btn} animate-pulse border-red-400/60 text-red-300`}><Square className="h-4 w-4" /><span className="truncate">{t(S.stopRec, lang)}</span></button>
             )}
