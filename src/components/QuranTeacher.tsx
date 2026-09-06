@@ -284,7 +284,7 @@ function stopLiveHifz() {
 
   return (
     <section className="fixed inset-0 z-[60] flex h-dvh flex-col overflow-hidden bg-background text-foreground animate-in fade-in duration-300">
-      <header className="shrink-0 border-b border-white/10 bg-[#151515] px-3 pb-2 pt-[max(.75rem,env(safe-area-inset-top))]">
+      <header className="shrink-0 border-b border-white/[0.07] bg-[#111214] px-3 pb-2 pt-[max(.6rem,env(safe-area-inset-top))]">
         <div className="mx-auto flex w-full max-w-4xl items-center gap-2">
           <button onClick={onBack} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10" aria-label={t(S.back, lang)}>
             <BackIcon className="h-4 w-4" />
@@ -307,24 +307,28 @@ function stopLiveHifz() {
         </div>
       </header>
 
-      <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#151515] px-3 py-4 sm:px-6">
-        <div className="mx-auto w-full max-w-4xl">
-          <div className="mb-5 flex items-center justify-center gap-3">
-            <span className="h-px flex-1 bg-white/10" />
-            <div className="min-w-40 border-y border-white/10 px-5 py-2 text-center">
-              <p dir="rtl" lang="ar" className="font-amiri text-2xl font-semibold text-white">{surah?.name ?? ""}</p>
-              {surah && <p dir="ltr" className="mt-0.5 text-[10px] uppercase text-white/40">{surah.englishName} · {surah.numberOfAyahs}</p>}
+      <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#111214] px-4 py-5 sm:px-8">
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="mb-6 flex items-center justify-center gap-4">
+            <span className="h-px flex-1 bg-gradient-to-l from-amber-200/30 to-transparent" />
+            <div className="relative px-8 py-3 text-center">
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent" />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent" />
+              <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-200/50">✦</span>
+              <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-200/50">✦</span>
+              <p dir="rtl" lang="ar" className="font-amiri text-[1.7rem] leading-snug text-white">{surah?.name ?? ""}</p>
+              {surah && <p dir="ltr" className="mt-1 text-[10px] tracking-[0.18em] uppercase text-white/35">{surah.englishName} · {surah.numberOfAyahs}</p>}
             </div>
-            <span className="h-px flex-1 bg-white/10" />
+            <span className="h-px flex-1 bg-gradient-to-r from-amber-200/30 to-transparent" />
           </div>
           {isFetching || !ayahs ? (
-            <p className="text-center text-sm text-muted-foreground">{t(S.loading, lang)}</p>
+            <p className="text-center text-sm text-white/40">{t(S.loading, lang)}</p>
           ) : (
             <div className={hideQuran ? "select-none" : ""}>
               {surahNum !== 9 && (
-                <p className={`mb-5 text-center font-amiri text-2xl leading-loose text-white transition sm:text-3xl ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
+                <p className={`mb-6 text-center font-amiri text-[1.45rem] leading-loose text-white/90 transition sm:text-[1.7rem] ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
               )}
-              <p className="text-justify font-amiri text-[1.9rem] leading-[2.55] text-white sm:text-[2.25rem]">
+              <p className="text-justify font-amiri text-[1.45rem] leading-[2.35] tracking-wide text-white/[0.93] sm:text-[1.7rem]">
                 {ayahs.map((a) => {
                   const active = a.numberInSurah === ayahNum;
                   return (
@@ -332,12 +336,12 @@ function stopLiveHifz() {
                       key={a.numberInSurah}
                       ref={active ? currentAyahRef : undefined}
                       onClick={() => setAyahNum(a.numberInSurah)}
-                      className={`cursor-pointer rounded transition-colors ${hideQuran ? "select-none" : active ? "bg-white/10" : "hover:bg-white/5"}`}
+                      className={`cursor-pointer rounded-sm transition-colors ${hideQuran ? "select-none" : active ? "bg-teal-400/10" : "hover:bg-white/[0.04]"}`}
                     >
                       {hideQuran && active ? (
                         <>{a.text.split(/\s+/).map((word, index) => <span key={index} className={index < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)}</>
                       ) : <span className={hideQuran ? "invisible" : ""}>{a.text}</span>}
-                      <span className={`mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border align-middle text-xs ${active ? "border-white/60 text-white" : "border-white/20 text-white/60"}`}>
+                      <span className={`mx-1.5 inline-grid h-6 w-6 place-items-center rounded-full border align-middle text-[10px] leading-none ${active ? "border-teal-300/70 text-teal-200" : "border-white/15 text-white/45"}`}>
                         {toArDigits(a.numberInSurah)}
                       </span>
                     </span>
@@ -349,25 +353,26 @@ function stopLiveHifz() {
         </div>
       </main>
 
-      <footer className="shrink-0 border-t border-white/10 bg-[#151515] px-3 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
-        <div className="mx-auto w-full max-w-xl space-y-2.5">
+      <footer className="shrink-0 border-t border-white/[0.07] bg-[#111214] px-3 pt-2 pb-[max(.6rem,env(safe-area-inset-bottom))]">
+        <div className="mx-auto w-full max-w-xl space-y-2">
           <div className="flex items-center gap-2">
             <label className="min-w-0 flex-1">
               <span className="sr-only">{t(S.reciter, lang)}</span>
-              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-9 w-full truncate rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-white/30">
-                {RECITERS.map((r) => <option key={r.id} value={r.id} className="bg-[#151515] text-white">{r.name}</option>)}
+              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-8 w-full truncate rounded-md border border-white/10 bg-white/[0.04] px-2 text-[11px] text-white/80 outline-none focus:border-teal-300/50">
+                {RECITERS.map((r) => <option key={r.id} value={r.id} className="bg-[#111214] text-white">{r.name}</option>)}
               </select>
             </label>
-            <span className="shrink-0 text-xs tabular-nums text-white/50">{ayahNum} / {total}</span>
+            <span className="shrink-0 text-[11px] tabular-nums text-white/40">{ayahNum} / {total}</span>
           </div>
 
-          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-1 w-full accent-teal-400" />
+          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-0.5 w-full accent-teal-400" />
 
-          <div className="flex items-center justify-center gap-4">
-            <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-10 w-10 place-items-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
-            <button onClick={replayAyah} className="grid h-10 w-10 place-items-center rounded-full text-white/80 transition hover:bg-white/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-5 w-5" /></button>
-            <button onClick={listening ? stopListening : listen} className="grid h-14 w-14 place-items-center rounded-full bg-teal-500 text-[#151515] shadow-lg shadow-teal-500/25 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-6 w-6" /> : <Play className="ms-0.5 h-6 w-6" />}</button>
-            <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-10 w-10 place-items-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
+          <div className="flex items-center justify-center gap-5 py-0.5">
+            <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
+            <button onClick={replayAyah} className="grid h-9 w-9 place-items-center rounded-full text-white/70 transition hover:bg-white/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-[18px] w-[18px]" /></button>
+            <button onClick={listening ? stopListening : listen} className="grid h-[52px] w-[52px] place-items-center rounded-full bg-teal-500 text-[#111214] shadow-lg shadow-teal-500/20 ring-1 ring-teal-300/40 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-[22px] w-[22px]" /> : <Play className="ms-0.5 h-[22px] w-[22px]" />}</button>
+            <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-9 w-9 place-items-center rounded-full text-white/50 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
+            <span className="w-9" aria-hidden="true" />
           </div>
 
           <div className="grid grid-cols-2 gap-2">
