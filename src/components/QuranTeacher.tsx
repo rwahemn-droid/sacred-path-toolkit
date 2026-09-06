@@ -279,7 +279,7 @@ function stopLiveHifz() {
     if (next >= 1 && next <= surah.numberOfAyahs) setAyahNum(next);
   }
 
-  const btn = "flex min-h-10 items-center justify-center gap-2 rounded-xl border border-border bg-secondary/70 px-3 py-2 text-xs font-medium transition hover:border-primary/50 disabled:opacity-40";
+  const btn = "flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:border-white/25 disabled:opacity-40";
   const total = surah?.numberOfAyahs ?? 0;
 
   return (
@@ -309,13 +309,13 @@ function stopLiveHifz() {
 
       <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#151515] px-3 py-4 sm:px-6">
         <div className="mx-auto w-full max-w-4xl">
-          <div className="mb-5 flex items-center justify-center gap-3 text-primary/70">
-            <span className="h-px flex-1 bg-gradient-to-r from-transparent to-primary/40" />
-            <div className="min-w-40 border-y border-primary/30 px-5 py-2 text-center">
-              <p dir="rtl" lang="ar" className="font-amiri text-2xl font-semibold text-primary">{surah?.name ?? ""}</p>
-              {surah && <p dir="ltr" className="mt-0.5 text-[10px] uppercase text-muted-foreground">{surah.englishName} · {surah.numberOfAyahs}</p>}
+          <div className="mb-5 flex items-center justify-center gap-3">
+            <span className="h-px flex-1 bg-white/10" />
+            <div className="min-w-40 border-y border-white/10 px-5 py-2 text-center">
+              <p dir="rtl" lang="ar" className="font-amiri text-2xl font-semibold text-white">{surah?.name ?? ""}</p>
+              {surah && <p dir="ltr" className="mt-0.5 text-[10px] uppercase text-white/40">{surah.englishName} · {surah.numberOfAyahs}</p>}
             </div>
-            <span className="h-px flex-1 bg-gradient-to-l from-transparent to-primary/40" />
+            <span className="h-px flex-1 bg-white/10" />
           </div>
           {isFetching || !ayahs ? (
             <p className="text-center text-sm text-muted-foreground">{t(S.loading, lang)}</p>
