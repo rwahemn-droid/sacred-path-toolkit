@@ -307,24 +307,28 @@ function stopLiveHifz() {
         </div>
       </header>
 
-      <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#151515] px-3 py-4 sm:px-6">
-        <div className="mx-auto w-full max-w-4xl">
-          <div className="mb-5 flex items-center justify-center gap-3">
-            <span className="h-px flex-1 bg-white/10" />
-            <div className="min-w-40 border-y border-white/10 px-5 py-2 text-center">
-              <p dir="rtl" lang="ar" className="font-amiri text-2xl font-semibold text-white">{surah?.name ?? ""}</p>
-              {surah && <p dir="ltr" className="mt-0.5 text-[10px] uppercase text-white/40">{surah.englishName} · {surah.numberOfAyahs}</p>}
+      <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#111214] px-4 py-5 sm:px-8">
+        <div className="mx-auto w-full max-w-3xl">
+          <div className="mb-6 flex items-center justify-center gap-4">
+            <span className="h-px flex-1 bg-gradient-to-l from-amber-200/30 to-transparent" />
+            <div className="relative px-8 py-3 text-center">
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent" />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent" />
+              <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-200/50">✦</span>
+              <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-200/50">✦</span>
+              <p dir="rtl" lang="ar" className="font-amiri text-[1.7rem] leading-snug text-white">{surah?.name ?? ""}</p>
+              {surah && <p dir="ltr" className="mt-1 text-[10px] tracking-[0.18em] uppercase text-white/35">{surah.englishName} · {surah.numberOfAyahs}</p>}
             </div>
-            <span className="h-px flex-1 bg-white/10" />
+            <span className="h-px flex-1 bg-gradient-to-r from-amber-200/30 to-transparent" />
           </div>
           {isFetching || !ayahs ? (
-            <p className="text-center text-sm text-muted-foreground">{t(S.loading, lang)}</p>
+            <p className="text-center text-sm text-white/40">{t(S.loading, lang)}</p>
           ) : (
             <div className={hideQuran ? "select-none" : ""}>
               {surahNum !== 9 && (
-                <p className={`mb-5 text-center font-amiri text-2xl leading-loose text-white transition sm:text-3xl ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
+                <p className={`mb-6 text-center font-amiri text-[1.45rem] leading-loose text-white/90 transition sm:text-[1.7rem] ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
               )}
-              <p className="text-justify font-amiri text-[1.9rem] leading-[2.55] text-white sm:text-[2.25rem]">
+              <p className="text-justify font-amiri text-[1.45rem] leading-[2.35] tracking-wide text-white/[0.93] sm:text-[1.7rem]">
                 {ayahs.map((a) => {
                   const active = a.numberInSurah === ayahNum;
                   return (
@@ -332,12 +336,12 @@ function stopLiveHifz() {
                       key={a.numberInSurah}
                       ref={active ? currentAyahRef : undefined}
                       onClick={() => setAyahNum(a.numberInSurah)}
-                      className={`cursor-pointer rounded transition-colors ${hideQuran ? "select-none" : active ? "bg-white/10" : "hover:bg-white/5"}`}
+                      className={`cursor-pointer rounded-sm transition-colors ${hideQuran ? "select-none" : active ? "bg-teal-400/10" : "hover:bg-white/[0.04]"}`}
                     >
                       {hideQuran && active ? (
                         <>{a.text.split(/\s+/).map((word, index) => <span key={index} className={index < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)}</>
                       ) : <span className={hideQuran ? "invisible" : ""}>{a.text}</span>}
-                      <span className={`mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border align-middle text-xs ${active ? "border-white/60 text-white" : "border-white/20 text-white/60"}`}>
+                      <span className={`mx-1.5 inline-grid h-6 w-6 place-items-center rounded-full border align-middle text-[10px] leading-none ${active ? "border-teal-300/70 text-teal-200" : "border-white/15 text-white/45"}`}>
                         {toArDigits(a.numberInSurah)}
                       </span>
                     </span>
