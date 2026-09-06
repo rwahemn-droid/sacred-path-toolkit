@@ -234,7 +234,23 @@ function startLiveHifz() {
     }
 
     setRecognizedWords((prev) => Math.max(prev, matched));
+const lastWord = expectedWords[expectedWords.length - 1];
 
+const finishedAyah =
+  matched >= expectedWords.length ||
+  (
+    heardWords.length >= Math.max(1, expectedWords.length - 1) &&
+    heardWords.slice(-3).includes(lastWord)
+  );
+
+if (finishedAyah) {
+  recognition.stop();
+
+  setTimeout(() => {
+    goAyah(1);
+    setRecognizedWords(0);
+  }, 300);
+}
 if (expectedWords.length > 0 && matched >= expectedWords.length) {
   recognition.onresult = null;
   recognition.stop();
