@@ -289,7 +289,7 @@ function stopLiveHifz() {
           <button onClick={onBack} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10" aria-label={t(S.back, lang)}>
             <BackIcon className="h-4 w-4" />
           </button>
-          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-teal-300 sm:grid">
+          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-sky-300 sm:grid">
             <GraduationCap className="h-5 w-5" />
           </div>
           <label className="min-w-0 flex-[2]">
@@ -310,16 +310,16 @@ function stopLiveHifz() {
       <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#111214] px-4 py-5 sm:px-8">
         <div className="mx-auto w-full max-w-3xl">
           <div className="mb-6 flex items-center justify-center gap-4">
-            <span className="h-px flex-1 bg-gradient-to-l from-amber-200/30 to-transparent" />
+            <span className="h-px flex-1 bg-gradient-to-l from-sky-300/25 to-transparent" />
             <div className="relative px-8 py-3 text-center">
-              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent" />
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-200/40 to-transparent" />
-              <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-200/50">✦</span>
-              <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-200/50">✦</span>
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/35 to-transparent" />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-sky-300/35 to-transparent" />
+              <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-sky-300/50">✦</span>
+              <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-sky-300/50">✦</span>
               <p dir="rtl" lang="ar" className="font-amiri text-[1.7rem] leading-snug text-white">{surah?.name ?? ""}</p>
               {surah && <p dir="ltr" className="mt-1 text-[10px] tracking-[0.18em] uppercase text-white/35">{surah.englishName} · {surah.numberOfAyahs}</p>}
             </div>
-            <span className="h-px flex-1 bg-gradient-to-r from-amber-200/30 to-transparent" />
+            <span className="h-px flex-1 bg-gradient-to-r from-sky-300/25 to-transparent" />
           </div>
           {isFetching || !ayahs ? (
             <p className="text-center text-sm text-white/40">{t(S.loading, lang)}</p>
