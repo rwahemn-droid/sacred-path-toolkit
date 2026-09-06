@@ -284,24 +284,24 @@ function stopLiveHifz() {
 
   return (
     <section className="fixed inset-0 z-[60] flex h-dvh flex-col overflow-hidden bg-background text-foreground animate-in fade-in duration-300">
-      <header className="shrink-0 border-b border-border bg-background/95 px-3 pb-2 pt-[max(.75rem,env(safe-area-inset-top))] backdrop-blur-xl">
+      <header className="shrink-0 border-b border-white/10 bg-[#151515] px-3 pb-2 pt-[max(.75rem,env(safe-area-inset-top))]">
         <div className="mx-auto flex w-full max-w-4xl items-center gap-2">
-          <button onClick={onBack} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-border bg-secondary/70 text-primary transition hover:bg-secondary" aria-label={t(S.back, lang)}>
+          <button onClick={onBack} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10" aria-label={t(S.back, lang)}>
             <BackIcon className="h-4 w-4" />
           </button>
-          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground sm:grid">
+          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-teal-300 sm:grid">
             <GraduationCap className="h-5 w-5" />
           </div>
           <label className="min-w-0 flex-[2]">
             <span className="sr-only">{t(S.selectSurah, lang)}</span>
-            <select value={surahNum} onChange={(e) => { setSurahNum(Number(e.target.value)); setAyahNum(1); }} className="h-10 w-full truncate rounded-xl border border-border bg-secondary/70 px-3 text-sm font-medium outline-none focus:border-primary">
-              {surahs?.map((s) => <option key={s.number} value={s.number}>{s.number}. {s.name} — {s.englishName}</option>)}
+            <select value={surahNum} onChange={(e) => { setSurahNum(Number(e.target.value)); setAyahNum(1); }} className="h-9 w-full truncate rounded-lg border border-white/10 bg-white/5 px-3 text-sm font-medium text-white outline-none focus:border-white/30">
+              {surahs?.map((s) => <option key={s.number} value={s.number} className="bg-[#151515] text-white">{s.number}. {s.name} — {s.englishName}</option>)}
             </select>
           </label>
           <label className="w-20 shrink-0">
             <span className="sr-only">{t(S.selectAyah, lang)}</span>
-            <select value={ayahNum} onChange={(e) => setAyahNum(Number(e.target.value))} className="h-10 w-full rounded-xl border border-border bg-secondary/70 px-2 text-center text-sm outline-none focus:border-primary">
-              {Array.from({ length: total || 7 }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
+            <select value={ayahNum} onChange={(e) => setAyahNum(Number(e.target.value))} className="h-9 w-full rounded-lg border border-white/10 bg-white/5 px-2 text-center text-sm text-white outline-none focus:border-white/30">
+              {Array.from({ length: total || 7 }, (_, i) => i + 1).map((n) => <option key={n} value={n} className="bg-[#151515] text-white">{n}</option>)}
             </select>
           </label>
         </div>
@@ -349,49 +349,49 @@ function stopLiveHifz() {
         </div>
       </main>
 
-      <footer className="shrink-0 border-t border-border bg-background/95 px-3 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))] backdrop-blur-xl">
+      <footer className="shrink-0 border-t border-white/10 bg-[#151515] px-3 pt-3 pb-[max(.75rem,env(safe-area-inset-bottom))]">
         <div className="mx-auto w-full max-w-xl space-y-2.5">
           <div className="flex items-center gap-2">
             <label className="min-w-0 flex-1">
               <span className="sr-only">{t(S.reciter, lang)}</span>
-              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-9 w-full truncate rounded-lg border border-border bg-secondary/70 px-2 text-xs outline-none focus:border-primary">
-                {RECITERS.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}
+              <select value={reciterId} onChange={(e) => selectReciter(e.target.value)} className="h-9 w-full truncate rounded-lg border border-white/10 bg-white/5 px-2 text-xs text-white outline-none focus:border-white/30">
+                {RECITERS.map((r) => <option key={r.id} value={r.id} className="bg-[#151515] text-white">{r.name}</option>)}
               </select>
             </label>
-            <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{ayahNum} / {total}</span>
+            <span className="shrink-0 text-xs tabular-nums text-white/50">{ayahNum} / {total}</span>
           </div>
 
-          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-1 w-full accent-primary" />
+          <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-1 w-full accent-teal-400" />
 
           <div className="flex items-center justify-center gap-4">
-            <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-10 w-10 place-items-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
-            <button onClick={replayAyah} className="grid h-10 w-10 place-items-center rounded-full text-primary transition hover:bg-primary/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-5 w-5" /></button>
-            <button onClick={listening ? stopListening : listen} className="grid h-14 w-14 place-items-center rounded-full bg-primary text-primary-foreground shadow-lg transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-6 w-6" /> : <Play className="ms-0.5 h-6 w-6" />}</button>
-            <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-10 w-10 place-items-center rounded-full text-muted-foreground transition hover:bg-secondary hover:text-foreground disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
+            <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-10 w-10 place-items-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
+            <button onClick={replayAyah} className="grid h-10 w-10 place-items-center rounded-full text-white/80 transition hover:bg-white/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-5 w-5" /></button>
+            <button onClick={listening ? stopListening : listen} className="grid h-14 w-14 place-items-center rounded-full bg-teal-500 text-[#151515] shadow-lg shadow-teal-500/25 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-6 w-6" /> : <Play className="ms-0.5 h-6 w-6" />}</button>
+            <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-10 w-10 place-items-center rounded-full text-white/60 transition hover:bg-white/10 hover:text-white disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
           </div>
 
           <div className="grid grid-cols-2 gap-2">
-            <button onClick={() => setHideQuran((v) => !v)} className={`${btn} ${hideQuran ? "border-primary/60 text-primary" : ""}`} aria-label={t(S.hifzMode, lang)}>
+            <button onClick={() => setHideQuran((v) => !v)} className={`${btn} ${hideQuran ? "border-teal-400/60 text-teal-300" : ""}`} aria-label={t(S.hifzMode, lang)}>
               {hideQuran ? <Eye className="h-4 w-4" /> : <EyeOff className="h-4 w-4" />}<span className="truncate">{hideQuran ? t(S.showQuran, lang) : t(S.hideQuran, lang)}</span>
             </button>
             {hideQuran ? (
-              <button onClick={liveListening ? stopLiveHifz : startLiveHifz} className={`${btn} ${liveListening ? "animate-pulse border-destructive/60 text-destructive" : "text-primary"}`}>
+              <button onClick={liveListening ? stopLiveHifz : startLiveHifz} className={`${btn} ${liveListening ? "animate-pulse border-red-400/60 text-red-300" : "text-teal-300"}`}>
                 {liveListening ? <Square className="h-4 w-4" /> : <Mic className="h-4 w-4" />}<span className="truncate">{liveListening ? t(S.stopRec, lang) : t(S.startRec, lang)}</span>
               </button>
             ) : !recording ? (
-              <button onClick={startRecording} className={`${btn} text-primary`}><Mic className="h-4 w-4" /><span className="truncate">{t(S.startRec, lang)}</span></button>
+              <button onClick={startRecording} className={`${btn} text-teal-300`}><Mic className="h-4 w-4" /><span className="truncate">{t(S.startRec, lang)}</span></button>
             ) : (
-              <button onClick={stopRecording} className={`${btn} animate-pulse border-destructive/60 text-destructive`}><Square className="h-4 w-4" /><span className="truncate">{t(S.stopRec, lang)}</span></button>
+              <button onClick={stopRecording} className={`${btn} animate-pulse border-red-400/60 text-red-300`}><Square className="h-4 w-4" /><span className="truncate">{t(S.stopRec, lang)}</span></button>
             )}
           </div>
 
           {audioUrl && !recording && (
             <div className="flex items-center gap-2">
               <audio controls src={audioUrl} className="h-10 min-w-0 flex-1" aria-label={t(S.playMine, lang)} />
-              <button onClick={clearRecording} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-border bg-secondary/70 text-muted-foreground" aria-label={t(S.tryAgain, lang)}><RotateCcw className="h-4 w-4" /></button>
+              <button onClick={clearRecording} className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-white/10 bg-white/5 text-white/60" aria-label={t(S.tryAgain, lang)}><RotateCcw className="h-4 w-4" /></button>
             </div>
           )}
-          {micError && <p className="text-center text-xs text-destructive">{t(S.micError, lang)}</p>}
+          {micError && <p className="text-center text-xs text-red-300">{t(S.micError, lang)}</p>}
         </div>
       </footer>
     </section>
