@@ -322,9 +322,9 @@ function stopLiveHifz() {
           ) : (
             <div className={hideQuran ? "select-none" : ""}>
               {surahNum !== 9 && (
-                <p className={`mb-5 text-center font-amiri text-2xl leading-loose text-primary transition sm:text-3xl ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
+                <p className={`mb-5 text-center font-amiri text-2xl leading-loose text-white transition sm:text-3xl ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
               )}
-              <p className="text-justify font-amiri text-[1.9rem] leading-[2.55] sm:text-[2.25rem]">
+              <p className="text-justify font-amiri text-[1.9rem] leading-[2.55] text-white sm:text-[2.25rem]">
                 {ayahs.map((a) => {
                   const active = a.numberInSurah === ayahNum;
                   return (
@@ -332,12 +332,12 @@ function stopLiveHifz() {
                       key={a.numberInSurah}
                       ref={active ? currentAyahRef : undefined}
                       onClick={() => setAyahNum(a.numberInSurah)}
-                      className={`cursor-pointer transition-colors ${hideQuran ? "select-none" : active ? "text-primary" : "hover:text-primary/80"}`}
+                      className={`cursor-pointer rounded transition-colors ${hideQuran ? "select-none" : active ? "bg-white/10" : "hover:bg-white/5"}`}
                     >
                       {hideQuran && active ? (
                         <>{a.text.split(/\s+/).map((word, index) => <span key={index} className={index < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)}</>
                       ) : <span className={hideQuran ? "invisible" : ""}>{a.text}</span>}
-                      <span className={`mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border align-middle text-xs ${active ? "border-primary text-primary" : "border-primary/40 text-primary/70"}`}>
+                      <span className={`mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border align-middle text-xs ${active ? "border-white/60 text-white" : "border-white/20 text-white/60"}`}>
                         {toArDigits(a.numberInSurah)}
                       </span>
                     </span>
