@@ -218,9 +218,11 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   const [faces, setFaces] = useState<Tracked[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [shot, setShot] = useState<string | null>(null);
-const [quranMode, setQuranMode] = useState<QuranMode>("juzAmma");
+const [quranMode, setQuranMode] = useState<QuranMode | null>(null);
   const assignVerse = useCallback((id: number) => {
-    randomVerse().then((v) => {
+    if (!quranMode) return;
+    
+    randomVerse(quranMode).then((v) => {
       if (!v) return;
       const tr = tracksRef.current.find((f) => f.id === id);
       if (tr) {
@@ -228,10 +230,17 @@ const [quranMode, setQuranMode] = useState<QuranMode>("juzAmma");
         setFaces([...tracksRef.current]);
       }
     });
-  }, []);
-
+}, [quranMode]);
+useEffect(() => {
+  tracksRef.current.forEach((f) => assignVerse(f.id));
+}, [quranMode, assignVerse]);
+  
   /* start camera + detector */
+
+
   useEffect(() => {
+    if (!quranMode) return;
+    
     let cancelled = false;
     const start = async () => {
       setPhase("cam");
@@ -377,7 +386,52 @@ const [quranMode, setQuranMode] = useState<QuranMode>("juzAmma");
   };
 
   const loading = phase === "cam" || phase === "face";
+if (!quranMode) {
+  return (
+    <div className="fixed inset-0 z-[60] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
+      <button
+        onClick={onBack}
+        className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </button>
 
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-2 text-4xl">📖</div>
+
+        <h1 className="text-2xl font-bold">
+          هەڵبژاردنی قورئان
+        </h1>
+
+        <p className="mt-2 text-sm text-white/60">
+          کام بەش دەتەوێت لە Muslim Filter بەکاربهێنیت؟
+        </p>
+
+        <div className="mt-8 grid gap-3">
+          <button
+            onClick={() => setQuranMode("juzAmma")}
+            className="rounded-2xl border border-sky-400/40 bg-sky-500/10 p-5 transition hover:bg-sky-500/20"
+          >
+            <div className="text-xl font-bold">جزء عمّ</div>
+            <div className="mt-1 text-xs text-white/50">
+              سورە 78 تا 114
+            </div>
+          </button>
+
+          <button
+            onClick={() => setQuranMode("full")}
+            className="rounded-2xl border border-white/10 bg-white/5 p-5 transition hover:bg-white/10"
+          >
+            <div className="text-xl font-bold">هەموو قورئان</div>
+            <div className="mt-1 text-xs text-white/50">
+              Full Quran • 114 Surahs
+            </div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
   return (
     <div className="fixed inset-0 z-[60] h-dvh bg-black" dir="ltr">
       <div ref={wrapRef} className="relative h-full w-full overflow-hidden">
@@ -472,7 +526,31 @@ const [quranMode, setQuranMode] = useState<QuranMode>("juzAmma");
         )}
 
         {/* controls */}
+        
         <div className="absolute inset-x-0 bottom-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+          <div className="mb-2 flex justify-center gap-2">
+  <button
+    onClick={() => setQuranMode("juzAmma")}
+    className={`rounded-full px-4 py-2 text-xs font-semibold ${
+      quranMode === "juzAmma"
+        ? "bg-sky-500 text-white"
+        : "bg-white/10 text-white/70"
+    }`}
+  >
+    جزء عمّ
+  </button>
+
+  <button
+    onClick={() => setQuranMode("full")}
+    className={`rounded-full px-4 py-2 text-xs font-semibold ${
+      quranMode === "full"
+        ? "bg-sky-500 text-white"
+        : "bg-white/10 text-white/70"
+    }`}
+  >
+    Full Quran
+  </button>
+</div>
           <p className="mb-2 text-center text-[10px] text-white/50">{t.privacy}</p>
           <div className="flex flex-wrap items-center justify-center gap-2">
             <Ctl icon={Shuffle} label={t.changeVerse} onClick={() => {
