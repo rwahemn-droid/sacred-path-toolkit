@@ -99,28 +99,38 @@ const T: Record<Lang, Record<Keys, string>> = {
 /* ---------------- Quran verses (full Quran via existing API) ---------------- */
 
 const TOTAL_AYAHS = 6236;
-
+type QuranMode = "juzAmma" | "full";
 type Verse = { text: string; surah: string; ayah: number; n: number };
 
 const cache = new Map<number, Verse>();
 let recent: number[] = [];
 
-function pickIndex() {
+function pickIndex(mode: QuranMode) {
+  const min = mode === "juzAmma" ? 5673 : 1;
+  const count = TOTAL_AYAHS - min + 1;
+
   for (let i = 0; i < 12; i++) {
-    const n = 1 + Math.floor(Math.random() * TOTAL_AYAHS);
+    const n = min + Math.floor(Math.random() * count);
     if (!recent.includes(n)) return n;
   }
-  return 1 + Math.floor(Math.random() * TOTAL_AYAHS);
+
+  return min + Math.floor(Math.random() * count);
 }
 
-async function randomVerse(): Promise<Verse | null> {
-  const n = pickIndex();
+async function randomVerse(mode: QuranMode): Promise<Verse | null> {
+  const n = pickIndex(mode);
   recent = [n, ...recent].slice(0, 25);
   if (cache.has(n)) return cache.get(n)!;
   try {
     const res = await fetch(`https://api.alquran.cloud/v1/ayah/${n}/quran-uthmani`);
     if (!res.ok) return null;
     const d = (await res.json()).data;
+    if (
+  mode === "juzAmma" &&
+  (Number(d.surah?.number) < 78 || Number(d.surah?.number) > 114)
+) {
+  return randomVerse(mode);
+}
     const v: Verse = {
       text: String(d.text ?? "").trim(),
       surah: String(d.surah?.name ?? "").replace(/^سُورَةُ\s*/, ""),
