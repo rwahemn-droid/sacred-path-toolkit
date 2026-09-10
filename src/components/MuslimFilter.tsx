@@ -228,7 +228,7 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   const [faces, setFaces] = useState<Tracked[]>([]);
   const [attempt, setAttempt] = useState(0);
   const [shot, setShot] = useState<string | null>(null);
-const [quranMode, setQuranMode] = useState<QuranMode | null>(null);
+const [quranMode, setQuranMode] = useState<QuranMode>("juzAmma");
   const assignVerse = useCallback((id: number) => {
     if (!quranMode) return;
     
