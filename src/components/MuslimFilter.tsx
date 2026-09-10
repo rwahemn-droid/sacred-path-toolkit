@@ -563,11 +563,29 @@ if (!quranMode) {
 </div>
           <p className="mb-2 text-center text-[10px] text-white/50">{t.privacy}</p>
           <div className="flex flex-wrap items-center justify-center gap-2">
-            <Ctl icon={Shuffle} label={t.changeVerse} onClick={() => {
-              const f = tracksRef.current[0];
-              if (f) assignVerse(f.id);
-            }} />
-            {faces.length > 1 && <Ctl icon={RefreshCw} label={t.changeAll} onClick={changeAll} />}
+            <Ctl
+  icon={Shuffle}
+  label={t.changeVerse}
+  onClick={async () => {
+    const f = tracksRef.current[0];
+    if (!f) return;
+
+    for (let i = 0; i < 7; i++) {
+      const v = await randomVerse(quranMode);
+      if (!v) continue;
+
+      const tr = tracksRef.current.find((x) => x.id === f.id);
+      if (tr) {
+        tr.verse = v;
+        setFaces([...tracksRef.current]);
+      }
+
+      await new Promise((resolve) =>
+        setTimeout(resolve, 100 + i * 45)
+      );
+    }
+  }}
+/>
             <Ctl icon={RotateCcw} label={t.flip} onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} />
             <Ctl icon={Camera} label={t.capture} onClick={capture} primary />
           </div>
