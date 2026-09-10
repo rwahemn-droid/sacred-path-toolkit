@@ -582,7 +582,7 @@ for (const v of verses) {
     setFaces([...tracksRef.current]);
   }
 
-  await new Promise((resolve) => setTimeout(resolve, 35);
+  await new Promise((resolve) => setTimeout(resolve, 35));
 }
   }}
 />
