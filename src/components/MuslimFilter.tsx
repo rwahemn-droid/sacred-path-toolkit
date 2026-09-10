@@ -569,21 +569,21 @@ if (!quranMode) {
   onClick={async () => {
     const f = tracksRef.current[0];
     if (!f) return;
+const verses = await Promise.all(
+Array.from({ length: 15 }, () => randomVerse(quranMode))
+);
 
-    for (let i = 0; i < 7; i++) {
-      const v = await randomVerse(quranMode);
-      if (!v) continue;
+for (const v of verses) {
+  if (!v) continue;
 
-      const tr = tracksRef.current.find((x) => x.id === f.id);
-      if (tr) {
-        tr.verse = v;
-        setFaces([...tracksRef.current]);
-      }
+  const tr = tracksRef.current.find((x) => x.id === f.id);
+  if (tr) {
+    tr.verse = v;
+    setFaces([...tracksRef.current]);
+  }
 
-      await new Promise((resolve) =>
-        setTimeout(resolve, 20 + i * 5)
-      );
-    }
+  await new Promise((resolve) => setTimeout(resolve, 35);
+}
   }}
 />
             <Ctl icon={RotateCcw} label={t.flip} onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} />
