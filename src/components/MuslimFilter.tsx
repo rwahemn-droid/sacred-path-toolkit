@@ -581,7 +581,7 @@ if (!quranMode) {
       }
 
       await new Promise((resolve) =>
-        setTimeout(resolve, 45 + i * 15)
+        setTimeout(resolve, 20 + i * 5)
       );
     }
   }}
