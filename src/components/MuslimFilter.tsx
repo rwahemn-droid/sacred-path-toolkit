@@ -428,7 +428,7 @@ const startRecording = () => {
     setRecordedVideo(URL.createObjectURL(blob));
   };
 
-  recorder.start();
+recorder.start(100);
   setIsRecording(true);
 
   const draw = () => {
