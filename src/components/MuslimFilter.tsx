@@ -590,7 +590,11 @@ if (!quranMode) {
         {phase === "ready" && faces.length === 0 && (
           <div className="absolute inset-x-0 top-1/2 text-center text-sm text-white/70">{t.noFace}</div>
         )}
-
+{isRecording && (
+  <div className="absolute left-1/2 top-20 z-20 -translate-x-1/2 rounded-full bg-red-600/90 px-4 py-2 text-xs font-bold text-white shadow-lg">
+    🔴 REC
+  </div>
+)}
         {/* controls */}
         
         <div className="absolute inset-x-0 bottom-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -699,6 +703,38 @@ for (const v of verses) {
             </div>
           </div>
         )}
+        {recordedVideo && (
+  <div className="absolute inset-0 z-10 grid place-items-center bg-black/85 p-4">
+    <div className="w-full max-w-sm space-y-3">
+      <video
+        src={recordedVideo}
+        controls
+        playsInline
+        className="w-full rounded-2xl border border-white/20"
+      />
+
+      <div className="flex justify-center gap-2">
+        <a
+          href={recordedVideo}
+          download="muslim-filter.webm"
+          className="rounded-full bg-primary px-5 py-2 text-sm font-semibold text-primary-foreground"
+        >
+          Save Video
+        </a>
+
+        <button
+          onClick={() => {
+            URL.revokeObjectURL(recordedVideo);
+            setRecordedVideo(null);
+          }}
+          className="rounded-full border border-white/25 px-5 py-2 text-sm text-white"
+        >
+          {t.close}
+        </button>
+      </div>
+    </div>
+  </div>
+)}
       </div>
     </div>
   );
