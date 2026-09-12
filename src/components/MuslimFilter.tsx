@@ -446,7 +446,8 @@ const stopRecording = () => {
     recorderRef.current &&
     recorderRef.current.state !== "inactive"
   ) {
-    recorderRef.current.stop();
+    recorderRef.current.requestData();
+setTimeout(() => recorderRef.current?.stop(), 100);
   }
 
   setIsRecording(false);
