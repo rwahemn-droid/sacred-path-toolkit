@@ -221,7 +221,15 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   const tracksRef = useRef<Tracked[]>([]);
   const rafRef = useRef<number>(0);
   const idRef = useRef(1);
+const recorderRef = useRef<MediaRecorder | null>(null);
+const recordCanvasRef = useRef<HTMLCanvasElement | null>(null);
+const recordRafRef = useRef<number>(0);
+const recordChunksRef = useRef<Blob[]>([]);
+const holdTimerRef = useRef<number | null>(null);
+const didHoldRef = useRef(false);
 
+const [isRecording, setIsRecording] = useState(false);
+const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
   const [facing, setFacing] = useState<"user" | "environment">("user");
   const [phase, setPhase] = useState<"cam" | "face" | "ready" | "error">("cam");
   const [errMsg, setErrMsg] = useState("");
@@ -351,13 +359,13 @@ useEffect(() => {
 
   const changeAll = () => tracksRef.current.forEach((f) => assignVerse(f.id));
 
-  const capture = () => {
+  const capture = (targetCanvas?: HTMLCanvasElement) => {
     const v = videoRef.current;
     const wrap = wrapRef.current;
     if (!v || !wrap) return;
     const W = v.videoWidth || 720;
     const H = v.videoHeight || 1280;
-    const c = document.createElement("canvas");
+    const c = targetCanvas ?? document.createElement("canvas");
     c.width = W;
     c.height = H;
     const ctx = c.getContext("2d")!;
@@ -392,9 +400,57 @@ useEffect(() => {
       ctx.fillStyle = "rgba(255,255,255,0.8)";
       ctx.fillText(`${f.verse.surah} • ${f.verse.ayah}`, left + cardW / 2, top + size * 2.6, cardW - 30);
     }
-    setShot(c.toDataURL("image/png"));
+    if (!targetCanvas) setShot(c.toDataURL("image/png"));
+  };
+const startRecording = () => {
+  const c = document.createElement("canvas");
+  recordCanvasRef.current = c;
+
+  capture(c);
+
+  const stream = c.captureStream(30);
+  const recorder = new MediaRecorder(stream);
+
+  recorderRef.current = recorder;
+  recordChunksRef.current = [];
+
+  recorder.ondataavailable = (e) => {
+    if (e.data.size > 0) {
+      recordChunksRef.current.push(e.data);
+    }
   };
 
+  recorder.onstop = () => {
+    const blob = new Blob(recordChunksRef.current, {
+      type: recorder.mimeType || "video/webm",
+    });
+
+    setRecordedVideo(URL.createObjectURL(blob));
+  };
+
+  recorder.start();
+  setIsRecording(true);
+
+  const draw = () => {
+    capture(c);
+    recordRafRef.current = requestAnimationFrame(draw);
+  };
+
+  draw();
+};
+
+const stopRecording = () => {
+  cancelAnimationFrame(recordRafRef.current);
+
+  if (
+    recorderRef.current &&
+    recorderRef.current.state !== "inactive"
+  ) {
+    recorderRef.current.stop();
+  }
+
+  setIsRecording(false);
+};
   const loading = phase === "cam" || phase === "face";
 if (!quranMode) {
   return (
@@ -587,7 +643,36 @@ for (const v of verses) {
   }}
 />
             <Ctl icon={RotateCcw} label={t.flip} onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))} />
-            <Ctl icon={Camera} label={t.capture} onClick={capture} primary />
+            <Ctl
+  icon={Camera}
+  label={t.capture}
+  primary
+  onClick={() => {
+    if (didHoldRef.current) {
+      didHoldRef.current = false;
+      return;
+    }
+    capture();
+  }}
+  onPointerDown={() => {
+    didHoldRef.current = false;
+
+    holdTimerRef.current = window.setTimeout(() => {
+      didHoldRef.current = true;
+      startRecording();
+    }, 350);
+  }}
+  onPointerUp={() => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+
+    if (didHoldRef.current) {
+      stopRecording();
+    }
+  }}
+/>
           </div>
         </div>
 
@@ -623,16 +708,21 @@ function Ctl({
   icon: Icon,
   label,
   onClick,
+  onPointerDown,
+  onPointerUp,
   primary,
 }: {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   onClick: () => void;
+  onPointerDown?: () => void;
+  onPointerUp?: () => void;
   primary?: boolean;
-}) {
-  return (
+}) {  return (
     <button
       onClick={onClick}
+      onPointerDown={onPointerDown}
+onPointerUp={onPointerUp}
       className={`flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-medium backdrop-blur-md transition active:scale-95 ${
         primary
           ? "border-transparent bg-primary text-primary-foreground"
