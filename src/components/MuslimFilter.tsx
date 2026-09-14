@@ -711,59 +711,62 @@ className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-
 >
   <Shuffle className="h-6 w-6" />
 </button>
-            
-<button
+            <button
   type="button"
   aria-label={t.capture}
-onClick={() => {
-  if (didHoldRef.current) {
-    didHoldRef.current = false;
-    return;
-  }
+  onClick={() => {
+    if (didHoldRef.current) {
+      didHoldRef.current = false;
+      return;
+    }
 
-  if (recordingLocked) {
-    stopRecording();
-    setRecordingLocked(false);
-    return;
-  }
+    if (recordingLocked) {
+      stopRecording();
+      setRecordingLocked(false);
+      return;
+    }
 
-  capture();
+    capture();
   }}
-onPointerDown={(e) => {
-  e.currentTarget.setPointerCapture(e.pointerId);
+  onPointerDown={(e) => {
+    e.currentTarget.setPointerCapture(e.pointerId);
 
-  if (recordingLocked) return;
+    if (recordingLocked) return;
 
-  recordStartYRef.current = e.clientY;
-  setRecordingLocked(false);
-  didHoldRef.current = false;
+    recordStartYRef.current = e.clientY;
+    setRecordingLocked(false);
+    didHoldRef.current = false;
 
-  holdTimerRef.current = window.setTimeout(() => {
-    didHoldRef.current = true;
-    startRecording();
-  }, 350);
-}}
-
-onPointerMove={(e) => {
-  if (
-    isRecording &&
-    recordStartYRef.current !== null &&
-    recordStartYRef.current - e.clientY > 70
-  ) {
-    setRecordingLocked(true);
-  }
-}}  onPointerUp={() => {
+    holdTimerRef.current = window.setTimeout(() => {
+      didHoldRef.current = true;
+      startRecording();
+    }, 350);
+  }}
+  onPointerMove={(e) => {
+    if (
+      isRecording &&
+      recordStartYRef.current !== null &&
+      recordStartYRef.current - e.clientY > 70
+    ) {
+      setRecordingLocked(true);
+    }
+  }}
+  onPointerUp={(e) => {
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
     }
 
-    if (didHoldRef.current && !recordingLocked) {
+    const lockedNow =
+      recordingLocked ||
+      (recordStartYRef.current !== null &&
+        recordStartYRef.current - e.clientY > 70);
+
+    if (didHoldRef.current && !lockedNow) {
       stopRecording();
     }
   }}
-  
-className="relative mx-auto grid h-20 w-20 touch-none place-items-center rounded-full border-4 border-[#D4AF37] bg-[#0B1F33]/85 p-1 shadow-lg backdrop-blur-sm transition active:scale-95"
+  className="relative mx-auto grid h-20 w-20 touch-none place-items-center rounded-full border-4 border-[#D4AF37] bg-[#0B1F33]/85 p-1 shadow-lg backdrop-blur-sm transition active:scale-95"
 >
   {isRecording && (
     <div
@@ -784,8 +787,14 @@ className="relative mx-auto grid h-20 w-20 touch-none place-items-center rounded
         : "h-full w-full rounded-full bg-[#D4AF37]"
     }`}
   />
+</button>
+
+<button
+  type="button"
   aria-label={t.flip}
-  onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
+  onClick={() =>
+    setFacing((f) => (f === "user" ? "environment" : "user"))
+  }
   className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 text-[#F6E7A1] shadow-lg backdrop-blur-md transition active:scale-90"
 >
   <RotateCcw className="h-6 w-6" />
