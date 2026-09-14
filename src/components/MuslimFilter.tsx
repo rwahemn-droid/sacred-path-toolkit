@@ -714,6 +714,20 @@ className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-
             <button
   type="button"
   aria-label={t.capture}
+onClick={() => {
+  if (didHoldRef.current) {
+    didHoldRef.current = false;
+    return;
+  }
+
+  if (recordingLocked) {
+    stopRecording();
+    setRecordingLocked(false);
+    return;
+  }
+
+  capture();
+}}              
 onPointerDown={(e) => {
     e.currentTarget.setPointerCapture(e.pointerId);
 
@@ -755,7 +769,6 @@ onPointerUp={(e) => {
     return;
   }
 
-  capture();
 }}
   className="relative mx-auto grid h-20 w-20 touch-none place-items-center rounded-full border-4 border-[#D4AF37] bg-[#0B1F33]/85 p-1 shadow-lg backdrop-blur-sm transition active:scale-95"
 >
