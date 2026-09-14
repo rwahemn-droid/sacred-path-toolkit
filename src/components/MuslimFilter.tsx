@@ -714,6 +714,7 @@ className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-
             <button
   type="button"
   aria-label={t.capture}
+onPointerDown={(e) => {
     e.currentTarget.setPointerCapture(e.pointerId);
 
     if (recordingLocked) return;
@@ -736,21 +737,26 @@ className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-
       setRecordingLocked(true);
     }
   }}
-  onPointerUp={(e) => {
-    if (holdTimerRef.current) {
-      clearTimeout(holdTimerRef.current);
-      holdTimerRef.current = null;
-    }
+onPointerUp={(e) => {
+  if (holdTimerRef.current) {
+    clearTimeout(holdTimerRef.current);
+    holdTimerRef.current = null;
+  }
 
-    const lockedNow =
-      recordingLocked ||
-      (recordStartYRef.current !== null &&
-        recordStartYRef.current - e.clientY > 70);
 
-    if (didHoldRef.current && !lockedNow) {
+  const lockedNow =
+    recordStartYRef.current !== null &&
+    recordStartYRef.current - e.clientY > 70;
+
+  if (didHoldRef.current) {
+    if (!lockedNow) {
       stopRecording();
     }
-  }}
+    return;
+  }
+
+  capture();
+}}
   className="relative mx-auto grid h-20 w-20 touch-none place-items-center rounded-full border-4 border-[#D4AF37] bg-[#0B1F33]/85 p-1 shadow-lg backdrop-blur-sm transition active:scale-95"
 >
   {isRecording && (
