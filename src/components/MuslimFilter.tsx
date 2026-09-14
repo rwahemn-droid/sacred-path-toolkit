@@ -716,32 +716,34 @@ className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-
   type="button"
   aria-label={t.capture}
 onClick={() => {
-  if (recordingLocked) {
-    stopRecording();
-    setRecordingLocked(false);
-    didHoldRef.current = false;
-    return;
-  }
-
   if (didHoldRef.current) {
     didHoldRef.current = false;
     return;
   }
 
+  if (recordingLocked) {
+    stopRecording();
+    setRecordingLocked(false);
+    return;
+  }
+
   capture();
-}}
-  onPointerDown={(e) => {
+onPointerDown={(e) => {
+  e.currentTarget.setPointerCapture(e.pointerId);
+
   if (recordingLocked) return;
+
   recordStartYRef.current = e.clientY;
   setRecordingLocked(false);
-    didHoldRef.current = false;
+  didHoldRef.current = false;
 
-    holdTimerRef.current = window.setTimeout(() => {
-      didHoldRef.current = true;
-      startRecording();
-    }, 350);
-  }}
-  onPointerMove={(e) => {
+  holdTimerRef.current = window.setTimeout(() => {
+    didHoldRef.current = true;
+    startRecording();
+  }, 350);
+}}
+
+onPointerMove={(e) => {
   if (
     isRecording &&
     recordStartYRef.current !== null &&
@@ -749,8 +751,7 @@ onClick={() => {
   ) {
     setRecordingLocked(true);
   }
-}}
-  onPointerUp={() => {
+}}  onPointerUp={() => {
     if (holdTimerRef.current) {
       clearTimeout(holdTimerRef.current);
       holdTimerRef.current = null;
@@ -760,7 +761,7 @@ onClick={() => {
       stopRecording();
     }
   }}
-  <span
+  
 className="relative mx-auto grid h-20 w-20 touch-none place-items-center rounded-full border-4 border-[#D4AF37] bg-[#0B1F33]/85 p-1 shadow-lg backdrop-blur-sm transition active:scale-95"
 >
   {isRecording && (
