@@ -387,18 +387,18 @@ useEffect(() => {
       const boxH = size * 3.2;
       const top = Math.max(8, f.y * H - boxH - 14);
       const left = Math.max(8, Math.min(W - cardW - 8, cx - cardW / 2));
-      ctx.fillStyle = "rgba(10,25,41,0.62)";
-      ctx.strokeStyle = "rgba(255,255,255,0.25)";
+ctx.fillStyle = "rgba(11,31,51,0.88)";
+      ctx.strokeStyle = "rgba(212,175,55,0.55)";
       ctx.lineWidth = 2;
       const r = 22;
       ctx.beginPath();
       ctx.roundRect(left, top, cardW, boxH, r);
       ctx.fill();
       ctx.stroke();
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = "#FFF8E1";
       ctx.fillText(text, left + cardW / 2, top + size * 1.5, cardW - 30);
       ctx.font = `500 ${Math.round(size * 0.62)}px system-ui, sans-serif`;
-      ctx.fillStyle = "rgba(255,255,255,0.8)";
+      ctx.fillStyle = "rgba(246,231,161,0.95)";
       ctx.fillText(`${f.verse.surah} • ${f.verse.ayah}`, left + cardW / 2, top + size * 2.6, cardW - 30);
     }
     if (!targetCanvas) setShot(c.toDataURL("image/png"));
