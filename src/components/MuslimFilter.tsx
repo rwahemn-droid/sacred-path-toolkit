@@ -231,6 +231,8 @@ const didHoldRef = useRef(false);
 
 const [isRecording, setIsRecording] = useState(false);
 const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
+  const [privacyOpen, setPrivacyOpen] = useState(false);
+  const [privacyMode, setPrivacyMode] = useState<"off" | "face" | "eyes" | "full">("off");
   const [facing, setFacing] = useState<"user" | "environment">("user");
   const [phase, setPhase] = useState<"cam" | "face" | "ready" | "error">("cam");
   const [errMsg, setErrMsg] = useState("");
@@ -623,9 +625,67 @@ className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-[#D4A
   <Shield className="h-4 w-4" />
   Privacy
 </button>
+          {privacyOpen && (
+  <div className="mx-auto mb-3 w-full max-w-xs rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33]/90 p-3 text-[#F6E7A1] shadow-xl backdrop-blur-xl">
+    <div className="mb-3 text-center text-sm font-semibold">
+      Privacy Settings
+    </div>
+
+    <div className="grid grid-cols-2 gap-2">
+      <button
+        type="button"
+        onClick={() => setPrivacyMode("full")}
+        className={`rounded-xl border px-3 py-2 text-xs ${
+  privacyMode === "full"
+    ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F33]"
+    : "border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F6E7A1]"
+}`}
+      >
+        Full Person Blur
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setPrivacyMode("face")}
+        className={`rounded-xl border px-3 py-2 text-xs ${
+  privacyMode === "face"
+    ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F33]"
+    : "border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F6E7A1]"
+}`}
+      >
+        Face Blur
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setPrivacyMode("eyes")}
+        className={`rounded-xl border px-3 py-2 text-xs ${
+  privacyMode === "eyes"
+    ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F33]"
+    : "border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F6E7A1]"
+}`}
+      >
+        Eyes Blur
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setPrivacyMode("off")}
+        className={`rounded-xl border px-3 py-2 text-xs ${
+  privacyMode === "off"
+    ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F33]"
+    : "border-[#D4AF37]/30 bg-[#D4AF37]/10 text-[#F6E7A1]"
+}`}
+      >
+        Off
+      </button>
+    </div>
+  </div>
+)}
           <div className="grid grid-cols-3 items-center gap-5">
 <button
   type="button"
+  onClick={() => setPrivacyOpen((v) => !v)}
   aria-label={t.changeVerse}
   onClick={async () => {
     const f = tracksRef.current[0];
