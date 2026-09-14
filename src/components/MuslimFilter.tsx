@@ -592,11 +592,7 @@ if (!quranMode) {
         {phase === "ready" && faces.length === 0 && (
           <div className="absolute inset-x-0 top-1/2 text-center text-sm text-white/70">{t.noFace}</div>
         )}
-{isRecording && (
-  <div className="absolute left-1/2 top-20 z-20 -translate-x-1/2 rounded-full bg-red-600/90 px-4 py-2 text-xs font-bold text-white shadow-lg">
-    🔴 REC
-  </div>
-)}
+        
         {/* controls */}
         
         <div className="absolute inset-x-0 bottom-0 p-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
@@ -605,9 +601,8 @@ if (!quranMode) {
     onClick={() => setQuranMode("juzAmma")}
     className={`rounded-full px-4 py-2 text-xs font-semibold ${
       quranMode === "juzAmma"
-        ? "bg-sky-500 text-white"
-        : "bg-white/10 text-white/70"
-    }`}
+? "border border-[#D4AF37] bg-[#D4AF37] text-[#0B1F33]"
+: "border border-[#D4AF37]/30 bg-[#0B1F33]/70 text-[#F6E7A1]"    }`}
   >
     جزء عمّ
   </button>
@@ -616,9 +611,8 @@ if (!quranMode) {
     onClick={() => setQuranMode("full")}
     className={`rounded-full px-4 py-2 text-xs font-semibold ${
       quranMode === "full"
-        ? "bg-sky-500 text-white"
-        : "bg-white/10 text-white/70"
-    }`}
+? "border border-[#D4AF37] bg-[#D4AF37] text-[#0B1F33]"
+: "border border-[#D4AF37]/30 bg-[#0B1F33]/70 text-[#F6E7A1]"    }`}
   >
     Full Quran
   </button>
@@ -626,7 +620,7 @@ if (!quranMode) {
           <button
   type="button"
 className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-xs font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-xl">
-00  <Shield className="h-4 w-4" />
+  <Shield className="h-4 w-4" />
   Privacy
 </button>
           <div className="grid grid-cols-3 items-center gap-5">
