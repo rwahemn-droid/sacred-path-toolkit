@@ -548,17 +548,17 @@ if (!quranMode) {
         <div className="absolute inset-x-0 top-0 flex items-center justify-between gap-2 p-4 pt-[max(1rem,env(safe-area-inset-top))]">
           <button
             onClick={onBack}
-            className="grid h-10 w-10 place-items-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 text-[#F6E7A1] shadow-lg backdrop-blur-md"
             aria-label={t.close}
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <div className="rounded-full border border-white/20 bg-black/40 px-4 py-2 text-sm font-semibold text-white backdrop-blur-md">
+          <div className="rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-sm font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-md">
             {t.title}
           </div>
           <button
             onClick={onBack}
-            className="grid h-10 w-10 place-items-center rounded-full border border-white/20 bg-black/40 text-white backdrop-blur-md"
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 text-[#F6E7A1] shadow-lg backdrop-blur-md"
             aria-label={t.close}
           >
             <X className="h-5 w-5" />
