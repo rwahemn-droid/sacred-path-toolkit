@@ -625,9 +625,8 @@ if (!quranMode) {
 </div>
           <button
   type="button"
-  className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-white/15 bg-black/35 px-4 py-2 text-xs font-semibold text-white backdrop-blur-xl"
->
-  <Shield className="h-4 w-4" />
+className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-xs font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-xl">
+00  <Shield className="h-4 w-4" />
   Privacy
 </button>
           <div className="grid grid-cols-3 items-center gap-5">
@@ -653,7 +652,7 @@ for (const v of verses) {
   await new Promise((resolve) => setTimeout(resolve, 8));
 }
   }}
-  className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition active:scale-90"
+className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 text-[#F6E7A1] shadow-lg backdrop-blur-md transition active:scale-90"
 >
   <Shuffle className="h-6 w-6" />
 </button>
@@ -686,21 +685,20 @@ for (const v of verses) {
       stopRecording();
     }
   }}
-  className="mx-auto grid h-20 w-20 touch-none place-items-center rounded-full border-4 border-white bg-white/20 p-1 shadow-lg backdrop-blur-sm transition active:scale-95"
+className="mx-auto grid h-20 w-20 touch-none place-items-center rounded-full border-4 border-[#D4AF37] bg-[#0B1F33]/85 p-1 shadow-xl backdrop-blur-sm transition active:scale-95"
 >
   <span
     className={`block transition-all duration-200 ${
-      isRecording
-        ? "h-11 w-11 rounded-xl bg-red-500"
-        : "h-full w-full rounded-full bg-white"
-    }`}
+isRecording
+  ? "h-11 w-11 rounded-xl bg-red-500"
+  : "h-full w-full rounded-full bg-[#D4AF37]"    }`}
   />
 </button>
           <button
   type="button"
   aria-label={t.flip}
   onClick={() => setFacing((f) => (f === "user" ? "environment" : "user"))}
-  className="mx-auto grid h-12 w-12 place-items-center rounded-full bg-black/35 text-white backdrop-blur-md transition active:scale-90"
+  className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 text-[#F6E7A1] shadow-lg backdrop-blur-md transition active:scale-90"
 >
   <RotateCcw className="h-6 w-6" />
 </button>
