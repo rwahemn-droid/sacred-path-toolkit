@@ -728,6 +728,7 @@ onClick={() => {
   }
 
   capture();
+  }}
 onPointerDown={(e) => {
   e.currentTarget.setPointerCapture(e.pointerId);
 
