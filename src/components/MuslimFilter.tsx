@@ -714,21 +714,6 @@ className="mx-auto grid h-12 w-12 place-items-center rounded-full border border-
             <button
   type="button"
   aria-label={t.capture}
-  onClick={() => {
-    if (didHoldRef.current) {
-      didHoldRef.current = false;
-      return;
-    }
-
-    if (recordingLocked) {
-      stopRecording();
-      setRecordingLocked(false);
-      return;
-    }
-
-    capture();
-  }}
-  onPointerDown={(e) => {
     e.currentTarget.setPointerCapture(e.pointerId);
 
     if (recordingLocked) return;
