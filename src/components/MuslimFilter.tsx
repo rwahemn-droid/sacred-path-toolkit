@@ -388,7 +388,7 @@ useEffect(() => {
       const top = Math.max(8, f.y * H - boxH - 14);
       const left = Math.max(8, Math.min(W - cardW - 8, cx - cardW / 2));
 ctx.fillStyle = "rgba(11,31,51,0.88)";
-      ctx.strokeStyle = "rgba(212,175,55,0.55)";
+ ctx.strokeStyle = "rgba(212,175,55,0.85)";
       ctx.lineWidth = 2;
       const r = 22;
       ctx.beginPath();
