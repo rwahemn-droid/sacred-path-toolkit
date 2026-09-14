@@ -454,6 +454,7 @@ setTimeout(() => recorderRef.current?.stop(), 100);
   }
 
   setIsRecording(false);
+  setRecordingLocked(false);
 };
   const loading = phase === "cam" || phase === "face";
 if (!quranMode) {
