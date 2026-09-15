@@ -218,7 +218,6 @@ async function createPersonSegmenter() {
     baseOptions: {
 modelAssetPath:
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-        delegate: "GPU",
     },
     runningMode: "VIDEO",
     outputCategoryMask: true,
@@ -459,7 +458,36 @@ ctx.globalCompositeOperation = "source-over";
   }, []);
 
   const changeAll = () => tracksRef.current.forEach((f) => assignVerse(f.id));
+const getDisplayBox = (f: Tracked) => {
+  const v = videoRef.current;
+  const wrap = wrapRef.current;
 
+  if (!v || !wrap || !v.videoWidth || !v.videoHeight) return null;
+
+  const cw = wrap.clientWidth;
+  const ch = wrap.clientHeight;
+  const vw = v.videoWidth;
+  const vh = v.videoHeight;
+
+  const scale = Math.max(cw / vw, ch / vh);
+
+  const displayW = vw * scale;
+  const displayH = vh * scale;
+
+  const offsetX = (cw - displayW) / 2;
+  const offsetY = (ch - displayH) / 2;
+
+  let left = f.x * vw * scale + offsetX;
+  const top = f.y * vh * scale + offsetY;
+  const width = f.w * vw * scale;
+  const height = f.h * vh * scale;
+
+  if (facing === "user") {
+    left = cw - left - width;
+  }
+
+  return { left, top, width, height };
+};
   const capture = (targetCanvas?: HTMLCanvasElement) => {
     const v = videoRef.current;
     const wrap = wrapRef.current;
@@ -700,46 +728,44 @@ if (!quranMode) {
         
 {privacyMode === "face" &&
   faces.map((f) => {
-    const left =
-      (facing === "user" ? 1 - (f.x + f.w) : f.x) * 100;
+    const box = getDisplayBox(f);
+    if (!box) return null;
 
     return (
       <div
         key={`blur-${f.id}`}
         className="pointer-events-none absolute rounded-full"
         style={{
-          left: `${left}%`,
-          top: `${f.y * 100}%`,
-          width: `${f.w * 100}%`,
-          height: `${f.h * 100}%`,
+          left: `${box.left}px`,
+          top: `${box.top}px`,
+          width: `${box.width}px`,
+          height: `${box.height}px`,
           backdropFilter: "blur(18px)",
           WebkitBackdropFilter: "blur(18px)",
         }}
       />
     );
   })}
-
-        {privacyMode === "eyes" &&
+{privacyMode === "eyes" &&
   faces.map((f) => {
-    const left =
-      (facing === "user" ? 1 - (f.x + f.w) : f.x) * 100;
+    const box = getDisplayBox(f);
+    if (!box) return null;
 
     return (
       <div
         key={`eyes-blur-${f.id}`}
         className="pointer-events-none absolute rounded-full"
         style={{
-          left: `${left + f.w * 10}%`,
-    top: `${(f.y + f.h * 0.12) * 100}%`,
-    width: `${f.w * 80}%`,
-    height: `${f.h * 20}%`,
+          left: `${box.left + box.width * 0.1}px`,
+          top: `${box.top + box.height * 0.12}px`,
+          width: `${box.width * 0.8}px`,
+          height: `${box.height * 0.2}px`,
           backdropFilter: "blur(18px)",
           WebkitBackdropFilter: "blur(18px)",
         }}
       />
     );
-  })}
-        {/* verse cards */}
+  })}        {/* verse cards */}
         {phase === "ready" &&
           faces.map((f) => {
             if (!f.verse) return null;
