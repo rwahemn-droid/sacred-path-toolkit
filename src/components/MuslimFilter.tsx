@@ -449,7 +449,7 @@ ctx.globalCompositeOperation = "source-over";
       streamRef.current = null;
       tracksRef.current = [];
     };
-  }, [facing, attempt, assignVerse]);
+  }, [facing, attempt, assignVerse, privacyMode]);
 
   /* release detector on unmount */
   useEffect(() => () => {
