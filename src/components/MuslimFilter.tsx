@@ -568,6 +568,27 @@ if (!quranMode) {
       />
     );
   })}
+
+        {privacyMode === "eyes" &&
+  faces.map((f) => {
+    const left =
+      (facing === "user" ? 1 - (f.x + f.w) : f.x) * 100;
+
+    return (
+      <div
+        key={`eyes-blur-${f.id}`}
+        className="pointer-events-none absolute rounded-full"
+        style={{
+          left: `${left + f.w * 10}%`,
+          top: `${(f.y + f.h * 0.28) * 100}%`,
+          width: `${f.w * 80}%`,
+          height: `${f.h * 22}%`,
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+        }}
+      />
+    );
+  })}
         {/* verse cards */}
         {phase === "ready" &&
           faces.map((f) => {
