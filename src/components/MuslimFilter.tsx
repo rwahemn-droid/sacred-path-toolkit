@@ -156,7 +156,7 @@ async function createDetector(): Promise<Detector> {
   const AnyWin = window as unknown as { FaceDetector?: new (o: unknown) => { detect: (s: unknown) => Promise<{ boundingBox: DOMRectReadOnly }[]> } };
   if (AnyWin.FaceDetector) {
     const native = new AnyWin.FaceDetector({ maxDetectedFaces: 5, fastMode: true });
-    let boxes: Box[] = [];
+    
     let busy = false;
     return {
       detect: (v) => {
@@ -207,7 +207,24 @@ async function createDetector(): Promise<Detector> {
     close: () => det.close(),
   };
 }
+async function createPersonSegmenter() {
+  const vision = await import("@mediapipe/tasks-vision");
 
+  const fileset = await vision.FilesetResolver.forVisionTasks(
+    "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+  );
+
+  return vision.ImageSegmenter.createFromOptions(fileset, {
+    baseOptions: {
+modelAssetPath:
+  "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
+      delegate: "GPU",
+    },
+    runningMode: "VIDEO",
+    outputCategoryMask: true,
+    outputConfidenceMasks: false,
+  });
+}
 /* ---------------- Tracked faces ---------------- */
 
 type Tracked = Box & { id: number; verse: Verse | null; miss: number; alive: number };
@@ -219,6 +236,15 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const detectorRef = useRef<Detector | null>(null);
+  const segmenterRef = useRef<import("@mediapipe/tasks-vision").ImageSegmenter | null>(null);
+  const personMaskRef = useRef<{
+  data: Uint8Array;
+  width: number;
+  height: number;
+} | null>(null);
+  
+  const lastSegmentTimeRef = useRef(0);
+  const fullBlurCanvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const tracksRef = useRef<Tracked[]>([]);
   const rafRef = useRef<number>(0);
@@ -279,6 +305,10 @@ useEffect(() => {
         await v.play().catch(() => {});
         setPhase("face");
         if (!detectorRef.current) detectorRef.current = await createDetector();
+        
+        if (!segmenterRef.current) {
+  segmenterRef.current = await createPersonSegmenter();
+}
         if (cancelled) return;
         setPhase("ready");
         loop();
@@ -296,6 +326,71 @@ useEffect(() => {
         rafRef.current = requestAnimationFrame(loop);
         return;
       }
+      const now = performance.now();
+
+if (
+  privacyMode === "full" &&
+  segmenterRef.current &&
+  now - lastSegmentTimeRef.current > 120
+) {
+  lastSegmentTimeRef.current = now;
+
+  segmenterRef.current.segmentForVideo(v, now, (result) => {
+    const mask = result.categoryMask;
+    if (!mask) return;
+
+    personMaskRef.current = {
+      data: new Uint8Array(mask.getAsUint8Array()),
+      width: mask.width,
+      height: mask.height,
+    };
+    const out = fullBlurCanvasRef.current;
+if (!out) return;
+
+out.width = v.videoWidth;
+out.height = v.videoHeight;
+
+const ctx = out.getContext("2d");
+if (!ctx) return;
+
+const maskData = personMaskRef.current;
+if (!maskData) return;
+
+const maskCanvas = document.createElement("canvas");
+maskCanvas.width = maskData.width;
+maskCanvas.height = maskData.height;
+
+const maskCtx = maskCanvas.getContext("2d");
+if (!maskCtx) return;
+
+const imageData = maskCtx.createImageData(
+  maskData.width,
+  maskData.height
+);
+
+for (let i = 0; i < maskData.data.length; i++) {
+  const person = maskData.data[i] !== 0;
+
+  imageData.data[i * 4] = 255;
+  imageData.data[i * 4 + 1] = 255;
+  imageData.data[i * 4 + 2] = 255;
+  imageData.data[i * 4 + 3] = person ? 255 : 0;
+}
+
+maskCtx.putImageData(imageData, 0, 0);
+
+ctx.clearRect(0, 0, out.width, out.height);
+
+ctx.save();
+ctx.filter = "blur(22px)";
+ctx.drawImage(v, 0, 0, out.width, out.height);
+ctx.restore();
+
+ctx.globalCompositeOperation = "destination-in";
+ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
+ctx.globalCompositeOperation = "source-over";
+  });
+}
       let boxes: Box[] = [];
       try {
         boxes = det.detect(v, performance.now());
@@ -577,6 +672,16 @@ if (!quranMode) {
           className="h-full w-full object-cover"
           style={{ transform: facing === "user" ? "scaleX(-1)" : undefined }}
         />
+{privacyMode === "full" && (
+  <canvas
+    ref={fullBlurCanvasRef}
+    className="pointer-events-none absolute inset-0 h-full w-full"
+    style={{
+      transform: facing === "user" ? "scaleX(-1)" : undefined,
+    }}
+  />
+)}
+        
 {privacyMode === "face" &&
   faces.map((f) => {
     const left =
