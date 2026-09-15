@@ -378,7 +378,40 @@ useEffect(() => {
     if (facing === "user") { ctx.translate(W, 0); ctx.scale(-1, 1); }
     ctx.drawImage(v, 0, 0, W, H);
     ctx.restore();
+if (privacyMode === "face") {
+  for (const f of tracksRef.current) {
+    if (f.alive < 0.3) continue;
 
+    const bx =
+      (facing === "user" ? 1 - (f.x + f.w) : f.x) * W;
+    const by = f.y * H;
+    const bw = f.w * W;
+    const bh = f.h * H;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(
+      bx + bw / 2,
+      by + bh / 2,
+      bw / 2,
+      bh / 2,
+      0,
+      0,
+      Math.PI * 2
+    );
+    ctx.clip();
+
+    ctx.filter = "blur(24px)";
+
+    if (facing === "user") {
+      ctx.translate(W, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(v, 0, 0, W, H);
+    ctx.restore();
+  }
+}
     ctx.direction = "rtl";
     ctx.textAlign = "center";
     for (const f of tracksRef.current) {
