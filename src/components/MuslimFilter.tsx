@@ -776,7 +776,7 @@ onPointerUp={(e) => {
 >
   {isRecording && (
     <div
-      className={`absolute -top-14 left-1/2 grid h-10 w-10 -translate-x-1/2 place-items-center rounded-full border border-[#D4AF37]/60 backdrop-blur-md ${
+      className={`absolute -top-3 -right-3 grid h-10 w-10  place-items-center rounded-full border border-[#D4AF37]/60 backdrop-blur-md ${
         recordingLocked
           ? "bg-[#D4AF37] text-[#0B1F33]"
           : "bg-[#0B1F33]/90 text-[#F6E7A1]"
