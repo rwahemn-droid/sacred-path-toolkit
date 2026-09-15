@@ -244,6 +244,7 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   
   const lastSegmentTimeRef = useRef(0);
   const fullBlurCanvasRef = useRef<HTMLCanvasElement>(null);
+  const personMaskCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const tracksRef = useRef<Tracked[]>([]);
   const rafRef = useRef<number>(0);
@@ -356,13 +357,24 @@ if (!ctx) return;
 const maskData = personMaskRef.current;
 if (!maskData) return;
 
-const maskCanvas = document.createElement("canvas");
-maskCanvas.width = maskData.width;
-maskCanvas.height = maskData.height;
+let maskCanvas = personMaskCanvasRef.current;
+
+if (!maskCanvas) {
+  maskCanvas = document.createElement("canvas");
+  personMaskCanvasRef.current = maskCanvas;
+}
+
+if (
+  maskCanvas.width !== maskData.width ||
+  maskCanvas.height !== maskData.height
+) {
+  maskCanvas.width = maskData.width;
+  maskCanvas.height = maskData.height;
+}
 
 const maskCtx = maskCanvas.getContext("2d");
 if (!maskCtx) return;
-
+    
 const imageData = maskCtx.createImageData(
   maskData.width,
   maskData.height
@@ -379,17 +391,36 @@ for (let i = 0; i < maskData.data.length; i++) {
 
 maskCtx.putImageData(imageData, 0, 0);
 
-ctx.clearRect(0, 0, out.width, out.height);
-
-ctx.save();
-ctx.filter = "blur(22px)";
-ctx.drawImage(v, 0, 0, out.width, out.height);
-ctx.restore();
-
-ctx.globalCompositeOperation = "destination-in";
-ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
-ctx.globalCompositeOperation = "source-over";
   });
+}
+      if (privacyModeRef.current === "full") {
+  const out = fullBlurCanvasRef.current;
+  const maskCanvas = personMaskCanvasRef.current;
+
+  if (out && maskCanvas && maskCanvas.width && maskCanvas.height) {
+    if (
+      out.width !== v.videoWidth ||
+      out.height !== v.videoHeight
+    ) {
+      out.width = v.videoWidth;
+      out.height = v.videoHeight;
+    }
+
+    const ctx = out.getContext("2d");
+
+    if (ctx) {
+      ctx.clearRect(0, 0, out.width, out.height);
+
+      ctx.save();
+      ctx.filter = "blur(22px)";
+      ctx.drawImage(v, 0, 0, out.width, out.height);
+      ctx.restore();
+
+      ctx.globalCompositeOperation = "destination-in";
+      ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
+      ctx.globalCompositeOperation = "source-over";
+    }
+  }
 }
       let boxes: Box[] = [];
       try {
