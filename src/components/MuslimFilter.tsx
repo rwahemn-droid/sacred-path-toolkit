@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ArrowLeft,
   Camera,
+  Lock,
   RefreshCw,
   RotateCcw,
   Shuffle,
@@ -228,7 +229,8 @@ const recordRafRef = useRef<number>(0);
 const recordChunksRef = useRef<Blob[]>([]);
 const holdTimerRef = useRef<number | null>(null);
 const didHoldRef = useRef(false);
-
+  const recordStartYRef = useRef<number | null>(null);
+const [recordingLocked, setRecordingLocked] = useState(false);
 const [isRecording, setIsRecording] = useState(false);
 const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
@@ -686,7 +688,7 @@ className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-[#D4A
           <div className="grid grid-cols-3 items-center gap-5">
 <button
   type="button"
-  onClick={() => setPrivacyOpen((v) => !v)}
+  
   aria-label={t.changeVerse}
   onClick={async () => {
     const f = tracksRef.current[0];
