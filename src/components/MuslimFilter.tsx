@@ -331,7 +331,7 @@ useEffect(() => {
 if (
   privacyModeRef.current === "full" &&
   segmenterRef.current &&
-  now - lastSegmentTimeRef.current > 120
+  now - lastSegmentTimeRef.current > 500
 ) {
   lastSegmentTimeRef.current = now;
 
@@ -473,6 +473,21 @@ ctx.globalCompositeOperation = "source-over";
     if (facing === "user") { ctx.translate(W, 0); ctx.scale(-1, 1); }
     ctx.drawImage(v, 0, 0, W, H);
     ctx.restore();
+   if (privacyMode === "full") {
+  const blurCanvas = fullBlurCanvasRef.current;
+
+  if (blurCanvas) {
+    ctx.save();
+
+    if (facing === "user") {
+      ctx.translate(W, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(blurCanvas, 0, 0, W, H);
+    ctx.restore();
+  }
+} 
 if (privacyMode === "face") {
   for (const f of tracksRef.current) {
     if (f.alive < 0.3) continue;
