@@ -156,7 +156,7 @@ async function createDetector(): Promise<Detector> {
   const AnyWin = window as unknown as { FaceDetector?: new (o: unknown) => { detect: (s: unknown) => Promise<{ boundingBox: DOMRectReadOnly }[]> } };
   if (AnyWin.FaceDetector) {
     const native = new AnyWin.FaceDetector({ maxDetectedFaces: 5, fastMode: true });
-    
+    let boxes: Box[] = [];
     let busy = false;
     return {
       detect: (v) => {
@@ -218,7 +218,6 @@ async function createPersonSegmenter() {
     baseOptions: {
 modelAssetPath:
   "https://storage.googleapis.com/mediapipe-models/image_segmenter/selfie_segmenter/float16/latest/selfie_segmenter.tflite",
-      delegate: "GPU",
     },
     runningMode: "VIDEO",
     outputCategoryMask: true,
@@ -261,6 +260,10 @@ const [isRecording, setIsRecording] = useState(false);
 const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [privacyMode, setPrivacyMode] = useState<"off" | "face" | "eyes" | "full">("off");
+  useEffect(() => {
+  privacyModeRef.current = privacyMode;
+}, [privacyMode]);
+  const privacyModeRef = useRef<"off" | "face" | "eyes" | "full">("off");
   const [facing, setFacing] = useState<"user" | "environment">("user");
   const [phase, setPhase] = useState<"cam" | "face" | "ready" | "error">("cam");
   const [errMsg, setErrMsg] = useState("");
@@ -306,9 +309,6 @@ useEffect(() => {
         setPhase("face");
         if (!detectorRef.current) detectorRef.current = await createDetector();
         
-        if (!segmenterRef.current) {
-  segmenterRef.current = await createPersonSegmenter();
-}
         if (cancelled) return;
         setPhase("ready");
         loop();
@@ -329,7 +329,7 @@ useEffect(() => {
       const now = performance.now();
 
 if (
-  privacyMode === "full" &&
+  privacyModeRef.current === "full" &&
   segmenterRef.current &&
   now - lastSegmentTimeRef.current > 120
 ) {
@@ -449,7 +449,7 @@ ctx.globalCompositeOperation = "source-over";
       streamRef.current = null;
       tracksRef.current = [];
     };
-  }, [facing, attempt, assignVerse, privacyMode]);
+    }, [facing, attempt, assignVerse]);
 
   /* release detector on unmount */
   useEffect(() => () => {
@@ -846,7 +846,20 @@ if (!quranMode) {
     <div className="grid grid-cols-2 gap-2">
       <button
         type="button"
-        onClick={() => setPrivacyMode("full")}
+        onClick={async () => {
+  setPrivacyMode("full");
+  privacyModeRef.current = "full";
+
+  if (!segmenterRef.current) {
+    try {
+      segmenterRef.current = await createPersonSegmenter();
+    } catch (e) {
+      console.error("Person segmenter failed:", e);
+      setPrivacyMode("off");
+      privacyModeRef.current = "off";
+    }
+  }
+}}
         className={`rounded-xl border px-3 py-2 text-xs ${
   privacyMode === "full"
     ? "border-[#D4AF37] bg-[#D4AF37] text-[#0B1F33]"
