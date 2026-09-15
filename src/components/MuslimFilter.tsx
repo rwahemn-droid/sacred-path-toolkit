@@ -515,7 +515,26 @@ if (!quranMode) {
           className="h-full w-full object-cover"
           style={{ transform: facing === "user" ? "scaleX(-1)" : undefined }}
         />
+{privacyMode === "face" &&
+  faces.map((f) => {
+    const left =
+      (facing === "user" ? 1 - (f.x + f.w) : f.x) * 100;
 
+    return (
+      <div
+        key={`blur-${f.id}`}
+        className="pointer-events-none absolute rounded-full"
+        style={{
+          left: `${left}%`,
+          top: `${f.y * 100}%`,
+          width: `${f.w * 100}%`,
+          height: `${f.h * 100}%`,
+          backdropFilter: "blur(18px)",
+          WebkitBackdropFilter: "blur(18px)",
+        }}
+      />
+    );
+  })}
         {/* verse cards */}
         {phase === "ready" &&
           faces.map((f) => {
@@ -622,9 +641,11 @@ if (!quranMode) {
     Full Quran
   </button>
 </div>
-          <button
+<button
   type="button"
-className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-xs font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-xl">
+  onClick={() => setPrivacyOpen((v) => !v)}
+  
+  className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-xs font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-xl">
   <Shield className="h-4 w-4" />
   Privacy
 </button>
