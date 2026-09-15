@@ -412,6 +412,35 @@ if (privacyMode === "face") {
     ctx.restore();
   }
 }
+    if (privacyMode === "eyes") {
+  for (const f of tracksRef.current) {
+    if (f.alive < 0.3) continue;
+
+    const bx =
+      (facing === "user" ? 1 - (f.x + f.w) : f.x) * W;
+
+    const ex = bx + f.w * W * 0.1;
+    const ey = (f.y + f.h * 0.12) * H;
+    const ew = f.w * W * 0.8;
+    const eh = f.h * H * 0.2;
+
+    ctx.save();
+
+    ctx.beginPath();
+    ctx.roundRect(ex, ey, ew, eh, eh / 2);
+    ctx.clip();
+
+    ctx.filter = "blur(24px)";
+
+    if (facing === "user") {
+      ctx.translate(W, 0);
+      ctx.scale(-1, 1);
+    }
+
+    ctx.drawImage(v, 0, 0, W, H);
+    ctx.restore();
+  }
+}
     ctx.direction = "rtl";
     ctx.textAlign = "center";
     for (const f of tracksRef.current) {
@@ -580,9 +609,9 @@ if (!quranMode) {
         className="pointer-events-none absolute rounded-full"
         style={{
           left: `${left + f.w * 10}%`,
-          top: `${(f.y + f.h * 0.28) * 100}%`,
-          width: `${f.w * 80}%`,
-          height: `${f.h * 22}%`,
+    top: `${(f.y + f.h * 0.12) * 100}%`,
+    width: `${f.w * 80}%`,
+    height: `${f.h * 20}%`,
           backdropFilter: "blur(18px)",
           WebkitBackdropFilter: "blur(18px)",
         }}
