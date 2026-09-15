@@ -369,7 +369,7 @@ const imageData = maskCtx.createImageData(
 );
 
 for (let i = 0; i < maskData.data.length; i++) {
-  const person = maskData.data[i] !== 0;
+  const person = maskData.data[i] === 0;
 
   imageData.data[i * 4] = 255;
   imageData.data[i * 4 + 1] = 255;
