@@ -446,11 +446,10 @@ maskCtx.putImageData(imageData, 0, 0);
           if (d < bestD) { bestD = d; best = tr; }
         }
         if (best) {
-          used.add(best.id);
-          best.x = lerp(best.x, b.x, 0.35);
-          best.y = lerp(best.y, b.y, 0.35);
-          best.w = lerp(best.w, b.w, 0.35);
-          best.h = lerp(best.h, b.h, 0.35);
+          used.add(best.id);best.x = lerp(best.x, b.x, 0.75);
+best.y = lerp(best.y, b.y, 0.75);
+best.w = lerp(best.w, b.w, 0.75);
+best.h = lerp(best.h, b.h, 0.75);;
           best.miss = 0;
           best.alive = Math.min(1, best.alive + 0.12);
         } else {
