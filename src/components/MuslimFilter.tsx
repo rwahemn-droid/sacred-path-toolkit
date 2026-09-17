@@ -245,6 +245,7 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   const lastSegmentTimeRef = useRef(0);
   const fullBlurCanvasRef = useRef<HTMLCanvasElement>(null);
   const personMaskCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const segmentInputCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const tracksRef = useRef<Tracked[]>([]);
   const rafRef = useRef<number>(0);
@@ -335,8 +336,26 @@ if (
   now - lastSegmentTimeRef.current > 120
 ) {
   lastSegmentTimeRef.current = now;
+let segmentInput = segmentInputCanvasRef.current;
 
-  segmenterRef.current.segmentForVideo(v, now, (result) => {
+if (!segmentInput) {
+  segmentInput = document.createElement("canvas");
+  segmentInputCanvasRef.current = segmentInput;
+}
+
+const segmentW = 256;
+const segmentH = Math.round(
+  (v.videoHeight / v.videoWidth) * segmentW
+);
+
+segmentInput.width = segmentW;
+segmentInput.height = segmentH;
+
+const segmentCtx = segmentInput.getContext("2d");
+if (!segmentCtx) return;
+
+segmentCtx.drawImage(v, 0, 0, segmentW, segmentH);
+segmenterRef.current.segmentForVideo(segmentInput, now, (result) => {
     const mask = result.categoryMask;
     if (!mask) return;
 
