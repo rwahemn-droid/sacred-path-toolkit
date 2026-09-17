@@ -343,7 +343,7 @@ if (!segmentInput) {
   segmentInputCanvasRef.current = segmentInput;
 }
 
-const segmentW = 256;
+const segmentW = 384;
 const segmentH = Math.round(
   (v.videoHeight / v.videoWidth) * segmentW
 );
