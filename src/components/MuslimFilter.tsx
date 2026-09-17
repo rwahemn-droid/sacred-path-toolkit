@@ -332,7 +332,7 @@ useEffect(() => {
 if (
   privacyModeRef.current === "full" &&
   segmenterRef.current &&
-  now - lastSegmentTimeRef.current > 250
+  now - lastSegmentTimeRef.current > 120
 ) {
   lastSegmentTimeRef.current = now;
 
