@@ -435,10 +435,11 @@ maskCtx.putImageData(imageData, 0, 0);
       ctx.drawImage(v, 0, 0, out.width, out.height);
       ctx.restore();
 
-      ctx.globalCompositeOperation = "destination-in";
-      ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
-      ctx.globalCompositeOperation = "source-over";
-    }
+ctx.globalCompositeOperation = "destination-in";
+ctx.filter = "blur(6px)";
+ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
+ctx.filter = "none";
+ctx.globalCompositeOperation = "source-over";    }
   }
 }
       let boxes: Box[] = [];
