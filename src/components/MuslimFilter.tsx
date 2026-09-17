@@ -1019,7 +1019,6 @@ if (!quranMode) {
     Full Quran
   </button>
 </div>
-<button
 {userGender === "male" && (
   <>
     <button
