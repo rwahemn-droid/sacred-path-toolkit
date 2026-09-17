@@ -261,11 +261,51 @@ const [recordingLocked, setRecordingLocked] = useState(false);
 const [isRecording, setIsRecording] = useState(false);
 const [recordedVideo, setRecordedVideo] = useState<string | null>(null);
   const [privacyOpen, setPrivacyOpen] = useState(false);
-  const [privacyMode, setPrivacyMode] = useState<"off" | "face" | "eyes" | "full">("off");
-  useEffect(() => {
+const [privacyMode, setPrivacyMode] =
+  useState<"off" | "face" | "eyes" | "full">("off");
+const [fullBlurReady, setFullBlurReady] = useState(false);
+const [userGender, setUserGender] =
+  useState<"male" | "female" | null>(() => {
+    if (typeof window === "undefined") return null;
+
+    const saved = localStorage.getItem("muslimFilterGender");
+
+    return saved === "male" || saved === "female"
+      ? saved
+      : null;
+  });
+
+const userGenderRef = useRef<"male" | "female" | null>(userGender);
+
+useEffect(() => {
+  userGenderRef.current = userGender;
+}, [userGender]);
+useEffect(() => {
+  if (userGender === "female") {
+    setFullBlurReady(false);
+  }
+}, [facing, userGender]);
+const privacyModeRef =
+  useRef<"off" | "face" | "eyes" | "full">("off");
+
+useEffect(() => {
   privacyModeRef.current = privacyMode;
-}, [privacyMode]);
-  const privacyModeRef = useRef<"off" | "face" | "eyes" | "full">("off");
+}, [privacyMode]);  useEffect(() => {
+  if (userGender !== "female") return;
+
+  setPrivacyMode("full");
+  privacyModeRef.current = "full";
+
+  if (!segmenterRef.current) {
+    createPersonSegmenter()
+      .then((segmenter) => {
+        segmenterRef.current = segmenter;
+      })
+      .catch((e) => {
+        console.error("Person segmenter failed:", e);
+      });
+  }
+}, [userGender]);
   const [facing, setFacing] = useState<"user" | "environment">("user");
   const [phase, setPhase] = useState<"cam" | "face" | "ready" | "error">("cam");
   const [errMsg, setErrMsg] = useState("");
@@ -293,7 +333,7 @@ useEffect(() => {
 
 
   useEffect(() => {
-    if (!quranMode) return;
+if (!quranMode || !userGender) return;
     
     let cancelled = false;
     const start = async () => {
@@ -409,10 +449,10 @@ for (let i = 0; i < maskData.data.length; i++) {
 }
 
 maskCtx.putImageData(imageData, 0, 0);
-
+setFullBlurReady(true);
   });
 }
-      if (privacyModeRef.current === "full") {
+if (privacyModeRef.current === "full") {
   const out = fullBlurCanvasRef.current;
   const maskCanvas = personMaskCanvasRef.current;
 
@@ -430,19 +470,32 @@ maskCtx.putImageData(imageData, 0, 0);
     if (ctx) {
       ctx.clearRect(0, 0, out.width, out.height);
 
-      ctx.save();
-      ctx.filter = "blur(22px)";
-      ctx.drawImage(v, 0, 0, out.width, out.height);
-      ctx.restore();
+      if (userGenderRef.current === "female") {
+        ctx.save();
+        ctx.filter = "blur(50px)";
+        ctx.drawImage(v, 0, 0, out.width, out.height);
+        ctx.restore();
 
-ctx.globalCompositeOperation = "destination-in";
-ctx.filter = "blur(6px)";
-ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
-ctx.filter = "none";
-ctx.globalCompositeOperation = "source-over";    }
+        ctx.globalCompositeOperation = "destination-in";
+        ctx.filter = "blur(12px)";
+        ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
+        ctx.filter = "none";
+        ctx.globalCompositeOperation = "source-over";
+      } else {
+        ctx.save();
+        ctx.filter = "blur(22px)";
+        ctx.drawImage(v, 0, 0, out.width, out.height);
+        ctx.restore();
+
+        ctx.globalCompositeOperation = "destination-in";
+        ctx.filter = "blur(8px)";
+        ctx.drawImage(maskCanvas, 0, 0, out.width, out.height);
+        ctx.filter = "none";
+        ctx.globalCompositeOperation = "source-over";
+      }
+    }
   }
-}
-      let boxes: Box[] = [];
+}      let boxes: Box[] = [];
       try {
         boxes = det.detect(v, performance.now());
       } catch {
@@ -499,8 +552,7 @@ best.h = lerp(best.h, b.h, 0.75);;
       streamRef.current = null;
       tracksRef.current = [];
     };
-    }, [facing, attempt, assignVerse]);
-
+}, [facing, attempt, assignVerse, userGender]);
   /* release detector on unmount */
   useEffect(() => () => {
     detectorRef.current?.close();
@@ -710,6 +762,49 @@ setTimeout(() => recorderRef.current?.stop(), 100);
   setRecordingLocked(false);
 };
   const loading = phase === "cam" || phase === "face";
+  if (!userGender) {
+  return (
+    <div className="fixed inset-0 z-[70] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-3 text-4xl">👤</div>
+
+        <h1 className="text-2xl font-bold">
+          ڕەگەزت هەڵبژێرە
+        </h1>
+
+        <p className="mt-2 text-sm text-white/60">
+          ئەمە تەنها بۆ ڕێکخستنی Privacy ـە.
+        </p>
+
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          <button
+            onClick={() => {
+              localStorage.setItem("muslimFilterGender", "male");
+              setUserGender("male");
+            }}
+            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5"
+          >
+            <div className="text-3xl">👨</div>
+            <div className="mt-2 font-bold">کوڕ</div>
+          </button>
+
+          <button
+            onClick={() => {
+              localStorage.setItem("muslimFilterGender", "female");
+              setUserGender("female");
+              setPrivacyMode("full");
+              privacyModeRef.current = "full";
+            }}
+            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5"
+          >
+            <div className="text-3xl">👩</div>
+            <div className="mt-2 font-bold">کچ</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 if (!quranMode) {
   return (
     <div className="fixed inset-0 z-[60] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
@@ -766,6 +861,9 @@ if (!quranMode) {
           className="h-full w-full object-cover"
           style={{ transform: facing === "user" ? "scaleX(-1)" : undefined }}
         />
+        {userGender === "female" && !fullBlurReady && (
+  <div className="pointer-events-none absolute inset-0 z-[5] backdrop-blur-[50px]" />
+)}
 {privacyMode === "full" && (
   <canvas
     ref={fullBlurCanvasRef}
@@ -922,6 +1020,8 @@ if (!quranMode) {
   </button>
 </div>
 <button
+  {userGender === "male" && (
+  <>
   type="button"
   onClick={() => setPrivacyOpen((v) => !v)}
   
@@ -998,6 +1098,8 @@ if (!quranMode) {
       </button>
     </div>
   </div>
+)}
+    </>
 )}
           <div className="grid grid-cols-3 items-center gap-5">
 <button
