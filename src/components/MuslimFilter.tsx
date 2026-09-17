@@ -552,7 +552,7 @@ const getDisplayBox = (f: Tracked) => {
     if (facing === "user") { ctx.translate(W, 0); ctx.scale(-1, 1); }
     ctx.drawImage(v, 0, 0, W, H);
     ctx.restore();
-   if (privacyMode === "full") {
+   if (privacyModeRef.current === "full") {
   const blurCanvas = fullBlurCanvasRef.current;
 
   if (blurCanvas) {
