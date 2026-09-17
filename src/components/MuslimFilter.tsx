@@ -280,11 +280,6 @@ const userGenderRef = useRef<"male" | "female" | null>(userGender);
 useEffect(() => {
   userGenderRef.current = userGender;
 }, [userGender]);
-useEffect(() => {
-  if (userGender === "female") {
-    setFullBlurReady(false);
-  }
-}, [facing, userGender]);
 const privacyModeRef =
   useRef<"off" | "face" | "eyes" | "full">("off");
 
@@ -307,6 +302,11 @@ useEffect(() => {
   }
 }, [userGender]);
   const [facing, setFacing] = useState<"user" | "environment">("user");
+  useEffect(() => {
+  if (userGender === "female") {
+    setFullBlurReady(false);
+  }
+}, [facing, userGender]);
   const [phase, setPhase] = useState<"cam" | "face" | "ready" | "error">("cam");
   const [errMsg, setErrMsg] = useState("");
   const [faces, setFaces] = useState<Tracked[]>([]);
@@ -1020,10 +1020,11 @@ if (!quranMode) {
   </button>
 </div>
 <button
-  {userGender === "male" && (
+{userGender === "male" && (
   <>
-  type="button"
-  onClick={() => setPrivacyOpen((v) => !v)}
+    <button
+      type="button"
+      onClick={() => setPrivacyOpen((v) => !v)}
   
   className="mx-auto mb-3 flex items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-xs font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-xl">
   <Shield className="h-4 w-4" />
