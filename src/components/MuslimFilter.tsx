@@ -251,6 +251,7 @@ export function MuslimFilter({ lang, onBack }: { lang: Lang; onBack: () => void 
   const rafRef = useRef<number>(0);
   const idRef = useRef(1);
 const recorderRef = useRef<MediaRecorder | null>(null);
+  const audioStreamRef = useRef<MediaStream | null>(null);
 const recordCanvasRef = useRef<HTMLCanvasElement | null>(null);
 const recordRafRef = useRef<number>(0);
 const recordChunksRef = useRef<Blob[]>([]);
@@ -313,6 +314,141 @@ useEffect(() => {
   const [attempt, setAttempt] = useState(0);
   const [shot, setShot] = useState<string | null>(null);
 const [quranMode, setQuranMode] = useState<QuranMode>("juzAmma");
+  const [isReciting, setIsReciting] = useState(false);
+const [recitationResult, setRecitationResult] =
+  useState<"correct" | "wrong" | null>(null);
+  const [heardText, setHeardText] = useState("");
+  const recognitionRef = useRef<any>(null);
+  const recitedTextRef = useRef("");
+  const shouldCheckRecitationRef = useRef(false);
+  const normalizeArabic = (text: string) =>
+  text
+  const textSimilarity = (a: string, b: string) => {
+  const s1 = normalizeArabic(a);
+  const s2 = normalizeArabic(b);
+
+  if (!s1 || !s2) return 0;
+
+  const longer = s1.length >= s2.length ? s1 : s2;
+  const shorter = s1.length < s2.length ? s1 : s2;
+
+  let matches = 0;
+
+  for (let i = 0; i < shorter.length; i++) {
+    if (shorter[i] === longer[i]) {
+      matches++;
+    }
+  }
+
+  return matches / longer.length;
+};
+    const startReciting = () => {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    alert("Speech Recognition لەم browser ـەدا بەردەست نییە");
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = "ar-SA";
+recognition.continuous = true;
+      recognition.interimResults = false;
+
+  recognition.onstart = () => {
+    setIsReciting(true);
+    setHeardText("");
+    setRecitationResult(null);
+  };
+
+recognition.onresult = (event: any) => {
+  let fullText = "";
+
+  for (let i = 0; i < event.results.length; i++) {
+    fullText += event.results[i][0].transcript + " ";
+  }
+
+  fullText = fullText.trim();
+
+  setHeardText(fullText);
+  recitedTextRef.current = fullText;
+};
+  for (let i = 0; i < event.results.length; i++) {
+    fullText += event.results[i][0].transcript + " ";
+  }
+
+  fullText = fullText.trim();
+  setHeardText(fullText);
+
+  const currentVerse = tracksRef.current[0]?.verse;
+
+  if (!currentVerse) {
+    setRecitationResult(null);
+    return;
+  }
+
+  const score = textSimilarity(fullText, currentVerse.text);
+
+  if (score >= 0.8) {
+    setRecitationResult("correct");
+  } else {
+    setRecitationResult("wrong");
+  }
+};  const text = event.results[0][0].transcript;
+  setHeardText(text);
+
+  const currentVerse = tracksRef.current[0]?.verse;
+
+  if (!currentVerse) {
+    setRecitationResult(null);
+    return;
+  }
+
+  const score = textSimilarity(text, currentVerse.text);
+
+  if (score >= 0.8) {
+    setRecitationResult("correct");
+  } else {
+    setRecitationResult("wrong");
+  }
+};
+recognition.onend = () => {
+  setIsReciting(false);
+
+  if (!shouldCheckRecitationRef.current) return;
+
+  shouldCheckRecitationRef.current = false;
+
+  const currentVerse = tracksRef.current[0]?.verse;
+  const recitedText = recitedTextRef.current;
+
+  if (!currentVerse || !recitedText) {
+    setRecitationResult("wrong");
+    return;
+  }
+
+  const score = textSimilarity(recitedText, currentVerse.text);
+
+  setRecitationResult(score >= 0.8 ? "correct" : "wrong");
+};  };
+
+  recognition.onerror = () => {
+    setIsReciting(false);
+  };
+
+  recognitionRef.current = recognition;
+  recognition.start();
+};
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/ـ/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/[^\u0621-\u063A\u0641-\u064A\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
   const assignVerse = useCallback((id: number) => {
     if (!quranMode) return;
     
@@ -710,15 +846,39 @@ ctx.fillStyle = "rgba(11,31,51,0.88)";
     }
     if (!targetCanvas) setShot(c.toDataURL("image/png"));
   };
-const startRecording = () => {
+const startRecording = async () => {
   const c = document.createElement("canvas");
   recordCanvasRef.current = c;
 
   capture(c);
 
-  const stream = c.captureStream(30);
-  const recorder = new MediaRecorder(stream);
+  const videoStream = c.captureStream(30);
 
+  let audioStream: MediaStream | null = null;
+
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({
+      audio: true,
+    });
+
+    audioStreamRef.current = audioStream;
+  } catch (e) {
+    console.error("Microphone failed:", e);
+  }
+
+  const combinedStream = new MediaStream([
+    ...videoStream.getVideoTracks(),
+    ...(audioStream?.getAudioTracks() ?? []),
+  ]);
+
+  const recorder = new MediaRecorder(combinedStream);
+
+  recitedTextRef.current = "";
+shouldCheckRecitationRef.current = false;
+setHeardText("");
+setRecitationResult(null);
+  
+  startReciting();
   recorderRef.current = recorder;
   recordChunksRef.current = [];
 
@@ -749,14 +909,21 @@ recorder.start(100);
 
 const stopRecording = () => {
   cancelAnimationFrame(recordRafRef.current);
-
+  shouldCheckRecitationRef.current = true;
+recognitionRef.current?.stop();
+recognitionRef.current = null;
+  
   if (
     recorderRef.current &&
     recorderRef.current.state !== "inactive"
   ) {
     recorderRef.current.requestData();
-setTimeout(() => recorderRef.current?.stop(), 100);
-  }
+setTimeout(() => {
+  recorderRef.current?.stop();
+
+  audioStreamRef.current?.getTracks().forEach((track) => track.stop());
+  audioStreamRef.current = null;
+}, 100);  }
 
   setIsRecording(false);
   setRecordingLocked(false);
@@ -1100,6 +1267,19 @@ if (!quranMode) {
   </div>
 )}
     </>
+)}
+          {recitationResult && (
+  <div
+    className={`mx-auto mb-3 w-fit rounded-full px-5 py-2 text-sm font-bold ${
+      recitationResult === "correct"
+        ? "bg-green-500/90 text-white"
+        : "bg-red-500/90 text-white"
+    }`}
+  >
+    {recitationResult === "correct"
+      ? "✅ خوێندنەوەکەت دروستە"
+      : "❌ هەڵەیە، دووبارە هەوڵ بدە"}
+  </div>
 )}
           <div className="grid grid-cols-3 items-center gap-5">
 <button
