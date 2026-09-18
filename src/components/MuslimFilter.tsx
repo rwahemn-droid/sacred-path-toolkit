@@ -321,9 +321,15 @@ const [recitationResult, setRecitationResult] =
   const recognitionRef = useRef<any>(null);
   const recitedTextRef = useRef("");
   const shouldCheckRecitationRef = useRef(false);
-  const normalizeArabic = (text: string) =>
+const normalizeArabic = (text: string) =>
   text
-  const textSimilarity = (a: string, b: string) => {
+    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
+    .replace(/ـ/g, "")
+    .replace(/[أإآٱ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/[^\u0621-\u063A\u0641-\u064A\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();  const textSimilarity = (a: string, b: string) => {
   const s1 = normalizeArabic(a);
   const s2 = normalizeArabic(b);
 
@@ -376,45 +382,6 @@ recognition.onresult = (event: any) => {
   setHeardText(fullText);
   recitedTextRef.current = fullText;
 };
-  for (let i = 0; i < event.results.length; i++) {
-    fullText += event.results[i][0].transcript + " ";
-  }
-
-  fullText = fullText.trim();
-  setHeardText(fullText);
-
-  const currentVerse = tracksRef.current[0]?.verse;
-
-  if (!currentVerse) {
-    setRecitationResult(null);
-    return;
-  }
-
-  const score = textSimilarity(fullText, currentVerse.text);
-
-  if (score >= 0.8) {
-    setRecitationResult("correct");
-  } else {
-    setRecitationResult("wrong");
-  }
-};  const text = event.results[0][0].transcript;
-  setHeardText(text);
-
-  const currentVerse = tracksRef.current[0]?.verse;
-
-  if (!currentVerse) {
-    setRecitationResult(null);
-    return;
-  }
-
-  const score = textSimilarity(text, currentVerse.text);
-
-  if (score >= 0.8) {
-    setRecitationResult("correct");
-  } else {
-    setRecitationResult("wrong");
-  }
-};
 recognition.onend = () => {
   setIsReciting(false);
 
@@ -442,13 +409,6 @@ recognition.onend = () => {
   recognitionRef.current = recognition;
   recognition.start();
 };
-    .replace(/[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]/g, "")
-    .replace(/ـ/g, "")
-    .replace(/[أإآٱ]/g, "ا")
-    .replace(/ى/g, "ي")
-    .replace(/[^\u0621-\u063A\u0641-\u064A\s]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
   const assignVerse = useCallback((id: number) => {
     if (!quranMode) return;
     
