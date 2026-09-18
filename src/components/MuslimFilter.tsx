@@ -433,7 +433,7 @@ recognition.onend = () => {
   const score = textSimilarity(recitedText, currentVerse.text);
 
   setRecitationResult(score >= 0.8 ? "correct" : "wrong");
-};  };
+};
 
   recognition.onerror = () => {
     setIsReciting(false);
