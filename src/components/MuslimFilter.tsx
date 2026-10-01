@@ -286,8 +286,10 @@ const privacyModeRef =
 
 useEffect(() => {
   privacyModeRef.current = privacyMode;
-}, [privacyMode]);  useEffect(() => {
-  if (userGender !== "female") return;
+}, [privacyMode]);
+const [sharingMode, setSharingMode] = useState<"public" | "private" | null>(null);
+  useEffect(() => {
+  if (userGender !== "female" || sharingMode !== "public") return;
 
   setPrivacyMode("full");
   privacyModeRef.current = "full";
@@ -301,13 +303,13 @@ useEffect(() => {
         console.error("Person segmenter failed:", e);
       });
   }
-}, [userGender]);
+}, [userGender, sharingMode]);
   const [facing, setFacing] = useState<"user" | "environment">("user");
   useEffect(() => {
   if (userGender === "female") {
     setFullBlurReady(false);
   }
-}, [facing, userGender]);
+}, [facing, userGender, sharingMode]);
   const [phase, setPhase] = useState<"cam" | "face" | "ready" | "error">("cam");
   const [errMsg, setErrMsg] = useState("");
   const [faces, setFaces] = useState<Tracked[]>([]);
@@ -932,6 +934,44 @@ setTimeout(() => {
     </div>
   );
 }
+if (userGender === "female" && !sharingMode) {
+  return (
+    <div className="fixed inset-0 z-[70] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
+      <button
+        onClick={onBack}
+        className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10"
+      >
+        <ArrowLeft className="h-5 w-5" />
+      </button>
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-3 text-4xl">🔒</div>
+        <h1 className="text-2xl font-bold">Is this for public sharing?</h1>
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          <button
+            onClick={() => {
+              setPrivacyMode("full");
+              privacyModeRef.current = "full";
+              setSharingMode("public");
+            }}
+            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5 font-bold"
+          >
+            Public
+          </button>
+          <button
+            onClick={() => {
+              setPrivacyMode("off");
+              privacyModeRef.current = "off";
+              setSharingMode("private");
+            }}
+            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5 font-bold"
+          >
+            Private
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 if (!quranMode) {
   return (
     <div className="fixed inset-0 z-[60] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
@@ -988,7 +1028,7 @@ if (!quranMode) {
           className="h-full w-full object-cover"
           style={{ transform: facing === "user" ? "scaleX(-1)" : undefined }}
         />
-        {userGender === "female" && !fullBlurReady && (
+        {userGender === "female" && sharingMode === "public" && !fullBlurReady && (
   <div className="pointer-events-none absolute inset-0 z-[5] backdrop-blur-[50px]" />
 )}
 {privacyMode === "full" && (
@@ -1146,7 +1186,12 @@ if (!quranMode) {
     Full Quran
   </button>
 </div>
-{userGender === "male" && (
+{userGender === "female" && sharingMode === "public" && (
+  <div className="mx-auto mb-3 flex w-fit items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-xs font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-xl">
+    🔒 Full Person Blur
+  </div>
+)}
+{(userGender === "male" || (userGender === "female" && sharingMode === "private")) && (
   <>
     <button
       type="button"
