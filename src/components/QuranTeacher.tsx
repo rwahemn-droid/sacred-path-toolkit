@@ -322,18 +322,18 @@ function stopLiveHifz() {
           <button onClick={onBack} className="grid h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10" aria-label={t(S.back, lang)}>
             <BackIcon className="h-4 w-4" />
           </button>
-          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-full border border-white/10 bg-white/5 text-sky-300 sm:grid">
+          <div className="hidden h-10 w-10 shrink-0 place-items-center rounded-full border border-amber-300/30 bg-white/5 text-amber-300 sm:grid">
             <GraduationCap className="h-5 w-5" />
           </div>
           <label className="min-w-0 flex-[2]">
             <span className="sr-only">{t(S.selectSurah, lang)}</span>
-            <select value={surahNum} onChange={(e) => { setSurahNum(Number(e.target.value)); setAyahNum(1); }} className="h-11 w-full truncate rounded-xl border border-white/10 bg-white/5 px-3 text-sm font-medium text-white outline-none focus:border-white/30">
+            <select value={surahNum} onChange={(e) => { setSurahNum(Number(e.target.value)); setAyahNum(1); }} className="h-9 w-full truncate rounded-full border border-white/10 bg-white/5 px-3 text-sm font-medium text-white outline-none focus:border-white/30">
               {surahs?.map((s) => <option key={s.number} value={s.number} className="bg-[#0B1426] text-white">{s.number}. {s.name} — {s.englishName}</option>)}
             </select>
           </label>
           <label className="w-20 shrink-0">
             <span className="sr-only">{t(S.selectAyah, lang)}</span>
-            <select value={ayahNum} onChange={(e) => setAyahNum(Number(e.target.value))} className="h-11 w-full rounded-xl border border-white/10 bg-white/5 px-2 text-center text-sm text-white outline-none focus:border-white/30">
+            <select value={ayahNum} onChange={(e) => setAyahNum(Number(e.target.value))} className="h-9 w-full rounded-full border border-white/10 bg-white/5 px-2 text-center text-sm text-white outline-none focus:border-white/30">
               {Array.from({ length: total || 7 }, (_, i) => i + 1).map((n) => <option key={n} value={n} className="bg-[#0B1426] text-white">{n}</option>)}
             </select>
           </label>
@@ -341,27 +341,27 @@ function stopLiveHifz() {
       </header>
 
       <main dir="rtl" lang="ar" className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-[#0B1426] px-4 py-5 sm:px-8">
-        <div className="mx-auto w-full max-w-3xl rounded-3xl border border-sky-300/10 bg-[#102038]/70 px-4 py-6 shadow-xl shadow-black/30 sm:px-8">
+        <div className="mx-auto w-full max-w-3xl rounded-3xl border border-amber-200/60 bg-[#FBF6EA] px-4 py-6 shadow-md shadow-black/20 sm:px-8">
           <div className="mb-6 flex items-center justify-center gap-4">
-            <span className="h-px flex-1 bg-gradient-to-l from-sky-300/25 to-transparent" />
+            <span className="h-px flex-1 bg-gradient-to-l from-amber-600/25 to-transparent" />
             <div className="relative px-8 py-3 text-center">
-              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-sky-300/35 to-transparent" />
-              <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-sky-300/35 to-transparent" />
-              <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-sky-300/50">✦</span>
-              <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-sky-300/50">✦</span>
-              <p dir="rtl" lang="ar" className="font-amiri text-[1.7rem] leading-snug text-white">{surah?.name ?? ""}</p>
-              {surah && <p dir="ltr" className="mt-1 text-[10px] tracking-[0.18em] uppercase text-white/35">{surah.englishName} · {surah.numberOfAyahs}</p>}
+              <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-amber-600/35 to-transparent" />
+              <span className="pointer-events-none absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-amber-600/35 to-transparent" />
+              <span className="pointer-events-none absolute left-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-600/50">✦</span>
+              <span className="pointer-events-none absolute right-0 top-1/2 -translate-y-1/2 text-[10px] text-amber-600/50">✦</span>
+              <p dir="rtl" lang="ar" className="font-amiri text-[1.7rem] leading-snug text-[#0B2545]">{surah?.name ?? ""}</p>
+              {surah && <p dir="ltr" className="mt-1 text-[10px] tracking-[0.18em] uppercase text-[#0B2545]/50">{surah.englishName} · {surah.numberOfAyahs}</p>}
             </div>
-            <span className="h-px flex-1 bg-gradient-to-r from-sky-300/25 to-transparent" />
+            <span className="h-px flex-1 bg-gradient-to-r from-amber-600/25 to-transparent" />
           </div>
           {isFetching || !ayahs ? (
-            <p className="text-center text-sm text-white/40">{t(S.loading, lang)}</p>
+            <p className="text-center text-sm text-[#0B2545]/50">{t(S.loading, lang)}</p>
           ) : (
             <div className={hideQuran ? "select-none" : ""}>
               {surahNum !== 9 && (
-                <p className={`mb-6 text-center font-amiri text-[1.45rem] leading-loose text-white/90 transition sm:text-[1.7rem] ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
+                <p className={`mb-6 text-center font-amiri text-[1.45rem] leading-loose text-[#0B2545] transition sm:text-[1.7rem] ${hideQuran ? "invisible select-none" : ""}`}>{BISMILLAH}</p>
               )}
-              <p className="text-justify font-amiri text-[1.45rem] leading-[2.35] tracking-wide text-white/[0.93] sm:text-[1.7rem]">
+              <p className="text-center font-amiri text-[1.45rem] leading-[2.35] tracking-wide text-[#1A2233] sm:text-[1.7rem]">
                 {ayahs.map((a) => {
                   const active = a.numberInSurah === ayahNum;
                   return (
@@ -369,12 +369,12 @@ function stopLiveHifz() {
                       key={a.numberInSurah}
                       ref={active ? currentAyahRef : undefined}
                       onClick={() => setAyahNum(a.numberInSurah)}
-                      className={`cursor-pointer rounded-sm transition-colors ${hideQuran ? "select-none" : active ? "bg-sky-400/10" : "hover:bg-white/[0.04]"}`}
+                      className={`cursor-pointer rounded-sm transition-colors ${hideQuran ? "select-none" : active ? "bg-amber-400/20" : "hover:bg-amber-200/30"}`}
                     >
                       {hideQuran && active ? (
                         <>{a.text.split(/\s+/).map((word, index) => <span key={index} className={index < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)}</>
                       ) : <span className={hideQuran ? "invisible" : ""}>{a.text}</span>}
-                      <span className={`mx-1.5 inline-grid h-6 w-6 place-items-center rounded-full border align-middle text-[10px] leading-none ${active ? "border-sky-300/70 text-sky-200" : "border-white/15 text-white/45"}`}>
+                      <span className={`mx-1.5 inline-grid h-6 w-6 place-items-center rounded-full border align-middle text-[10px] leading-none ${active ? "border-amber-600 bg-amber-100 text-amber-800" : "border-amber-500/50 text-amber-700"}`}>
                         {toArDigits(a.numberInSurah)}
                       </span>
                     </span>
