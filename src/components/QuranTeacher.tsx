@@ -312,7 +312,7 @@ function stopLiveHifz() {
     if (next >= 1 && next <= surah.numberOfAyahs) setAyahNum(next);
   }
 
-  const btn = "flex min-h-10 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs font-medium text-white transition hover:border-white/25 disabled:opacity-40";
+  const btn = "flex min-h-11 items-center justify-center gap-2 rounded-2xl border border-sky-300/15 bg-sky-400/[0.06] px-3 py-2 text-xs font-medium text-white transition hover:border-white/25 disabled:opacity-40";
   const total = surah?.numberOfAyahs ?? 0;
 
   return (
