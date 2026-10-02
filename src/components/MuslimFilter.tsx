@@ -893,6 +893,49 @@ setTimeout(() => {
   const loading = phase === "cam" || phase === "face";
   if (!userGender) {
   return (
+    <div className="fixed inset-0 z-[70] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
+      <div className="w-full max-w-sm text-center">
+        <div className="mb-3 text-4xl">👤</div>
+
+        <h1 className="text-2xl font-bold">
+          ڕەگەزت هەڵبژێرە
+        </h1>
+
+        <p className="mt-2 text-sm text-white/60">
+          ئەمە تەنها بۆ ڕێکخستنی Privacy ـە.
+        </p>
+
+        <div className="mt-8 grid grid-cols-2 gap-3">
+          <button
+            onClick={() => {
+              localStorage.setItem("muslimFilterGender", "male");
+              setUserGender("male");
+            }}
+            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5"
+          >
+            <div className="text-3xl">👨</div>
+            <div className="mt-2 font-bold">کوڕ</div>
+          </button>
+
+          <button
+            onClick={() => {
+              localStorage.setItem("muslimFilterGender", "female");
+              setUserGender("female");
+              setPrivacyMode("full");
+              privacyModeRef.current = "full";
+            }}
+            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5"
+          >
+            <div className="text-3xl">👩</div>
+            <div className="mt-2 font-bold">کچ</div>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+if (userGender === "female" && !sharingMode) {
+  return (
     <div className="fixed inset-0 z-[70] flex min-h-dvh items-center justify-center bg-[#071421] px-5 text-[#F6E7A1]">
       <button
         onClick={onBack}
