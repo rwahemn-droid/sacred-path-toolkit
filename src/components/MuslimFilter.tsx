@@ -893,68 +893,28 @@ setTimeout(() => {
   const loading = phase === "cam" || phase === "face";
   if (!userGender) {
   return (
-    <div className="fixed inset-0 z-[70] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
-      <div className="w-full max-w-sm text-center">
-        <div className="mb-3 text-4xl">👤</div>
-
-        <h1 className="text-2xl font-bold">
-          ڕەگەزت هەڵبژێرە
-        </h1>
-
-        <p className="mt-2 text-sm text-white/60">
-          ئەمە تەنها بۆ ڕێکخستنی Privacy ـە.
-        </p>
-
-        <div className="mt-8 grid grid-cols-2 gap-3">
-          <button
-            onClick={() => {
-              localStorage.setItem("muslimFilterGender", "male");
-              setUserGender("male");
-            }}
-            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5"
-          >
-            <div className="text-3xl">👨</div>
-            <div className="mt-2 font-bold">کوڕ</div>
-          </button>
-
-          <button
-            onClick={() => {
-              localStorage.setItem("muslimFilterGender", "female");
-              setUserGender("female");
-              setPrivacyMode("full");
-              privacyModeRef.current = "full";
-            }}
-            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5"
-          >
-            <div className="text-3xl">👩</div>
-            <div className="mt-2 font-bold">کچ</div>
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-if (userGender === "female" && !sharingMode) {
-  return (
-    <div className="fixed inset-0 z-[70] flex min-h-dvh items-center justify-center bg-black px-5 text-white">
+    <div className="fixed inset-0 z-[70] flex min-h-dvh items-center justify-center bg-[#071421] px-5 text-[#F6E7A1]">
       <button
         onClick={onBack}
-        className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10"
+        className="absolute left-4 top-4 grid h-10 w-10 place-items-center rounded-full border border-[#D4AF37]/30 bg-[#0B1F33]/70"
       >
         <ArrowLeft className="h-5 w-5" />
       </button>
-      <div className="w-full max-w-sm text-center">
-        <div className="mb-3 text-4xl">🔒</div>
-        <h1 className="text-2xl font-bold">Is this for public sharing?</h1>
-        <div className="mt-8 grid grid-cols-2 gap-3">
+      <div className="w-full max-w-sm rounded-[24px] border border-[#D4AF37]/35 bg-[#0B1F33]/80 p-6 text-center shadow-2xl backdrop-blur-xl transition-all duration-200">
+        <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-full border border-[#D4AF37]/40 bg-[#D4AF37]/10">
+          <Shield className="h-5 w-5 text-[#D4AF37]" />
+        </div>
+        <h1 className="text-xl font-semibold">Is this for public sharing?</h1>
+        <div className="mt-6 grid grid-cols-2 gap-3">
           <button
             onClick={() => {
               setPrivacyMode("full");
               privacyModeRef.current = "full";
               setSharingMode("public");
             }}
-            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5 font-bold"
+            className="flex flex-col items-center gap-2 rounded-[20px] border border-[#D4AF37] bg-[#D4AF37]/15 p-4 font-semibold transition-colors duration-200 hover:bg-[#D4AF37]/25"
           >
+            <span className="text-lg">🔒</span>
             Public
           </button>
           <button
@@ -963,8 +923,9 @@ if (userGender === "female" && !sharingMode) {
               privacyModeRef.current = "off";
               setSharingMode("private");
             }}
-            className="rounded-2xl border border-[#D4AF37]/40 bg-[#0B1F33] p-5 font-bold"
+            className="flex flex-col items-center gap-2 rounded-[20px] border border-[#D4AF37]/25 bg-[#0B1F33]/70 p-4 font-semibold transition-colors duration-200 hover:bg-[#0B1F33]"
           >
+            <Shield className="h-5 w-5 opacity-70" />
             Private
           </button>
         </div>
@@ -1188,7 +1149,11 @@ if (!quranMode) {
 </div>
 {userGender === "female" && sharingMode === "public" && (
   <div className="mx-auto mb-3 flex w-fit items-center gap-2 rounded-full border border-[#D4AF37]/50 bg-[#0B1F33]/85 px-4 py-2 text-xs font-semibold text-[#F6E7A1] shadow-lg backdrop-blur-xl">
-    🔒 Full Person Blur
+    <span>🔒</span>
+    <span className="flex flex-col leading-tight">
+      <span>Full Person Blur</span>
+      <span className="text-[10px] font-normal opacity-75">Public Sharing Protection</span>
+    </span>
   </div>
 )}
 {(userGender === "male" || (userGender === "female" && sharingMode === "private")) && (
