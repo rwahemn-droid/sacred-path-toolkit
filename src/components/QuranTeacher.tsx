@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Eye, EyeOff, Mic, Square, RotateCcw, Volume2, GraduationCap, Play, Pause, Repeat2, BookOpen, Circle } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl, type Reciter } from "@/lib/reciters";
+import { compareRecitation, saveResult, getSavedResult, type RecitationResult } from "@/lib/recitation-check";
+import { RecitationResultCard } from "./RecitationResultCard";
 
 // ---------- i18n (5 languages) ----------
 type L = { ku: string; bad: string; kmr: string; ar: string; en: string };
@@ -76,6 +78,15 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const currentAyahRef = useRef<HTMLSpanElement | null>(null);
 
   const reciter: Reciter = RECITERS.find((r) => r.id === reciterId) || RECITERS[0];
+  const [checking, setChecking] = useState(false);
+  const [checkResult, setCheckResult] = useState<RecitationResult | null>(null);
+  const checkRef = useRef<any>(null);
+  useEffect(() => {
+    checkRef.current?.abort?.();
+    setChecking(false);
+    setCheckResult(null);
+  }, [surahNum, ayahNum]);
+  useEffect(() => () => checkRef.current?.abort?.(), []);
 
   const { data: surahs } = useQuery<SurahMeta[]>({
     queryKey: ["surah-list"],
@@ -284,6 +295,42 @@ function stopLiveHifz() {
   recognitionRef.current?.stop();
   setLiveListening(false);
 }
+
+  // Recitation mistake detection (word-level, v1)
+  function startCheck() {
+    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) { setMicError(true); return; }
+    const ayah = ayahs?.find((a) => a.numberInSurah === ayahNum);
+    if (!ayah) return;
+    stopListening();
+    setMicError(false);
+    setCheckResult(null);
+    const key = `${surahNum}:${ayahNum}`;
+    const rec = new SR();
+    rec.lang = "ar-SA";
+    rec.continuous = true;
+    rec.interimResults = true;
+    let transcript = "";
+    rec.onstart = () => setChecking(true);
+    rec.onresult = (event: any) => {
+      let s = "";
+      for (let i = 0; i < event.results.length; i++) s += " " + event.results[i][0].transcript;
+      transcript = s;
+    };
+    rec.onerror = (e: any) => { if (e?.error !== "no-speech" && e?.error !== "aborted") setMicError(true); };
+    rec.onend = () => {
+      setChecking(false);
+      if (!transcript.trim()) return;
+      const r = compareRecitation(key, ayah.text, transcript);
+      saveResult(r);
+      setCheckResult(r);
+    };
+    checkRef.current = rec;
+    rec.start();
+  }
+  function stopCheck() {
+    checkRef.current?.stop();
+  }
   async function startRecording() {
     setMicError(false);
     try {
@@ -381,13 +428,23 @@ function stopLiveHifz() {
             </div>
           </div>
 
+          {checking && (
+            <div className="flex items-center justify-center gap-2 rounded-2xl border border-red-400/20 bg-red-500/10 py-2 text-xs text-red-200">
+              <span className="h-2 w-2 animate-pulse rounded-full bg-red-400" /> 🎙️ …
+            </div>
+          )}
+          {checkResult && !checking && (
+            <RecitationResultCard result={checkResult} lang={lang} best={getSavedResult(checkResult.key)?.best}
+              onRetry={() => { setCheckResult(null); startCheck(); }} onListen={replayAyah} />
+          )}
+
           {/* Mode cards */}
           <div className="grid grid-cols-4 gap-2">
             <button onClick={listening ? stopListening : listen} className={`${mode} ${listening ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`}>
               <Volume2 className="h-5 w-5" /><span className="truncate">{t(S.listen, lang)}</span>
             </button>
-            <button onClick={() => { if (!hideQuran) setHideQuran(true); else if (liveListening) stopLiveHifz(); else startLiveHifz(); }} className={`${mode} ${liveListening ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
-              {liveListening ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">Recite</span>
+            <button onClick={() => { if (hideQuran) { if (liveListening) stopLiveHifz(); else startLiveHifz(); } else if (checking) stopCheck(); else startCheck(); }} className={`${mode} ${liveListening || checking ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
+              {liveListening || checking ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">Recite</span>
             </button>
             <button onClick={() => setHideQuran((v) => !v)} className={`${mode} ${hideQuran ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`} aria-label={t(S.hifzMode, lang)}>
               {hideQuran ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}<span className="truncate">{hideQuran ? t(S.showQuran, lang) : t(S.hifzMode, lang)}</span>
