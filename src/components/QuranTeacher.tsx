@@ -5,6 +5,7 @@ import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl, type Reciter } from "@/lib/reciters";
 import { compareRecitation, saveResult, getSavedResult, type RecitationResult } from "@/lib/recitation-check";
 import { RecitationResultCard } from "./RecitationResultCard";
+import { TajweedAyah } from "./TajweedAyah";
 
 // ---------- i18n (5 languages) ----------
 type L = { ku: string; bad: string; kmr: string; ar: string; en: string };
@@ -423,7 +424,7 @@ function stopLiveHifz() {
                 <span className="text-sm text-white/40">{t(S.loading, lang)}</span>
               ) : hideQuran ? (
                 currentAyah.text.split(/\s+/).map((word, i) => <span key={i} className={i < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)
-              ) : currentAyah.text}
+              ) : <TajweedAyah surah={surahNum} ayah={ayahNum} fallback={currentAyah.text} lang={lang} onPractice={replayAyah} />}
               {currentAyah && <span className="mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border border-sky-300/40 align-middle text-xs text-sky-200">{toArDigits(ayahNum)}</span>}
             </div>
           </div>
