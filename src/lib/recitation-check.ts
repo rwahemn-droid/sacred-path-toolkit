@@ -30,6 +30,7 @@ export function normalizeWord(s: string) {
     .replace(/[ئ]/g, "ي")
     .replace(/ة/g, "ه")
     .replace(/[^\p{L}\p{N}]/gu, "")
+    .replace(/(?!^)ا/g, "") // drop inner alifs: Uthmani dagger-alif spellings vs. plain spelling
     .toLowerCase();
 }
 
