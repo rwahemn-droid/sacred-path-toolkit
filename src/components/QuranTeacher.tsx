@@ -424,7 +424,7 @@ function stopLiveHifz() {
                 <span className="text-sm text-white/40">{t(S.loading, lang)}</span>
               ) : hideQuran ? (
                 currentAyah.text.split(/\s+/).map((word, i) => <span key={i} className={i < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)
-              ) : <TajweedAyah surah={surahNum} ayah={ayahNum} fallback={currentAyah.text} lang={lang} onPractice={replayAyah} />}
+              ) : <TajweedAyah surah={surahNum} ayah={ayahNum} fallback={currentAyah.text} lang={lang} onListen={replayAyah} onPractice={startCheck} />}
               {currentAyah && <span className="mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border border-sky-300/40 align-middle text-xs text-sky-200">{toArDigits(ayahNum)}</span>}
             </div>
           </div>
