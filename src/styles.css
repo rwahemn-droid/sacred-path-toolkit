@@ -24,6 +24,7 @@
   --color-border: var(--border);
   --color-ring: var(--ring);
   --font-display: "Amiri", "Noto Naskh Arabic", serif;
+  --font-quran: "Noto Naskh Arabic", "Amiri Quran", "Amiri", serif;
 }
 
 :root {

@@ -418,8 +418,8 @@ function stopLiveHifz() {
               <span className="rounded-full bg-sky-400/15 px-3 py-1 font-medium text-sky-200">{surah?.englishName ?? ""}</span>
               <span className="rounded-full border border-white/10 px-3 py-1 tabular-nums text-white/70">{ayahNum} / {total}</span>
             </div>
-            <p dir="rtl" lang="ar" className="mt-2 text-center font-amiri text-lg text-sky-100/80">{surah?.name ?? ""}</p>
-            <div dir="rtl" lang="ar" className="mt-3 min-h-[5rem] text-center font-amiri text-[1.7rem] leading-[2.2] text-white sm:text-[1.9rem]">
+            <p dir="rtl" lang="ar" className="mt-2 text-center font-quran text-lg text-sky-100/80">{surah?.name ?? ""}</p>
+            <div dir="rtl" lang="ar" className="mt-3 min-h-[5rem] text-center font-quran text-[1.7rem] leading-[2.2] text-white sm:text-[1.9rem]">
               {!currentAyah ? (
                 <span className="text-sm text-white/40">{t(S.loading, lang)}</span>
               ) : hideQuran ? (
@@ -475,9 +475,9 @@ function stopLiveHifz() {
             ) : (
               <div className={hideQuran ? "select-none" : ""}>
                 {surahNum !== 9 && (
-                  <p className={`mb-5 text-center font-amiri text-[1.4rem] leading-loose text-sky-100 ${hideQuran ? "invisible" : ""}`}>{BISMILLAH}</p>
+                  <p className={`mb-5 text-center font-quran text-[1.4rem] leading-loose text-sky-100 ${hideQuran ? "invisible" : ""}`}>{BISMILLAH}</p>
                 )}
-                <p className="text-center font-amiri text-[1.35rem] leading-[2.3] text-white/85 sm:text-[1.55rem]">
+                <p className="text-center font-quran text-[1.35rem] leading-[2.3] text-white/85 sm:text-[1.55rem]">
                   {ayahs.map((a) => {
                     const active = a.numberInSurah === ayahNum;
                     return (
