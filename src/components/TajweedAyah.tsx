@@ -50,7 +50,7 @@ const LISTEN: L = { ku: "گوێگرتن", bad: "گوهدارکرن", kmr: "Guhda
 const PRACTICE: L = { ku: "ڕاهێنان", bad: "ڕاهێنان", kmr: "Pratîk", ar: "تدرّب", en: "Practice" };
 const tr = (l: L, lang: Lang) => l[lang as keyof L] ?? l.en;
 
-type Seg = { text: string; rule?: Rule };
+type Seg = { text: string; rule?: Rule; code?: string };
 // Izhar is not tagged in the source data; it is the standard rule: noon sakinah / tanween followed by a throat letter.
 const THROAT = /^[\s\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]*\[?[a-z]?(?::\d+)?\[?[ءأإؤئهعحغخ]/;
 const IZ = /(نْ|[\u064B-\u064D])/g;
@@ -74,7 +74,7 @@ function parse(raw: string): Seg[][] {
   let last = 0, m: RegExpExecArray | null;
   while ((m = re.exec(raw))) {
     if (m.index > last) pushPlain(segs, raw.slice(last, m.index), raw.slice(m.index));
-    segs.push({ text: m[2], rule: CODE[m[1]] });
+    segs.push({ text: m[2], rule: CODE[m[1]], code: m[1] });
     last = re.lastIndex;
   }
   if (last < raw.length) pushPlain(segs, raw.slice(last), "");
@@ -84,7 +84,7 @@ function parse(raw: string): Seg[][] {
     const parts = s.text.split(" ");
     parts.forEach((p, i) => {
       if (i > 0) words.push([]);
-      if (p) words[words.length - 1].push({ text: p, rule: s.rule });
+      if (p) words[words.length - 1].push({ text: p, rule: s.rule, code: s.code });
     });
   }
   return words.filter((w) => w.length);
@@ -95,6 +95,7 @@ export function TajweedAyah({ surah, ayah, fallback, lang, onPractice, onListen 
 }) {
   const [open, setOpen] = useState<Rule | null>(null);
   const [segText, setSegText] = useState("");
+  const [segCode, setSegCode] = useState<string | undefined>();
   const { data } = useQuery({
     queryKey: ["tajweed", surah, ayah],
     staleTime: Infinity,
@@ -113,7 +114,7 @@ export function TajweedAyah({ surah, ayah, fallback, lang, onPractice, onListen 
         return (
           <span key={i}>
             {w.map((s, j) => s.rule
-              ? <span key={j} onClick={() => { setOpen(s.rule!); setSegText(s.text); }} className={`${COLOR[s.rule]} cursor-pointer`}>{s.text}</span>
+              ? <span key={j} onClick={() => { setOpen(s.rule!); setSegText(s.text); setSegCode(s.code); }} className={`${COLOR[s.rule]} cursor-pointer`}>{s.text}</span>
               : <span key={j}>{s.text}</span>)}{" "}
           </span>
         );
@@ -127,7 +128,7 @@ export function TajweedAyah({ surah, ayah, fallback, lang, onPractice, onListen 
             </span>
             <span className="mt-2 block text-sm leading-relaxed text-white/80">{tr(INFO[open].desc, lang)}</span>
             {(open === "madd" || open === "ghunnah") ? (
-              <TajweedAudioPractice key={`${open}-${segText}`} rule={open} segmentText={segText} lang={lang} onListen={onListen} />
+              <TajweedAudioPractice key={`${open}-${segText}`} rule={open} code={segCode} segmentText={segText} lang={lang} onListen={onListen} />
             ) : (
             <span className="mt-3 flex gap-2">
             <button onClick={() => { onListen(); }} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-white/10 py-2.5 text-sm font-medium text-white/90 active:scale-95">
