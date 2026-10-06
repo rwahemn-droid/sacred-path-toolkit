@@ -50,7 +50,7 @@ const LISTEN: L = { ku: "گوێگرتن", bad: "گوهدارکرن", kmr: "Guhda
 const PRACTICE: L = { ku: "ڕاهێنان", bad: "ڕاهێنان", kmr: "Pratîk", ar: "تدرّب", en: "Practice" };
 const tr = (l: L, lang: Lang) => l[lang as keyof L] ?? l.en;
 
-type Seg = { text: string; rule?: Rule };
+type Seg = { text: string; rule?: Rule; code?: string };
 // Izhar is not tagged in the source data; it is the standard rule: noon sakinah / tanween followed by a throat letter.
 const THROAT = /^[\s\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06ED]*\[?[a-z]?(?::\d+)?\[?[ءأإؤئهعحغخ]/;
 const IZ = /(نْ|[\u064B-\u064D])/g;
