@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Mic, Volume2, X } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
+import { TajweedAudioPractice } from "./TajweedAudioPractice";
 
 // Basic Tajweed highlighting using alquran.cloud "quran-tajweed" markup: [code[letters] or [code:id[letters]
 type Rule = "madd" | "ghunnah" | "qalqalah" | "ikhfa" | "idgham" | "iqlab" | "izhar";
@@ -93,6 +94,7 @@ export function TajweedAyah({ surah, ayah, fallback, lang, onPractice, onListen 
   surah: number; ayah: number; fallback: string; lang: Lang; onPractice: () => void; onListen: () => void;
 }) {
   const [open, setOpen] = useState<Rule | null>(null);
+  const [segText, setSegText] = useState("");
   const { data } = useQuery({
     queryKey: ["tajweed", surah, ayah],
     staleTime: Infinity,
@@ -111,7 +113,7 @@ export function TajweedAyah({ surah, ayah, fallback, lang, onPractice, onListen 
         return (
           <span key={i}>
             {w.map((s, j) => s.rule
-              ? <span key={j} onClick={() => setOpen(s.rule!)} className={`${COLOR[s.rule]} cursor-pointer`}>{s.text}</span>
+              ? <span key={j} onClick={() => { setOpen(s.rule!); setSegText(s.text); }} className={`${COLOR[s.rule]} cursor-pointer`}>{s.text}</span>
               : <span key={j}>{s.text}</span>)}{" "}
           </span>
         );
@@ -124,6 +126,9 @@ export function TajweedAyah({ surah, ayah, fallback, lang, onPractice, onListen 
               <button onClick={() => setOpen(null)} className="grid h-8 w-8 place-items-center rounded-full bg-white/5" aria-label="close"><X className="h-4 w-4" /></button>
             </span>
             <span className="mt-2 block text-sm leading-relaxed text-white/80">{tr(INFO[open].desc, lang)}</span>
+            {(open === "madd" || open === "ghunnah") ? (
+              <TajweedAudioPractice key={`${open}-${segText}`} rule={open} segmentText={segText} lang={lang} onListen={onListen} />
+            ) : (
             <span className="mt-3 flex gap-2">
             <button onClick={() => { onListen(); }} className="flex flex-1 items-center justify-center gap-2 rounded-2xl bg-white/10 py-2.5 text-sm font-medium text-white/90 active:scale-95">
               <Volume2 className="h-4 w-4" />{tr(LISTEN, lang)}
@@ -132,6 +137,7 @@ export function TajweedAyah({ surah, ayah, fallback, lang, onPractice, onListen 
               <Mic className="h-4 w-4" />{tr(PRACTICE, lang)}
             </button>
             </span>
+            )}
           </span>
         </span>
       )}
