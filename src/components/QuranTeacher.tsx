@@ -65,6 +65,7 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
     return () => clearInterval(id);
   }, [recording]);
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
   const [listening, setListening] = useState(false);
   const [micError, setMicError] = useState(false);
   const [recognizedWords, setRecognizedWords] = useState(0);
@@ -270,14 +271,6 @@ const finishedAyah =
   );
 
 if (finishedAyah) {
-  recognition.stop();
-
-  setTimeout(() => {
-    goAyah(1);
-    setRecognizedWords(0);
-  }, 300);
-}
-if (expectedWords.length > 0 && matched >= expectedWords.length) {
   recognition.onresult = null;
   recognition.stop();
 
@@ -342,6 +335,7 @@ function stopLiveHifz() {
       mr.ondataavailable = (e) => e.data.size && chunksRef.current.push(e.data);
       mr.onstop = () => {
         const blob = new Blob(chunksRef.current, { type: mr.mimeType || "audio/webm" });
+        setAudioBlob(blob);
         if (audioUrl) URL.revokeObjectURL(audioUrl);
         setAudioUrl(URL.createObjectURL(blob));
         stream.getTracks().forEach((tr) => tr.stop());
@@ -359,6 +353,8 @@ function stopLiveHifz() {
   function clearRecording() {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
+   setAudioBlob(null);
+
   }
 
   function goAyah(delta: number) {
