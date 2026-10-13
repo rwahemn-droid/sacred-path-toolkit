@@ -1,8 +1,12 @@
 // Word-level Quran recitation checker (v1).
 // Modular: future audio/Tajweed analysers can add extra fields to RecitationResult.
 
-export type WordStatus = "correct" | "wrong" | "missing" | "extra";
-
+export type WordStatus =
+  | "correct"
+  | "wrong"
+  | "missing"
+  | "extra"
+  | "pending";
 export type WordResult = {
   status: WordStatus;
   expected?: string; // original Quran word (display, unmodified)
@@ -39,7 +43,11 @@ export function splitWords(text: string) {
 }
 
 /** Align expected vs heard words with edit distance (substitution = wrong word). */
-export function compareRecitation(key: string, expectedText: string, heardText: string): RecitationResult {
+  export function compareRecitation(
+  key: string,
+  expectedText: string,
+  heardText: string
+): RecitationResult {
   const exp = splitWords(expectedText);
   const heard = splitWords(heardText);
   const e = exp.map(normalizeWord);
@@ -71,6 +79,133 @@ export function compareRecitation(key: string, expectedText: string, heardText: 
     key, words, correct,
     wrong: count("wrong"), missing: count("missing"), extra: count("extra"),
     accuracy: n ? Math.round((correct / n) * 100) : 0,
+    at: Date.now(),
+  };
+}
+export function compareLiveRecitation(
+  key: string,
+  expectedText: string,
+  heardText: string
+): RecitationResult {
+  const exp = splitWords(expectedText);
+  const heard = splitWords(heardText);
+
+  if (!heard.length) {
+    return {
+      key,
+      words: exp.map((word) => ({
+        status: "pending",
+        expected: word,
+      })),
+      correct: 0,
+      wrong: 0,
+      missing: 0,
+      extra: 0,
+      accuracy: 0,
+      at: Date.now(),
+    };
+  }
+
+  const e = exp.map(normalizeWord);
+  const h = heard.map(normalizeWord);
+
+  const n = e.length;
+  const m = h.length;
+
+  const d: number[][] = Array.from(
+    { length: n + 1 },
+    (_, i) =>
+      Array.from(
+        { length: m + 1 },
+        (_, j) => (i === 0 ? j : j === 0 ? i : 0)
+      )
+  );
+
+  for (let i = 1; i <= n; i++) {
+    for (let j = 1; j <= m; j++) {
+      d[i][j] = Math.min(
+        d[i - 1][j - 1] + (e[i - 1] === h[j - 1] ? 0 : 1),
+        d[i - 1][j] + 1,
+        d[i][j - 1] + 1
+      );
+    }
+  }
+
+  let bestI = 0;
+  let bestCost = Infinity;
+
+  for (let i = 0; i <= n; i++) {
+    if (d[i][m] < bestCost || (d[i][m] === bestCost && i > bestI)) {
+      bestCost = d[i][m];
+      bestI = i;
+    }
+  }
+
+  const words: WordResult[] = [];
+  let i = bestI;
+  let j = m;
+
+  while (i > 0 || j > 0) {
+    if (
+      i > 0 &&
+      j > 0 &&
+      d[i][j] ===
+        d[i - 1][j - 1] + (e[i - 1] === h[j - 1] ? 0 : 1)
+    ) {
+      words.push({
+        status: e[i - 1] === h[j - 1] ? "correct" : "wrong",
+        expected: exp[i - 1],
+        heard: heard[j - 1],
+      });
+
+      i--;
+      j--;
+    } else if (i > 0 && d[i][j] === d[i - 1][j] + 1) {
+      words.push({
+        status: "missing",
+        expected: exp[i - 1],
+      });
+
+      i--;
+    } else {
+      words.push({
+        status: "extra",
+        heard: heard[j - 1],
+      });
+
+      j--;
+    }
+  }
+
+  words.reverse();
+
+  for (let k = bestI; k < exp.length; k++) {
+    words.push({
+      status: "pending",
+      expected: exp[k],
+    });
+  }
+
+  const count = (status: WordStatus) =>
+    words.filter((w) => w.status === status).length;
+
+  const correct = count("correct");
+  const wrong = count("wrong");
+  const missing = count("missing");
+  const extra = count("extra");
+
+  const processed = correct + wrong + missing;
+
+  return {
+    key,
+    words,
+    correct,
+    wrong,
+    missing,
+    extra,
+    accuracy: processed
+      ? Math.round((correct / processed) * 100)
+      : 0,
     at: Date.now(),
   };
 }
