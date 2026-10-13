@@ -21,14 +21,15 @@ const STYLE: Record<WordStatus, string> = {
   wrong: "border-red-400/50 bg-red-500/15 text-red-200",
   missing: "border-amber-400/50 bg-amber-500/15 text-amber-200",
   extra: "border-sky-400/50 bg-sky-500/15 text-sky-200",
+  pending: "border-white/10 bg-white/[0.03] text-white/35",
 };
-
 export function RecitationResultCard({ result, lang, best, onRetry, onListen }: {
   result: RecitationResult; lang: Lang; best?: number; onRetry: () => void; onListen: () => void;
 }) {
   const firstErr = useRef<HTMLSpanElement | null>(null);
-  const firstIdx = result.words.findIndex((w) => w.status !== "correct");
-  useEffect(() => { firstErr.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }, [result]);
+const firstIdx = result.words.findIndex(
+  (w) => w.status !== "correct" && w.status !== "pending"
+);  useEffect(() => { firstErr.current?.scrollIntoView({ behavior: "smooth", block: "center" }); }, [result]);
 
   const stats: [L, number, string][] = [
     [T.correct, result.correct, "text-emerald-300"],
