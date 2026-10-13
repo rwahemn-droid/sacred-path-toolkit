@@ -3,8 +3,13 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, ArrowRight, ChevronLeft, ChevronRight, Eye, EyeOff, Mic, Square, RotateCcw, Volume2, GraduationCap, Play, Pause, Repeat2, BookOpen, Circle } from "lucide-react";
 import type { Lang } from "@/lib/i18n";
 import { RECITERS, DEFAULT_RECITER_ID, ayahAudioUrl, type Reciter } from "@/lib/reciters";
-import { compareRecitation, saveResult, getSavedResult, type RecitationResult } from "@/lib/recitation-check";
-import { RecitationResultCard } from "./RecitationResultCard";
+import {
+  compareRecitation,
+  compareLiveRecitation,
+  saveResult,
+  getSavedResult,
+  type RecitationResult
+} from "@/lib/recitation-check";import { RecitationResultCard } from "./RecitationResultCard";
 import { TajweedAyah } from "./TajweedAyah";
 
 // ---------- i18n (5 languages) ----------
@@ -306,12 +311,23 @@ function stopLiveHifz() {
     rec.interimResults = true;
     let transcript = "";
     rec.onstart = () => setChecking(true);
-    rec.onresult = (event: any) => {
-      let s = "";
-      for (let i = 0; i < event.results.length; i++) s += " " + event.results[i][0].transcript;
-      transcript = s;
-    };
-    rec.onerror = (e: any) => { if (e?.error !== "no-speech" && e?.error !== "aborted") setMicError(true); };
+rec.onresult = (event: any) => {
+  let s = "";
+
+  for (let i = 0; i < event.results.length; i++) {
+    s += " " + event.results[i][0].transcript;
+  }
+
+  transcript = s;
+
+  const liveResult = compareLiveRecitation(
+    key,
+    ayah.text,
+    transcript
+  );
+
+  setCheckResult(liveResult);
+};    rec.onerror = (e: any) => { if (e?.error !== "no-speech" && e?.error !== "aborted") setMicError(true); };
     rec.onend = () => {
       setChecking(false);
       if (!transcript.trim()) return;
@@ -430,7 +446,7 @@ function stopLiveHifz() {
               <span className="h-2 w-2 animate-pulse rounded-full bg-red-400" /> 🎙️ …
             </div>
           )}
-          {checkResult && !checking && (
+          {checkResult && (
             <RecitationResultCard result={checkResult} lang={lang} best={getSavedResult(checkResult.key)?.best}
               onRetry={() => { setCheckResult(null); startCheck(); }} onListen={replayAyah} />
           )}
