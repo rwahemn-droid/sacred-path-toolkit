@@ -446,10 +446,6 @@ rec.onresult = (event: any) => {
               <span className="h-2 w-2 animate-pulse rounded-full bg-red-400" /> 🎙️ …
             </div>
           )}
-          {checkResult && (
-            <RecitationResultCard result={checkResult} lang={lang} best={getSavedResult(checkResult.key)?.best}
-              onRetry={() => { setCheckResult(null); startCheck(); }} onListen={replayAyah} />
-          )}
 
           {/* Mode cards */}
           <div className="grid grid-cols-4 gap-2">
@@ -497,7 +493,32 @@ rec.onresult = (event: any) => {
                         className={`cursor-pointer rounded-md transition-colors ${hideQuran ? "" : active ? "bg-sky-400/15 text-white" : "hover:bg-white/5"}`}>
                         {hideQuran && active ? (
                           <>{a.text.split(/\s+/).map((word, index) => <span key={index} className={index < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)}</>
-                        ) : <span className={hideQuran ? "invisible" : ""}>{a.text}</span>}
+                        ) : checkResult && active ? (
+  <>
+    {checkResult.words
+      .filter((w) => w.expected)
+      .map((w, index) => {
+        const cls =
+          w.status === "correct"
+            ? "text-emerald-300"
+            : w.status === "wrong"
+            ? "text-red-300 underline decoration-red-400"
+            : w.status === "missing"
+            ? "text-amber-300"
+            : w.status === "pending"
+            ? "text-white/35"
+            : "text-sky-300";
+
+        return (
+          <span key={index} className={`${cls} transition-colors duration-200`}>
+            {w.expected}{" "}
+          </span>
+        );
+      })}
+  </>
+) : (
+  <span className={hideQuran ? "invisible" : ""}>{a.text}</span>
+)}
                         <span className={`mx-1.5 inline-grid h-6 w-6 place-items-center rounded-full border align-middle text-[10px] leading-none ${active ? "border-sky-300 bg-sky-400/20 text-sky-100" : "border-sky-300/30 text-sky-200/70"}`}>
                           {toArDigits(a.numberInSurah)}
                         </span>
