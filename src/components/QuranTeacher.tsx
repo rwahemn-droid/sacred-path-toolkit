@@ -209,6 +209,8 @@ function startLiveHifz() {
   );
 
   if (!currentAyah) return;
+  const key = `${surahNum}:${ayahNum}`;
+setCheckResult(null);
 
   const expectedWords = normalizeArabic(currentAyah.text)
     .split(/\s+/)
@@ -238,11 +240,18 @@ function startLiveHifz() {
 
   recognition.onresult = (event: any) => {
     let transcript = "";
+    
+for (let i = 0; i < event.results.length; i++) {
+  transcript += " " + event.results[i][0].transcript;
+}
+    
+const liveResult = compareLiveRecitation(
+  key,
+  currentAyah.text,
+  transcript
+);
 
-    for (let i = 0; i < event.results.length; i++) {
-      transcript += " " + event.results[i][0].transcript;
-    }
-
+setCheckResult(liveResult);
     const heardWords = normalizeArabic(transcript)
       .split(/\s+/)
       .filter(Boolean);
@@ -432,12 +441,52 @@ rec.onresult = (event: any) => {
             </div>
             <p dir="rtl" lang="ar" className="mt-2 text-center font-quran text-lg text-sky-100/80">{surah?.name ?? ""}</p>
             <div dir="rtl" lang="ar" className="mt-3 min-h-[5rem] text-center font-quran text-[1.7rem] leading-[2.2] text-white sm:text-[1.9rem]">
-              {!currentAyah ? (
-                <span className="text-sm text-white/40">{t(S.loading, lang)}</span>
-              ) : hideQuran ? (
-                currentAyah.text.split(/\s+/).map((word, i) => <span key={i} className={i < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)
-              ) : <TajweedAyah surah={surahNum} ayah={ayahNum} fallback={currentAyah.text} lang={lang} onListen={replayAyah} onPractice={startCheck} />}
-              {currentAyah && <span className="mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border border-sky-300/40 align-middle text-xs text-sky-200">{toArDigits(ayahNum)}</span>}
+{!currentAyah ? (
+  <span className="text-sm text-white/40">
+    {t(S.loading, lang)}
+  </span>
+) : hideQuran ? (
+  checkResult ? (
+    <>
+      {checkResult.words
+        .filter((w) => w.expected)
+        .map((w, index) => {
+          const cls =
+            w.status === "correct"
+              ? "visible text-emerald-300"
+              : w.status === "wrong"
+              ? "visible text-red-300 underline decoration-red-400"
+              : w.status === "missing"
+              ? "visible text-amber-300"
+              : "invisible";
+
+          return (
+            <span
+              key={index}
+              className={`${cls} transition-colors duration-200`}
+            >
+              {w.expected}{" "}
+            </span>
+          );
+        })}
+    </>
+  ) : (
+    currentAyah.text.split(/\s+/).map((word, i) => (
+      <span key={i} className="invisible">
+        {word}{" "}
+      </span>
+    ))
+  )
+) : (
+  <TajweedAyah
+    surah={surahNum}
+    ayah={ayahNum}
+    fallback={currentAyah.text}
+    lang={lang}
+    onListen={replayAyah}
+    onPractice={startCheck}
+  />
+)}              {currentAyah && <span className="mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border border-sky-300/40 align-middle text-xs text-sky-200">{toArDigits(ayahNum)}</span>}
             </div>
           </div>
 
@@ -491,8 +540,40 @@ rec.onresult = (event: any) => {
                     return (
                       <span key={a.numberInSurah} ref={active ? currentAyahRef : undefined} onClick={() => setAyahNum(a.numberInSurah)}
                         className={`cursor-pointer rounded-md transition-colors ${hideQuran ? "" : active ? "bg-sky-400/15 text-white" : "hover:bg-white/5"}`}>
-                        {hideQuran && active ? (
-                          <>{a.text.split(/\s+/).map((word, index) => <span key={index} className={index < recognizedWords ? "visible" : "invisible"}>{word}{" "}</span>)}</>
+{hideQuran && active ? (
+  checkResult ? (
+    <>
+      {checkResult.words
+        .filter((w) => w.expected)
+        .map((w, index) => {
+          const cls =
+            w.status === "correct"
+              ? "visible text-emerald-300"
+              : w.status === "wrong"
+              ? "visible text-red-300 underline decoration-red-400"
+              : w.status === "missing"
+              ? "visible text-amber-300"
+              : "invisible";
+
+          return (
+            <span
+              key={index}
+              className={`${cls} transition-colors duration-200`}
+            >
+              {w.expected}{" "}
+            </span>
+          );
+        })}
+    </>
+  ) : (
+    <>
+      {a.text.split(/\s+/).map((word, index) => (
+        <span key={index} className="invisible">
+          {word}{" "}
+        </span>
+      ))}
+    </>
+  )
                         ) : checkResult && active ? (
   <>
     {checkResult.words
