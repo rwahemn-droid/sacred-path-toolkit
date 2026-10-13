@@ -341,8 +341,21 @@ rec.onresult = (event: any) => {
       setChecking(false);
       if (!transcript.trim()) return;
       const r = compareRecitation(key, ayah.text, transcript);
+const liveFinal = compareLiveRecitation(key, ayah.text, transcript);
+      
       saveResult(r);
       setCheckResult(r);
+const finishedAyah = !liveFinal.words.some(
+  (w) => w.status === "pending"
+);
+
+if (finishedAyah) {
+  setTimeout(() => {
+    goAyah(1);
+    setCheckResult(null);
+  }, 1200);
+}
+      
     };
     checkRef.current = rec;
     rec.start();
