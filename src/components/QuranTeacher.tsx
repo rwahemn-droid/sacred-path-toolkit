@@ -87,8 +87,13 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const reciter: Reciter = RECITERS.find((r) => r.id === reciterId) || RECITERS[0];
   const [checking, setChecking] = useState(false);
   const [checkResult, setCheckResult] = useState<RecitationResult | null>(null);
+  const currentPendingIndex =
+  checkResult?.words
+    .filter((w) => w.expected)
+    .findIndex((w) => w.status === "pending") ?? -1;
   const checkRef = useRef<any>(null);
   const continueReciteRef = useRef(false);
+  const continueHifzRef = useRef(false);
   useEffect(() => {
     checkRef.current?.abort?.();
     setChecking(false);
@@ -105,6 +110,15 @@ useEffect(() => {
   return () => window.clearTimeout(timer);
 }, [ayahNum]);
 
+useEffect(() => {
+  if (!continueHifzRef.current) return;
+
+  const timer = window.setTimeout(() => {
+    startLiveHifz(true);
+  }, 350);
+
+  return () => window.clearTimeout(timer);
+}, [ayahNum]);
   
   const { data: surahs } = useQuery<SurahMeta[]>({
     queryKey: ["surah-list"],
@@ -205,7 +219,9 @@ useEffect(() => {
     playerRef.current.currentTime = value;
     setAudioProgress(value);
   }
-function startLiveHifz() {
+function startLiveHifz(continueToNext = false) {
+  continueHifzRef.current = continueToNext;
+  
   const SpeechRecognition =
     (window as any).SpeechRecognition ||
     (window as any).webkitSpeechRecognition;
@@ -311,10 +327,10 @@ if (finishedAyah) {
 }
 
 function stopLiveHifz() {
+  continueHifzRef.current = false;
   recognitionRef.current?.stop();
   setLiveListening(false);
 }
-
   // Recitation mistake detection (word-level, v1)
 function startCheck(continueToNext = false) {
   continueReciteRef.current = continueToNext;
@@ -526,7 +542,7 @@ function stopCheck() {
             <button onClick={listening ? stopListening : listen} className={`${mode} ${listening ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`}>
               <Volume2 className="h-5 w-5" /><span className="truncate">{t(S.listen, lang)}</span>
             </button>
-            <button onClick={() => { if (hideQuran) { if (liveListening) stopLiveHifz(); else startLiveHifz(); } else if (checking) stopCheck(); else startCheck(true); }} className={`${mode} ${liveListening || checking ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
+            <button onClick={() => { if (hideQuran) { if (liveListening) stopLiveHifz(); else startLiveHifz(true); } else if (checking) stopCheck(); else startCheck(true); }} className={`${mode} ${liveListening || checking ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
               {liveListening || checking ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">Recite</span>
             </button>
             <button onClick={() => setHideQuran((v) => !v)} className={`${mode} ${hideQuran ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`} aria-label={t(S.hifzMode, lang)}>
@@ -583,7 +599,11 @@ function stopCheck() {
           return (
             <span
               key={index}
-              className={`${cls} transition-colors duration-200`}
+              className={`${
+  w.status === "pending" && index === currentPendingIndex
+    ? "visible rounded-md bg-sky-400/20 px-1 text-sky-200 ring-1 ring-sky-300/40"
+    : cls
+} transition-colors duration-200`}
             >
               {w.expected}{" "}
             </span>
@@ -616,8 +636,14 @@ function stopCheck() {
             : "text-sky-300";
 
         return (
-          <span key={index} className={`${cls} transition-colors duration-200`}>
-            {w.expected}{" "}
+<span
+  key={index}
+  className={`${cls} ${
+    index === currentPendingIndex
+      ? "rounded-md bg-sky-400/20 px-1 ring-1 ring-sky-300/40"
+      : ""
+  } transition-colors duration-200`}
+>            {w.expected}{" "}
           </span>
         );
       })}
