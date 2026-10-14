@@ -334,61 +334,141 @@ function stopLiveHifz() {
   // Recitation mistake detection (word-level, v1)
 function startCheck(continueToNext = false) {
   continueReciteRef.current = continueToNext;
-  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) { setMicError(true); return; }
-    const ayah = ayahs?.find((a) => a.numberInSurah === ayahNum);
-    if (!ayah) return;
-    stopListening();
-    setMicError(false);
-    setCheckResult(null);
-    const key = `${surahNum}:${ayahNum}`;
-    const rec = new SR();
-    rec.lang = "ar-SA";
-    rec.continuous = true;
-    rec.interimResults = true;
-    let transcript = "";
-    rec.onstart = () => setChecking(true);
-rec.onresult = (event: any) => {
-  let s = "";
 
-  for (let i = 0; i < event.results.length; i++) {
-    s += " " + event.results[i][0].transcript;
+  const SR =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SR) {
+    setMicError(true);
+    return;
   }
 
-  transcript = s;
+  const ayah = ayahs?.find((a) => a.numberInSurah === ayahNum);
+  if (!ayah) return;
 
-  const liveResult = compareLiveRecitation(
-    key,
-    ayah.text,
-    transcript
-  );
+  stopListening();
+  setMicError(false);
+  setCheckResult(null);
 
-  setCheckResult(liveResult);
-};    rec.onerror = (e: any) => { if (e?.error !== "no-speech" && e?.error !== "aborted") setMicError(true); };
-    rec.onend = () => {
-      setChecking(false);
-      if (!transcript.trim()) return;
-      const r = compareRecitation(key, ayah.text, transcript);
-const liveFinal = compareLiveRecitation(key, ayah.text, transcript);
-      
-      saveResult(r);
-      setCheckResult(r);
-const finishedAyah = !liveFinal.words.some(
-  (w) => w.status === "pending"
-);
+  const key = `${surahNum}:${ayahNum}`;
+  const rec = new SR();
 
-if (continueReciteRef.current && finishedAyah) {
-  setTimeout(() => {
-    goAyah(1);
-    setCheckResult(null);
-  }, 1200);
-}
-      
-    };
-    checkRef.current = rec;
-    rec.start();
-  }
-function stopCheck() {
+  rec.lang = "ar-SA";
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  let transcript = "";
+  let advancing = false;
+
+  rec.onstart = () => {
+    setChecking(true);
+  };
+
+  rec.onresult = (event: any) => {
+    let s = "";
+
+    for (let i = 0; i < event.results.length; i++) {
+      s += " " + event.results[i][0].transcript;
+    }
+
+    transcript = s;
+
+    const liveResult = compareLiveRecitation(
+      key,
+      ayah.text,
+      transcript
+    );
+
+    setCheckResult(liveResult);
+
+    // Move immediately when the current ayah has been fully processed
+    const finishedAyah = !liveResult.words.some(
+      (w) => w.status === "pending"
+    );
+
+    if (
+      continueReciteRef.current &&
+      finishedAyah &&
+      !advancing
+    ) {
+      advancing = true;
+
+      const finalResult = compareRecitation(
+        key,
+        ayah.text,
+        transcript
+      );
+
+      saveResult(finalResult);
+      setCheckResult(finalResult);
+
+      rec.stop();
+
+      window.setTimeout(() => {
+        goAyah(1);
+        setCheckResult(null);
+      }, 500);
+    }
+  };
+
+  rec.onerror = (e: any) => {
+    if (e?.error !== "no-speech" && e?.error !== "aborted") {
+      setMicError(true);
+    }
+  };
+
+  rec.onend = () => {
+    setChecking(false);
+
+    // We already moved to the next ayah
+    if (advancing) return;
+
+    if (transcript.trim()) {
+      const result = compareRecitation(
+        key,
+        ayah.text,
+        transcript
+      );
+
+      saveResult(result);
+      setCheckResult(result);
+
+      const liveFinal = compareLiveRecitation(
+        key,
+        ayah.text,
+        transcript
+      );
+
+      const finishedAyah = !liveFinal.words.some(
+        (w) => w.status === "pending"
+      );
+
+      if (
+        continueReciteRef.current &&
+        finishedAyah
+      ) {
+        window.setTimeout(() => {
+          goAyah(1);
+          setCheckResult(null);
+        }, 500);
+
+        return;
+      }
+    }
+
+    // Browser stopped listening before the ayah was finished:
+    // start listening again on the SAME ayah.
+    if (continueReciteRef.current) {
+      window.setTimeout(() => {
+        startCheck(true);
+      }, 300);
+    }
+  };
+
+  checkRef.current = rec;
+  rec.start();
+}function stopCheck() {
   continueReciteRef.current = false;
   checkRef.current?.stop();
 }  async function startRecording() {
@@ -504,7 +584,11 @@ function stopCheck() {
           return (
             <span
               key={index}
-              className={`${cls} transition-colors duration-200`}
+              className={`${
+  w.status === "pending" && index === currentPendingIndex
+    ? "visible rounded-md bg-sky-400/20 px-1 text-sky-200 ring-1 ring-sky-300/40"
+    : cls
+} transition-colors duration-200`}
             >
               {w.expected}{" "}
             </span>
