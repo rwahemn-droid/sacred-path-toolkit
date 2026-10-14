@@ -247,7 +247,8 @@ setCheckResult(null);
   setMicError(false);
 
   const recognition = new SpeechRecognition();
-
+  let advancing = false;
+  
   recognition.lang = "ar-SA";
   recognition.continuous = true;
   recognition.interimResults = true;
@@ -256,10 +257,15 @@ setCheckResult(null);
     setLiveListening(true);
   };
 
-  recognition.onend = () => {
-    setLiveListening(false);
-  };
+recognition.onend = () => {
+  setLiveListening(false);
 
+  if (!advancing && continueHifzRef.current) {
+    window.setTimeout(() => {
+      startLiveHifz(true);
+    }, 300);
+  }
+};
   recognition.onerror = () => {
     setLiveListening(false);
     setMicError(true);
@@ -312,6 +318,7 @@ const finishedAyah =
   );
 
 if (finishedAyah) {
+advancing = true;
   recognition.onresult = null;
   recognition.stop();
 
