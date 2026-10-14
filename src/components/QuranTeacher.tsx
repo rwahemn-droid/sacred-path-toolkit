@@ -88,13 +88,24 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const [checking, setChecking] = useState(false);
   const [checkResult, setCheckResult] = useState<RecitationResult | null>(null);
   const checkRef = useRef<any>(null);
+  const continueReciteRef = useRef(false);
   useEffect(() => {
     checkRef.current?.abort?.();
     setChecking(false);
     setCheckResult(null);
   }, [surahNum, ayahNum]);
   useEffect(() => () => checkRef.current?.abort?.(), []);
+useEffect(() => {
+  if (!continueReciteRef.current) return;
 
+  const timer = window.setTimeout(() => {
+    startCheck(true);
+  }, 350);
+
+  return () => window.clearTimeout(timer);
+}, [ayahNum]);
+
+  
   const { data: surahs } = useQuery<SurahMeta[]>({
     queryKey: ["surah-list"],
     staleTime: Infinity,
@@ -305,8 +316,9 @@ function stopLiveHifz() {
 }
 
   // Recitation mistake detection (word-level, v1)
-  function startCheck() {
-    const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+function startCheck(continueToNext = false) {
+  continueReciteRef.current = continueToNext;
+  const SR = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     if (!SR) { setMicError(true); return; }
     const ayah = ayahs?.find((a) => a.numberInSurah === ayahNum);
     if (!ayah) return;
@@ -349,7 +361,7 @@ const finishedAyah = !liveFinal.words.some(
   (w) => w.status === "pending"
 );
 
-if (finishedAyah) {
+if (continueReciteRef.current && finishedAyah) {
   setTimeout(() => {
     goAyah(1);
     setCheckResult(null);
@@ -360,10 +372,10 @@ if (finishedAyah) {
     checkRef.current = rec;
     rec.start();
   }
-  function stopCheck() {
-    checkRef.current?.stop();
-  }
-  async function startRecording() {
+function stopCheck() {
+  continueReciteRef.current = false;
+  checkRef.current?.stop();
+}  async function startRecording() {
     setMicError(false);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -514,7 +526,7 @@ if (finishedAyah) {
             <button onClick={listening ? stopListening : listen} className={`${mode} ${listening ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`}>
               <Volume2 className="h-5 w-5" /><span className="truncate">{t(S.listen, lang)}</span>
             </button>
-            <button onClick={() => { if (hideQuran) { if (liveListening) stopLiveHifz(); else startLiveHifz(); } else if (checking) stopCheck(); else startCheck(); }} className={`${mode} ${liveListening || checking ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
+            <button onClick={() => { if (hideQuran) { if (liveListening) stopLiveHifz(); else startLiveHifz(); } else if (checking) stopCheck(); else startCheck(true); }} className={`${mode} ${liveListening || checking ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
               {liveListening || checking ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">Recite</span>
             </button>
             <button onClick={() => setHideQuran((v) => !v)} className={`${mode} ${hideQuran ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`} aria-label={t(S.hifzMode, lang)}>
