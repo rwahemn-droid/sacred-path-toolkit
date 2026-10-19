@@ -390,10 +390,14 @@ function startCheck(continueToNext = false) {
     setCheckResult(liveResult);
 
     // Move immediately when the current ayah has been fully processed
-    const finishedAyah = !liveResult.words.some(
-      (w) => w.status === "pending"
-    );
+const finishedAyah =
+  !liveResult.words.some((w) => w.status === "pending") &&
+  !liveResult.words.some(
+    (w) => w.status === "wrong" || w.status === "missing"
+  );
 
+
+    
     if (
       continueReciteRef.current &&
       finishedAyah &&
@@ -447,10 +451,13 @@ function startCheck(continueToNext = false) {
         transcript
       );
 
-      const finishedAyah = !liveFinal.words.some(
-        (w) => w.status === "pending"
-      );
+const finishedAyah =
+  !liveFinal.words.some((w) => w.status === "pending") &&
+  !liveFinal.words.some(
+    (w) => w.status === "wrong" || w.status === "missing"
+  );
 
+      
       if (
         continueReciteRef.current &&
         finishedAyah
