@@ -308,15 +308,10 @@ setCheckResult(liveResult);
     }
 
     setRecognizedWords((prev) => Math.max(prev, matched));
-const lastWord = expectedWords[expectedWords.length - 1];
 
-const finishedAyah =
-  matched >= expectedWords.length ||
-  (
-    heardWords.length >= Math.max(1, expectedWords.length - 1) &&
-    heardWords.slice(-3).includes(lastWord)
-  );
 
+    const finishedAyah = matched >= expectedWords.length;
+    
 if (finishedAyah) {
 advancing = true;
   recognition.onresult = null;
