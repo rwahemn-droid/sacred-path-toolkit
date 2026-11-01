@@ -509,6 +509,7 @@ const finishedAyah =
   checkRef.current?.stop();
 }  async function startRecording() {
     setMicError(false);
+    stopListening();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
@@ -600,9 +601,9 @@ const finishedAyah =
             <div dir="rtl" lang="ar" className="mt-3 min-h-[5rem] text-center font-quran text-[1.7rem] leading-[2.2] text-white sm:text-[1.9rem]">
 {!currentAyah ? (
   <span className="text-sm text-white/40">
-    {t(S.loading, lang)}
+    {surahTextError ? t(S.loadError, lang) : t(S.loading, lang)}
   </span>
-) : hideQuran ? (
+) : hideQuran && !peek ? (
   checkResult ? (
     <>
       {checkResult.words
