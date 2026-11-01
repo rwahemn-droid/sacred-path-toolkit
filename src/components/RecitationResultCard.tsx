@@ -43,7 +43,7 @@ const firstIdx = result.words.findIndex(
       <div dir="rtl" lang="ar" className="flex flex-wrap justify-center gap-1.5">
         {result.words.map((w, i) => (
           <span key={i} ref={i === firstIdx ? firstErr : undefined}
-            className={`rounded-xl border px-2 py-1 font-amiri text-lg leading-snug ${STYLE[w.status]} ${i === firstIdx ? "ring-2 ring-offset-2 ring-offset-[#081225] ring-current animate-pulse" : ""}`}>
+            className={`rounded-xl border px-2 py-1 font-quran text-lg leading-snug ${STYLE[w.status]} ${i === firstIdx ? "ring-2 ring-offset-2 ring-offset-[#081225] ring-current animate-pulse" : ""}`}>
             {w.status === "extra" ? `+ ${w.heard}` : w.expected}
             {w.status === "wrong" && w.heard && <span className="ms-1 text-xs opacity-70">({w.heard})</span>}
             {w.status === "missing" && <span className="ms-1 text-xs">⚠️</span>}

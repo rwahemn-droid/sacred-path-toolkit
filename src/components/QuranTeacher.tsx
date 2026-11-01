@@ -31,6 +31,12 @@ const S = {
   hifzMode: { ku: "دۆخی حیفز", bad: "مۆدا حیفزێ", kmr: "Moda hifzê", ar: "وضع الحفظ", en: "Hifz Mode" },
   reciter: { ku: "قاری", bad: "قاری", kmr: "Qarî", ar: "القارئ", en: "Reciter" },
   replay: { ku: "دووبارەکردنەوە", bad: "دووبارەکرن", kmr: "Dîsa bike", ar: "إعادة الآية", en: "Replay ayah" },
+  recite: { ku: "خوێندنەوە", bad: "خواندن", kmr: "Xwendin", ar: "تلاوة", en: "Recite" },
+  record: { ku: "تۆمارکردن", bad: "تۆمارکرن", kmr: "Tomarkirin", ar: "تسجيل", en: "Record" },
+  audioError: { ku: "دەنگەکە بارنەکرا، دووبارە هەوڵبدەوە", bad: "دەنگ بارنەبوو، دیاسا هەوڵ بدە", kmr: "Deng nehat barkirin, dîsa biceribîne", ar: "تعذّر تحميل الصوت، حاول مجدداً", en: "Audio unavailable, please try again" },
+  loadError: { ku: "نەتوانرا دەقەکە باربکرێت", bad: "دەق نەهاتە بارکرن", kmr: "Nivîs nehat barkirin", ar: "تعذّر تحميل النص", en: "Could not load the text" },
+  retry: { ku: "دووبارە هەوڵبدەوە", bad: "دیاسا هەوڵ بدە", kmr: "Dîsa biceribîne", ar: "إعادة المحاولة", en: "Retry" },
+  peek: { ku: "بینینی ئایەتەکە", bad: "دیتنا ئایەتێ", kmr: "Ayetê bibîne", ar: "إلقاء نظرة على الآية", en: "Peek at ayah" },
 } as const;
 function t(l: L, lang: Lang) {
   return l[lang as keyof L] ?? l.en;
@@ -43,6 +49,15 @@ type SurahMeta = { number: number; name: string; englishName: string; numberOfAy
 type Ayah = { number: number; text: string; numberInSurah: number };
 
 const RECITER_KEY = "ibadah:reciter";
+const POS_KEY = "ibadah:teacher-pos";
+function savedPos(): { s: number; a: number } {
+  try {
+    if (typeof window === "undefined") return { s: 1, a: 1 };
+    const p = JSON.parse(localStorage.getItem(POS_KEY) || "null");
+    if (p && p.s >= 1 && p.s <= 114 && p.a >= 1) return { s: p.s, a: p.a };
+  } catch { /* ignore */ }
+  return { s: 1, a: 1 };
+}
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
 function normalizeArabic(text: string) {
   return text
@@ -60,6 +75,12 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
 
   const [surahNum, setSurahNum] = useState(1);
   const [ayahNum, setAyahNum] = useState(1);
+  // restore saved position after hydration (localStorage is client-only;
+  // reading it in a useState initializer causes an SSR hydration mismatch)
+  useEffect(() => {
+    const p = savedPos();
+    if (p.s !== 1 || p.a !== 1) { setSurahNum(p.s); setAyahNum(p.a); }
+  }, []);
   const [hideQuran, setHideQuran] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recSecs, setRecSecs] = useState(0);
@@ -78,6 +99,8 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const [reciterId, setReciterId] = useState(() => typeof window !== "undefined" ? localStorage.getItem(RECITER_KEY) || DEFAULT_RECITER_ID : DEFAULT_RECITER_ID);
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [audioError, setAudioError] = useState(false);
+  const [peek, setPeek] = useState(false);
   const recognitionRef = useRef<any>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -125,6 +148,7 @@ useEffect(() => {
     staleTime: Infinity,
     queryFn: async () => {
       const res = await fetch("https://api.alquran.cloud/v1/surah");
+      if (!res.ok) throw new Error("surah list failed");
       const j = await res.json();
       return j.data as SurahMeta[];
     },
@@ -132,11 +156,12 @@ useEffect(() => {
   const surah = surahs?.find((s) => s.number === surahNum);
 
   // Full surah text (same alquran.cloud source the app already uses)
-  const { data: ayahs, isFetching } = useQuery<Ayah[]>({
+  const { data: ayahs, isFetching, isError: surahTextError, refetch: refetchSurahText } = useQuery<Ayah[]>({
     queryKey: ["teacher-surah", surahNum],
     staleTime: Infinity,
     queryFn: async () => {
       const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/quran-uthmani`);
+      if (!res.ok) throw new Error("surah text failed");
       const j = await res.json();
       let list = j.data.ayahs as Ayah[];
       // Strip the inline Bismillah from the first ayah (except 1 & 9) since we render it as a header
@@ -165,7 +190,14 @@ useEffect(() => {
     clearRecording();
     playerRef.current?.pause();
     setListening(false);
+    setPeek(false);
+    setAudioError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surahNum, ayahNum]);
+
+  // preserve the user's selected surah + progress
+  useEffect(() => {
+    try { localStorage.setItem(POS_KEY, JSON.stringify({ s: surahNum, a: ayahNum })); } catch { /* ignore */ }
   }, [surahNum, ayahNum]);
 
   // keep the current ayah in view while navigating
@@ -178,6 +210,7 @@ useEffect(() => {
     const a = new Audio(ayahAudioUrl(reciter, surahNum, ayahNum));
     playerRef.current = a;
     setListening(true);
+    setAudioError(false);
     setAudioProgress(0);
     setAudioDuration(0);
     a.onloadedmetadata = () => setAudioDuration(Number.isFinite(a.duration) ? a.duration : 0);
@@ -190,8 +223,8 @@ useEffect(() => {
     setAyahNum(ayahNum + 1);
   }
 };
-    a.onerror = () => setListening(false);
-    a.play().catch(() => setListening(false));
+    a.onerror = () => { setListening(false); setAudioError(true); };
+    a.play().catch(() => { setListening(false); setAudioError(true); });
   }
   function stopListening() {
     playerRef.current?.pause();
@@ -482,6 +515,7 @@ const finishedAyah =
   checkRef.current?.stop();
 }  async function startRecording() {
     setMicError(false);
+    stopListening();
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       const mr = new MediaRecorder(stream);
@@ -573,9 +607,9 @@ const finishedAyah =
             <div dir="rtl" lang="ar" className="mt-3 min-h-[5rem] text-center font-quran text-[1.7rem] leading-[2.2] text-white sm:text-[1.9rem]">
 {!currentAyah ? (
   <span className="text-sm text-white/40">
-    {t(S.loading, lang)}
+    {surahTextError ? t(S.loadError, lang) : t(S.loading, lang)}
   </span>
-) : hideQuran ? (
+) : hideQuran && !peek ? (
   checkResult ? (
     <>
       {checkResult.words
@@ -622,6 +656,11 @@ const finishedAyah =
   />
 )}              {currentAyah && <span className="mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border border-sky-300/40 align-middle text-xs text-sky-200">{toArDigits(ayahNum)}</span>}
             </div>
+            {hideQuran && currentAyah && !checkResult && (
+              <button onClick={() => setPeek((v) => !v)} className="mx-auto mt-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition active:scale-95 hover:bg-white/10" aria-label={t(S.peek, lang)}>
+                {peek ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />} {t(S.peek, lang)}
+              </button>
+            )}
           </div>
 
           {checking && (
@@ -636,13 +675,13 @@ const finishedAyah =
               <Volume2 className="h-5 w-5" /><span className="truncate">{t(S.listen, lang)}</span>
             </button>
             <button onClick={() => { if (hideQuran) { if (liveListening) stopLiveHifz(); else startLiveHifz(true); } else if (checking) stopCheck(); else startCheck(true); }} className={`${mode} ${liveListening || checking ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
-              {liveListening || checking ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">Recite</span>
+              {liveListening || checking ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">{t(S.recite, lang)}</span>
             </button>
             <button onClick={() => setHideQuran((v) => !v)} className={`${mode} ${hideQuran ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`} aria-label={t(S.hifzMode, lang)}>
               {hideQuran ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}<span className="truncate">{hideQuran ? t(S.showQuran, lang) : t(S.hifzMode, lang)}</span>
             </button>
             <button onClick={recording ? stopRecording : startRecording} className={`${mode} ${recording ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
-              {recording ? <Square className="h-5 w-5" /> : <Circle className="h-5 w-5" />}<span className="truncate">{recording ? t(S.stopRec, lang) : "Record"}</span>
+              {recording ? <Square className="h-5 w-5" /> : <Circle className="h-5 w-5" />}<span className="truncate">{recording ? t(S.stopRec, lang) : t(S.record, lang)}</span>
             </button>
           </div>
 
@@ -658,10 +697,16 @@ const finishedAyah =
             </div>
           )}
           {micError && <p className="rounded-2xl border border-red-400/20 bg-red-500/10 py-2 text-center text-xs text-red-200">{t(S.micError, lang)}</p>}
+          {audioError && <p className="rounded-2xl border border-amber-400/20 bg-amber-500/10 py-2 text-center text-xs text-amber-200">{t(S.audioError, lang)}</p>}
 
           {/* Full surah page */}
           <div dir="rtl" lang="ar" className={`${glass} px-4 py-6 sm:px-6`}>
-            {isFetching || !ayahs ? (
+            {surahTextError ? (
+              <p className="text-center text-sm text-red-200">
+                {t(S.loadError, lang)}{" "}
+                <button onClick={() => refetchSurahText()} className="underline underline-offset-2">{t(S.retry, lang)}</button>
+              </p>
+            ) : isFetching || !ayahs ? (
               <p className="text-center text-sm text-white/40">{t(S.loading, lang)}</p>
             ) : (
               <div className={hideQuran ? "select-none" : ""}>
