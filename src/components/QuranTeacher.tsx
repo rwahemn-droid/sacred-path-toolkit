@@ -650,6 +650,11 @@ const finishedAyah =
   />
 )}              {currentAyah && <span className="mx-1.5 inline-grid h-7 w-7 place-items-center rounded-full border border-sky-300/40 align-middle text-xs text-sky-200">{toArDigits(ayahNum)}</span>}
             </div>
+            {hideQuran && currentAyah && !checkResult && (
+              <button onClick={() => setPeek((v) => !v)} className="mx-auto mt-3 flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-[11px] text-white/70 transition active:scale-95 hover:bg-white/10" aria-label={t(S.peek, lang)}>
+                {peek ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />} {t(S.peek, lang)}
+              </button>
+            )}
           </div>
 
           {checking && (
@@ -664,13 +669,13 @@ const finishedAyah =
               <Volume2 className="h-5 w-5" /><span className="truncate">{t(S.listen, lang)}</span>
             </button>
             <button onClick={() => { if (hideQuran) { if (liveListening) stopLiveHifz(); else startLiveHifz(true); } else if (checking) stopCheck(); else startCheck(true); }} className={`${mode} ${liveListening || checking ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
-              {liveListening || checking ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">Recite</span>
+              {liveListening || checking ? <Square className="h-5 w-5" /> : <Mic className="h-5 w-5" />}<span className="truncate">{t(S.recite, lang)}</span>
             </button>
             <button onClick={() => setHideQuran((v) => !v)} className={`${mode} ${hideQuran ? "border-sky-300/50 bg-sky-400/15 text-sky-200" : modeOff}`} aria-label={t(S.hifzMode, lang)}>
               {hideQuran ? <Eye className="h-5 w-5" /> : <EyeOff className="h-5 w-5" />}<span className="truncate">{hideQuran ? t(S.showQuran, lang) : t(S.hifzMode, lang)}</span>
             </button>
             <button onClick={recording ? stopRecording : startRecording} className={`${mode} ${recording ? "border-red-400/50 bg-red-500/10 text-red-200" : modeOff}`}>
-              {recording ? <Square className="h-5 w-5" /> : <Circle className="h-5 w-5" />}<span className="truncate">{recording ? t(S.stopRec, lang) : "Record"}</span>
+              {recording ? <Square className="h-5 w-5" /> : <Circle className="h-5 w-5" />}<span className="truncate">{recording ? t(S.stopRec, lang) : t(S.record, lang)}</span>
             </button>
           </div>
 
@@ -686,10 +691,16 @@ const finishedAyah =
             </div>
           )}
           {micError && <p className="rounded-2xl border border-red-400/20 bg-red-500/10 py-2 text-center text-xs text-red-200">{t(S.micError, lang)}</p>}
+          {audioError && <p className="rounded-2xl border border-amber-400/20 bg-amber-500/10 py-2 text-center text-xs text-amber-200">{t(S.audioError, lang)}</p>}
 
           {/* Full surah page */}
           <div dir="rtl" lang="ar" className={`${glass} px-4 py-6 sm:px-6`}>
-            {isFetching || !ayahs ? (
+            {surahTextError ? (
+              <p className="text-center text-sm text-red-200">
+                {t(S.loadError, lang)}{" "}
+                <button onClick={() => refetchSurahText()} className="underline underline-offset-2">{t(S.retry, lang)}</button>
+              </p>
+            ) : isFetching || !ayahs ? (
               <p className="text-center text-sm text-white/40">{t(S.loading, lang)}</p>
             ) : (
               <div className={hideQuran ? "select-none" : ""}>
