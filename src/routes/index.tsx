@@ -88,6 +88,10 @@ export const Route = createFileRoute("/")({
     meta: [
       { title: "IbadahPro — Quran, Prayer, Dhikr" },
       { name: "description", content: "Quran, prayer times, morning & evening adhkar, tasbih — Kurdish / Arabic / English." },
+      { property: "og:title", content: "IbadahPro — Quran, Prayer, Dhikr" },
+      { property: "og:description", content: "Quran, prayer times, morning & evening adhkar, tasbih — Kurdish / Arabic / English." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
     ],
   }),
 });
