@@ -73,8 +73,14 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const PrevIcon = rtl ? ChevronRight : ChevronLeft;
   const NextIcon = rtl ? ChevronLeft : ChevronRight;
 
-  const [surahNum, setSurahNum] = useState(() => savedPos().s);
-  const [ayahNum, setAyahNum] = useState(() => savedPos().a);
+  const [surahNum, setSurahNum] = useState(1);
+  const [ayahNum, setAyahNum] = useState(1);
+  // restore saved position after hydration (localStorage is client-only;
+  // reading it in a useState initializer causes an SSR hydration mismatch)
+  useEffect(() => {
+    const p = savedPos();
+    if (p.s !== 1 || p.a !== 1) { setSurahNum(p.s); setAyahNum(p.a); }
+  }, []);
   const [hideQuran, setHideQuran] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recSecs, setRecSecs] = useState(0);
