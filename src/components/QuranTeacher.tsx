@@ -31,6 +31,12 @@ const S = {
   hifzMode: { ku: "دۆخی حیفز", bad: "مۆدا حیفزێ", kmr: "Moda hifzê", ar: "وضع الحفظ", en: "Hifz Mode" },
   reciter: { ku: "قاری", bad: "قاری", kmr: "Qarî", ar: "القارئ", en: "Reciter" },
   replay: { ku: "دووبارەکردنەوە", bad: "دووبارەکرن", kmr: "Dîsa bike", ar: "إعادة الآية", en: "Replay ayah" },
+  recite: { ku: "خوێندنەوە", bad: "خواندن", kmr: "Xwendin", ar: "تلاوة", en: "Recite" },
+  record: { ku: "تۆمارکردن", bad: "تۆمارکرن", kmr: "Tomarkirin", ar: "تسجيل", en: "Record" },
+  audioError: { ku: "دەنگەکە بارنەکرا، دووبارە هەوڵبدەوە", bad: "دەنگ بارنەبوو، دیاسا هەوڵ بدە", kmr: "Deng nehat barkirin, dîsa biceribîne", ar: "تعذّر تحميل الصوت، حاول مجدداً", en: "Audio unavailable, please try again" },
+  loadError: { ku: "نەتوانرا دەقەکە باربکرێت", bad: "دەق نەهاتە بارکرن", kmr: "Nivîs nehat barkirin", ar: "تعذّر تحميل النص", en: "Could not load the text" },
+  retry: { ku: "دووبارە هەوڵبدەوە", bad: "دیاسا هەوڵ بدە", kmr: "Dîsa biceribîne", ar: "إعادة المحاولة", en: "Retry" },
+  peek: { ku: "بینینی ئایەتەکە", bad: "دیتنا ئایەتێ", kmr: "Ayetê bibîne", ar: "إلقاء نظرة على الآية", en: "Peek at ayah" },
 } as const;
 function t(l: L, lang: Lang) {
   return l[lang as keyof L] ?? l.en;
@@ -43,6 +49,15 @@ type SurahMeta = { number: number; name: string; englishName: string; numberOfAy
 type Ayah = { number: number; text: string; numberInSurah: number };
 
 const RECITER_KEY = "ibadah:reciter";
+const POS_KEY = "ibadah:teacher-pos";
+function savedPos(): { s: number; a: number } {
+  try {
+    if (typeof window === "undefined") return { s: 1, a: 1 };
+    const p = JSON.parse(localStorage.getItem(POS_KEY) || "null");
+    if (p && p.s >= 1 && p.s <= 114 && p.a >= 1) return { s: p.s, a: p.a };
+  } catch { /* ignore */ }
+  return { s: 1, a: 1 };
+}
 const BISMILLAH = "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ";
 function normalizeArabic(text: string) {
   return text
@@ -58,8 +73,8 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const PrevIcon = rtl ? ChevronRight : ChevronLeft;
   const NextIcon = rtl ? ChevronLeft : ChevronRight;
 
-  const [surahNum, setSurahNum] = useState(1);
-  const [ayahNum, setAyahNum] = useState(1);
+  const [surahNum, setSurahNum] = useState(() => savedPos().s);
+  const [ayahNum, setAyahNum] = useState(() => savedPos().a);
   const [hideQuran, setHideQuran] = useState(false);
   const [recording, setRecording] = useState(false);
   const [recSecs, setRecSecs] = useState(0);
@@ -78,6 +93,8 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const [reciterId, setReciterId] = useState(() => typeof window !== "undefined" ? localStorage.getItem(RECITER_KEY) || DEFAULT_RECITER_ID : DEFAULT_RECITER_ID);
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
+  const [audioError, setAudioError] = useState(false);
+  const [peek, setPeek] = useState(false);
   const recognitionRef = useRef<any>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
@@ -125,6 +142,7 @@ useEffect(() => {
     staleTime: Infinity,
     queryFn: async () => {
       const res = await fetch("https://api.alquran.cloud/v1/surah");
+      if (!res.ok) throw new Error("surah list failed");
       const j = await res.json();
       return j.data as SurahMeta[];
     },
@@ -132,11 +150,12 @@ useEffect(() => {
   const surah = surahs?.find((s) => s.number === surahNum);
 
   // Full surah text (same alquran.cloud source the app already uses)
-  const { data: ayahs, isFetching } = useQuery<Ayah[]>({
+  const { data: ayahs, isFetching, isError: surahTextError, refetch: refetchSurahText } = useQuery<Ayah[]>({
     queryKey: ["teacher-surah", surahNum],
     staleTime: Infinity,
     queryFn: async () => {
       const res = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/quran-uthmani`);
+      if (!res.ok) throw new Error("surah text failed");
       const j = await res.json();
       let list = j.data.ayahs as Ayah[];
       // Strip the inline Bismillah from the first ayah (except 1 & 9) since we render it as a header
@@ -165,7 +184,14 @@ useEffect(() => {
     clearRecording();
     playerRef.current?.pause();
     setListening(false);
+    setPeek(false);
+    setAudioError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [surahNum, ayahNum]);
+
+  // preserve the user's selected surah + progress
+  useEffect(() => {
+    try { localStorage.setItem(POS_KEY, JSON.stringify({ s: surahNum, a: ayahNum })); } catch { /* ignore */ }
   }, [surahNum, ayahNum]);
 
   // keep the current ayah in view while navigating
@@ -178,6 +204,7 @@ useEffect(() => {
     const a = new Audio(ayahAudioUrl(reciter, surahNum, ayahNum));
     playerRef.current = a;
     setListening(true);
+    setAudioError(false);
     setAudioProgress(0);
     setAudioDuration(0);
     a.onloadedmetadata = () => setAudioDuration(Number.isFinite(a.duration) ? a.duration : 0);
@@ -190,8 +217,8 @@ useEffect(() => {
     setAyahNum(ayahNum + 1);
   }
 };
-    a.onerror = () => setListening(false);
-    a.play().catch(() => setListening(false));
+    a.onerror = () => { setListening(false); setAudioError(true); };
+    a.play().catch(() => { setListening(false); setAudioError(true); });
   }
   function stopListening() {
     playerRef.current?.pause();
