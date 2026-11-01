@@ -11,6 +11,7 @@ import {
   type RecitationResult
 } from "@/lib/recitation-check";import { RecitationResultCard } from "./RecitationResultCard";
 import { TajweedAyah } from "./TajweedAyah";
+import { TeacherAudioPlayer, nextTeacherAyah } from "@/lib/teacher-audio-player";
 
 // ---------- i18n (5 languages) ----------
 type L = { ku: string; bad: string; kmr: string; ar: string; en: string };
@@ -105,6 +106,8 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const mediaRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const playerRef = useRef<HTMLAudioElement | null>(null);
+  const teacherPlayerRef = useRef<TeacherAudioPlayer | null>(null);
+  const playbackContextRef = useRef<{ reciter: Reciter; surahs: SurahMeta[] }>({ reciter: RECITERS[0], surahs: [] });
   const currentAyahRef = useRef<HTMLSpanElement | null>(null);
 
   const reciter: Reciter = RECITERS.find((r) => r.id === reciterId) || RECITERS[0];
@@ -154,6 +157,7 @@ useEffect(() => {
     },
   });
   const surah = surahs?.find((s) => s.number === surahNum);
+  playbackContextRef.current = { reciter, surahs: surahs ?? [] };
 
   // Full surah text (same alquran.cloud source the app already uses)
   const { data: ayahs, isFetching, isError: surahTextError, refetch: refetchSurahText } = useQuery<Ayah[]>({
@@ -177,7 +181,7 @@ useEffect(() => {
     return () => {
       if (mediaRef.current && mediaRef.current.state !== "inactive") mediaRef.current.stop();
       mediaRef.current?.stream.getTracks().forEach((tr) => tr.stop());
-      playerRef.current?.pause();
+      teacherPlayerRef.current?.dispose();
       recognitionRef.current?.stop();
     };
   }, []);
@@ -188,10 +192,14 @@ useEffect(() => {
   }, [surah, ayahNum]);
   useEffect(() => {
     clearRecording();
-    playerRef.current?.pause();
-    setListening(false);
+    if (!teacherPlayerRef.current?.matches({ surah: surahNum, ayah: ayahNum })) {
+      teacherPlayerRef.current?.pause();
+      setListening(false);
+      setAudioProgress(0);
+      setAudioDuration(0);
+      setAudioError(false);
+    }
     setPeek(false);
-    setAudioError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [surahNum, ayahNum]);
 
@@ -206,42 +214,40 @@ useEffect(() => {
   }, [ayahNum, surahNum, hideQuran]);
 
   function listen() {
-    playerRef.current?.pause();
-    const a = new Audio(ayahAudioUrl(reciter, surahNum, ayahNum));
-    playerRef.current = a;
-    setListening(true);
-    setAudioError(false);
-    setAudioProgress(0);
-    setAudioDuration(0);
-    a.onloadedmetadata = () => setAudioDuration(Number.isFinite(a.duration) ? a.duration : 0);
-    a.ontimeupdate = () => setAudioProgress(a.currentTime);
-    a.onended = () => {
-  setListening(false);
-  setAudioProgress(a.duration || 0);
-
-  if (surah && ayahNum < surah.numberOfAyahs) {
-    setAyahNum(ayahNum + 1);
+    getTeacherPlayer().start({ surah: surahNum, ayah: ayahNum });
   }
-};
-    a.onerror = () => { setListening(false); setAudioError(true); };
-    a.play().catch(() => { setListening(false); setAudioError(true); });
+  function getTeacherPlayer() {
+    if (teacherPlayerRef.current) return teacherPlayerRef.current;
+    const audio = new Audio();
+    playerRef.current = audio;
+    const player = new TeacherAudioPlayer(audio, {
+      source: ({ surah, ayah }) => ayahAudioUrl(playbackContextRef.current.reciter, surah, ayah),
+      next: (position) => {
+        let continuous = true;
+        try { continuous = localStorage.getItem("ibadah:auto-next") !== "0"; } catch { /* use existing default */ }
+        return nextTeacherAyah(position, playbackContextRef.current.surahs, continuous);
+      },
+      select: ({ surah, ayah }) => { setSurahNum(surah); setAyahNum(ayah); },
+      listening: setListening,
+      progress: setAudioProgress,
+      duration: setAudioDuration,
+      error: setAudioError,
+    });
+    teacherPlayerRef.current = player;
+    return player;
   }
   function stopListening() {
-    playerRef.current?.pause();
+    teacherPlayerRef.current?.pause();
     setListening(false);
   }
   function replayAyah() {
-    if (!playerRef.current || playerRef.current.src !== ayahAudioUrl(reciter, surahNum, ayahNum)) {
-      listen();
-      return;
-    }
-    playerRef.current.currentTime = 0;
-    setAudioProgress(0);
-    setListening(true);
-    playerRef.current.play().catch(() => setListening(false));
+    getTeacherPlayer().start({ surah: surahNum, ayah: ayahNum }, true);
   }
   function selectReciter(id: string) {
     stopListening();
+    teacherPlayerRef.current?.dispose();
+    teacherPlayerRef.current = null;
+    playerRef.current = null;
     setAudioProgress(0);
     setAudioDuration(0);
     setReciterId(id);
