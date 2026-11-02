@@ -46,11 +46,15 @@ export class TeacherAudioPlayer {
     const same = this.matches(position);
     if (same && this.playing && !replay) return;
     const generation = ++this.generation;
+    this.playing = false;
     this.audio.pause();
     this.position = position;
-    if (!same) {
+    // A failed resource must be loaded again on an explicit retry, even when
+    // the selected ayah has not changed. Never retry automatically on error.
+    if (!same || this.audio.error) {
       this.audio.src = this.options.source(position);
       this.options.duration(0);
+      this.audio.load();
     }
     if (!same || replay || this.audio.ended) this.audio.currentTime = 0;
     this.options.progress(this.audio.currentTime);
