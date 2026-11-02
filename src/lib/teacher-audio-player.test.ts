@@ -1,6 +1,14 @@
-/// <reference types="bun" />
-import { describe, expect, test } from "bun:test";
+import { describe, test } from "node:test";
+import assert from "node:assert/strict";
 import { TeacherAudioPlayer, nextTeacherAyah } from "./teacher-audio-player";
+
+function expect(actual: unknown) {
+  return {
+    toEqual: (expected: unknown) => assert.deepEqual(actual, expected),
+    toBe: (expected: unknown) => assert.equal(actual, expected),
+    toBeNull: () => assert.equal(actual, null),
+  };
+}
 
 class TestAudio {
   src = "";
