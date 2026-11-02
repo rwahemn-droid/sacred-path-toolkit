@@ -1,6 +1,6 @@
-# Quran Teacher automatic playback
+# Quran Teacher selected-Surah playback
 
-- [x] Inspect the existing event-owned player and selection integration.
-- [x] Ensure explicit retry reloads failed audio without automatic error loops.
-- [x] Run focused playback regression tests (8 passed).
-- [x] Verify natural audio completion, pause, replay, manual next and Surah rollover on desktop and mobile Chromium, using actual reciter audio and native ended events; audio failure and explicit retry also passed.
+- [x] Inspect the existing player and controls.
+- [ ] Advance on natural completion without added delays; stop and indicate completion at the selected Surah boundary.
+- [ ] Add distinct manual Stop, preserve Pause/Resume, and cancel pending playback safely.
+- [ ] Run focused regression tests and browser checks for advancement, Stop, Pause, Resume, Replay, manual Next, final Ayah and failures.
