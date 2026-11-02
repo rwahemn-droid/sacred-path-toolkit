@@ -17,6 +17,7 @@ class TestAudio {
   ended = false;
   error: object | null = null;
   plays = 0;
+  paused = true;
   loads = 0;
   onended: (() => void) | null = null;
   onerror: (() => void) | null = null;
@@ -25,25 +26,30 @@ class TestAudio {
   rejections: Array<() => void> = [];
   play() {
     this.ended = false;
+    this.paused = false;
     this.plays++;
     return new Promise<void>((_, reject) => this.rejections.push(() => reject(new Error("load failure"))));
   }
-  pause() {}
+  pause() { this.paused = true; }
   load() { this.loads++; this.error = null; this.ended = false; }
   removeAttribute() { this.src = ""; }
   finish() { this.ended = true; this.onended?.(); }
 }
 
 const surahs = [{ number: 1, numberOfAyahs: 7 }, { number: 2, numberOfAyahs: 286 }, { number: 114, numberOfAyahs: 6 }];
-function setup(continuous = true) {
+function setup() {
   const audio = new TestAudio();
   const selections: Array<{ surah: number; ayah: number }> = [];
   const errors: boolean[] = [];
+  const completions: boolean[] = [];
+  const preloads: AbortSignal[] = [];
   const player = new TeacherAudioPlayer(audio as unknown as HTMLAudioElement, {
-    source: p => `${p.surah}:${p.ayah}`, next: p => nextTeacherAyah(p, surahs, continuous),
+    source: p => `${p.surah}:${p.ayah}`, next: p => nextTeacherAyah(p, surahs),
     select: p => selections.push(p), listening: () => {}, progress: () => {}, duration: () => {}, error: e => errors.push(e),
+    complete: c => completions.push(c),
+    preload: async (_, signal) => { preloads.push(signal); },
   });
-  return { audio, player, selections, errors };
+  return { audio, player, selections, errors, completions, preloads };
 }
 
 describe("Quran Teacher event-owned navigation", () => {
@@ -63,19 +69,54 @@ describe("Quran Teacher event-owned navigation", () => {
     expect(selections).toEqual([]);
     expect(audio.plays).toBe(1);
   });
-  test("continuous playback rolls surah 1 ayah 7 into surah 2 ayah 1", () => {
-    const { audio, player, selections } = setup();
+  test("surah 1 ayah 7 stops with completion and never starts surah 2", () => {
+    const { audio, player, selections, completions } = setup();
     player.start({ surah: 1, ayah: 7 }); audio.finish();
-    expect(selections).toEqual([{ surah: 2, ayah: 1 }]);
-  });
-  test("disabled continuous playback stops at the surah boundary", () => {
-    const { audio, player, selections } = setup(false);
-    player.start({ surah: 1, ayah: 7 }); audio.finish();
+    audio.onended?.();
     expect(selections).toEqual([]);
     expect(audio.plays).toBe(1);
+    expect(completions).toEqual([false, true]);
+  });
+  test("pause and explicit play resume the current ayah at its existing position", () => {
+    const { audio, player } = setup();
+    player.start({ surah: 1, ayah: 1 }); audio.currentTime = 2;
+    player.pause(); expect(audio.paused).toBe(true);
+    player.start({ surah: 1, ayah: 1 });
+    expect(audio.currentTime).toBe(2); expect(audio.plays).toBe(2);
   });
   test("the last ayah of surah 114 never wraps around", () => {
-    expect(nextTeacherAyah({ surah: 114, ayah: 6 }, surahs, true)).toBeNull();
+    expect(nextTeacherAyah({ surah: 114, ayah: 6 }, surahs)).toBeNull();
+  });
+  test("stop aborts preload and pending playback; only explicit play restarts", async () => {
+    const { audio, player, selections, errors, preloads } = setup();
+    player.start({ surah: 1, ayah: 1 }); audio.currentTime = 2;
+    player.stop();
+    expect(audio.paused).toBe(true); expect(audio.src).toBe("");
+    expect(preloads[0]?.aborted).toBe(true);
+    audio.finish(); audio.rejections[0]?.(); await Promise.resolve();
+    expect(selections).toEqual([]); expect(audio.plays).toBe(1);
+    expect(errors.at(-1)).toBe(false);
+    player.start({ surah: 1, ayah: 1 });
+    expect(audio.currentTime).toBe(0); expect(audio.plays).toBe(2);
+  });
+  test("manual next stays paused until explicit play selects its exact ayah", () => {
+    const { audio, player } = setup();
+    player.start({ surah: 2, ayah: 19 }); player.pause();
+    expect(audio.plays).toBe(1);
+    player.start({ surah: 2, ayah: 20 });
+    expect(audio.src).toBe("2:20"); expect(audio.plays).toBe(2);
+  });
+  test("all seven ayahs advance synchronously from ended without delay", () => {
+    const { audio, player, selections, completions } = setup();
+    player.start({ surah: 1, ayah: 1 });
+    for (let ayah = 1; ayah < 7; ayah++) {
+      audio.finish();
+      expect(audio.src).toBe(`1:${ayah + 1}`);
+      expect(audio.plays).toBe(ayah + 1);
+    }
+    audio.finish();
+    expect(selections.length).toBe(6); expect(audio.plays).toBe(7);
+    expect(completions.at(-1)).toBe(true);
   });
   test("failed next audio stops without skipping and explicit retry reloads", () => {
     const { audio, player, selections, errors } = setup();
