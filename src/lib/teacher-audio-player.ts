@@ -8,6 +8,8 @@ type PlayerOptions = {
   progress: (value: number) => void;
   duration: (value: number) => void;
   error: (value: boolean) => void;
+  complete: (value: boolean) => void;
+  preload?: (source: string, signal: AbortSignal) => Promise<void>;
 };
 
 // A single audio element owns the sequence. Selection updates never create a
@@ -17,19 +19,22 @@ export class TeacherAudioPlayer {
   private playing = false;
   private generation = 0;
   private disposed = false;
+  private preloadRequest: AbortController | null = null;
 
   constructor(readonly audio: HTMLAudioElement, private options: PlayerOptions) {
     audio.onloadedmetadata = () => options.duration(Number.isFinite(audio.duration) ? audio.duration : 0);
     audio.ontimeupdate = () => options.progress(audio.currentTime);
-    audio.onerror = () => this.fail();
+    audio.onerror = () => { if (this.playing && audio.error) this.fail(); };
     audio.onended = () => {
       // ended is distinct from pause; ignore stale/duplicate events after src changes.
       if (!this.playing || !audio.ended || !this.position || this.disposed) return;
       this.playing = false;
       const next = options.next(this.position);
       if (!next) {
+        this.cancelPreload();
         options.listening(false);
         options.progress(Number.isFinite(audio.duration) ? audio.duration : 0);
+        options.complete(true);
         return;
       }
       this.start(next);
@@ -46,6 +51,7 @@ export class TeacherAudioPlayer {
     const same = this.matches(position);
     if (same && this.playing && !replay) return;
     const generation = ++this.generation;
+    this.cancelPreload();
     this.playing = false;
     this.audio.pause();
     this.position = position;
@@ -59,18 +65,44 @@ export class TeacherAudioPlayer {
     if (!same || replay || this.audio.ended) this.audio.currentTime = 0;
     this.options.progress(this.audio.currentTime);
     this.options.error(false);
+    this.options.complete(false);
     this.playing = true;
     this.options.listening(true);
     this.audio.play().catch(() => {
       if (generation === this.generation && !this.disposed) this.fail();
     });
+    // Warm the next resource without another audio element or any delay in
+    // ended handling. Failure here never skips an ayah or starts a retry loop.
+    const next = this.options.next(position);
+    if (next && this.options.preload) {
+      const request = new AbortController();
+      this.preloadRequest = request;
+      this.options.preload(this.options.source(next), request.signal).catch(() => {});
+    }
   }
 
   pause() {
     ++this.generation;
     this.playing = false;
+    this.cancelPreload();
     this.audio.pause();
     this.options.listening(false);
+  }
+
+  stop() {
+    this.pause();
+    this.position = null;
+    this.audio.removeAttribute("src");
+    this.audio.load(); // abort pending media loads/play promises
+    this.options.progress(0);
+    this.options.duration(0);
+    this.options.error(false);
+    this.options.complete(false);
+  }
+
+  private cancelPreload() {
+    this.preloadRequest?.abort();
+    this.preloadRequest = null;
   }
 
   private fail() {
@@ -94,12 +126,9 @@ export class TeacherAudioPlayer {
 export function nextTeacherAyah(
   position: TeacherPosition,
   surahs: ReadonlyArray<{ number: number; numberOfAyahs: number }>,
-  continuous: boolean,
 ): TeacherPosition | null {
   const surah = surahs.find((s) => s.number === position.surah);
   if (!surah) return null;
   if (position.ayah < surah.numberOfAyahs) return { surah: position.surah, ayah: position.ayah + 1 };
-  if (!continuous) return null;
-  const next = surahs.find((s) => s.number === position.surah + 1);
-  return next ? { surah: next.number, ayah: 1 } : null;
+  return null;
 }
