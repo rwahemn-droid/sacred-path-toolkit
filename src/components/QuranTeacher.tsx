@@ -12,6 +12,7 @@ import {
 } from "@/lib/recitation-check";import { RecitationResultCard } from "./RecitationResultCard";
 import { TajweedAyah } from "./TajweedAyah";
 import { TeacherAudioPlayer, nextTeacherAyah } from "@/lib/teacher-audio-player";
+import { Button } from "@/components/ui/button";
 
 // ---------- i18n (5 languages) ----------
 type L = { ku: string; bad: string; kmr: string; ar: string; en: string };
@@ -20,6 +21,9 @@ const S = {
   selectSurah: { ku: "سوورەت هەڵبژێرە", bad: "سوورەتێ هەلبژێرە", kmr: "Sûre hilbijêre", ar: "اختر السورة", en: "Select Surah" },
   selectAyah: { ku: "ئایەت هەڵبژێرە", bad: "ئایەتێ هەلبژێرە", kmr: "Ayete hilbijêre", ar: "اختر الآية", en: "Select Ayah" },
   listen: { ku: "گوێگرتن", bad: "گوهداری", kmr: "Guhdarî", ar: "استمع", en: "Listen" },
+  pauseAudio: { ku: "ڕاگرتنی دەنگ", bad: "ڕاگرتنا دەنگی", kmr: "Deng rawestîne", ar: "إيقاف مؤقت", en: "Pause" },
+  stopAudio: { ku: "وەستاندنی دەنگ", bad: "وەستاندنا دەنگی", kmr: "Deng bisekinîne", ar: "إيقاف الصوت", en: "Stop" },
+  surahComplete: { ku: "سوورەتەکە تەواو بوو", bad: "سوورەت تەواو بوو", kmr: "Sûre qediya", ar: "اكتملت السورة", en: "Surah complete" },
   startRec: { ku: "دەستپێکردنی تۆمار", bad: "دەستپێکا تۆمارێ", kmr: "Destpêkirina tomarkirinê", ar: "بدء التسجيل", en: "Start Recording" },
   stopRec: { ku: "وەستانی تۆمار", bad: "ڤەرتینا تۆمارێ", kmr: "Rawestandina tomarkirinê", ar: "إيقاف التسجيل", en: "Stop Recording" },
   playMine: { ku: "گوێگرتن بە تۆمارەکەم", bad: "گوهداریێ ب تۆمارا من", kmr: "Guhdariya tomara min", ar: "تشغيل تسجيلي", en: "Play My Recording" },
@@ -101,6 +105,7 @@ export function QuranTeacher({ lang, onBack }: { lang: Lang; onBack: () => void 
   const [audioProgress, setAudioProgress] = useState(0);
   const [audioDuration, setAudioDuration] = useState(0);
   const [audioError, setAudioError] = useState(false);
+  const [surahComplete, setSurahComplete] = useState(false);
   const [peek, setPeek] = useState(false);
   const recognitionRef = useRef<any>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
@@ -192,6 +197,7 @@ useEffect(() => {
   }, [surah, ayahNum]);
   useEffect(() => {
     clearRecording();
+    setSurahComplete(false);
     if (!teacherPlayerRef.current?.matches({ surah: surahNum, ayah: ayahNum })) {
       teacherPlayerRef.current?.pause();
       setListening(false);
@@ -222,22 +228,27 @@ useEffect(() => {
     playerRef.current = audio;
     const player = new TeacherAudioPlayer(audio, {
       source: ({ surah, ayah }) => ayahAudioUrl(playbackContextRef.current.reciter, surah, ayah),
-      next: (position) => {
-        let continuous = true;
-        try { continuous = localStorage.getItem("ibadah:auto-next") !== "0"; } catch { /* use existing default */ }
-        return nextTeacherAyah(position, playbackContextRef.current.surahs, continuous);
+      next: (position) => nextTeacherAyah(position, playbackContextRef.current.surahs),
+      preload: async (source, signal) => {
+        const response = await fetch(source, { signal, cache: "force-cache" });
+        if (response.ok) await response.arrayBuffer();
       },
       select: ({ surah, ayah }) => { setSurahNum(surah); setAyahNum(ayah); },
       listening: setListening,
       progress: setAudioProgress,
       duration: setAudioDuration,
       error: setAudioError,
+      complete: setSurahComplete,
     });
     teacherPlayerRef.current = player;
     return player;
   }
   function stopListening() {
     teacherPlayerRef.current?.pause();
+    setListening(false);
+  }
+  function stopAudio() {
+    teacherPlayerRef.current?.stop();
     setListening(false);
   }
   function replayAyah() {
@@ -555,7 +566,10 @@ const finishedAyah =
   function goAyah(delta: number) {
     if (!surah) return;
     const next = ayahNum + delta;
-    if (next >= 1 && next <= surah.numberOfAyahs) setAyahNum(next);
+    if (next >= 1 && next <= surah.numberOfAyahs) {
+      stopListening();
+      setAyahNum(next);
+    }
   }
 
   const total = surah?.numberOfAyahs ?? 0;
@@ -818,12 +832,14 @@ const finishedAyah =
               </select>
             </label>
             <span dir="ltr" className="shrink-0 text-[10px] tabular-nums text-white/45">{fmt(audioProgress)} / {fmt(audioDuration)}</span>
+            <Button variant="ghost" size="icon" onClick={stopAudio} aria-label={t(S.stopAudio, lang)} title={t(S.stopAudio, lang)} className="shrink-0 rounded-full text-muted-foreground"><Square /></Button>
           </div>
+          {surahComplete && <p role="status" className="text-center text-xs text-muted-foreground">{t(S.surahComplete, lang)}</p>}
           <input aria-label="Audio progress" type="range" min={0} max={audioDuration || 1} step="0.1" value={Math.min(audioProgress, audioDuration || 1)} onChange={(e) => seekAudio(Number(e.target.value))} className="h-1 w-full accent-sky-400 transition-all" />
           <div className="flex items-center justify-between px-2">
             <button onClick={replayAyah} className="grid h-10 w-10 place-items-center rounded-full text-white/70 transition active:scale-90 hover:bg-white/10" aria-label={t(S.replay, lang)}><Repeat2 className="h-[18px] w-[18px]" /></button>
             <button onClick={() => goAyah(-1)} disabled={ayahNum <= 1} className="grid h-11 w-11 place-items-center rounded-full bg-white/5 text-white/80 transition active:scale-90 hover:bg-white/10 disabled:opacity-30" aria-label="Previous ayah"><PrevIcon className="h-5 w-5" /></button>
-            <button onClick={listening ? stopListening : listen} className="grid h-14 w-14 place-items-center rounded-full bg-sky-400 text-[#081225] shadow-lg shadow-sky-400/25 ring-4 ring-sky-400/15 transition active:scale-95" aria-label={listening ? t(S.stopRec, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-6 w-6" /> : <Play className="ms-0.5 h-6 w-6" />}</button>
+            <button onClick={listening ? stopListening : listen} className="grid h-14 w-14 place-items-center rounded-full bg-sky-400 text-[#081225] shadow-lg shadow-sky-400/25 ring-4 ring-sky-400/15 transition active:scale-95" aria-label={listening ? t(S.pauseAudio, lang) : t(S.listen, lang)}>{listening ? <Pause className="h-6 w-6" /> : <Play className="ms-0.5 h-6 w-6" />}</button>
             <button onClick={() => goAyah(1)} disabled={ayahNum >= total} className="grid h-11 w-11 place-items-center rounded-full bg-white/5 text-white/80 transition active:scale-90 hover:bg-white/10 disabled:opacity-30" aria-label="Next ayah"><NextIcon className="h-5 w-5" /></button>
             <button onClick={recording ? stopRecording : startRecording} className={`grid h-10 w-10 place-items-center rounded-full transition active:scale-90 ${recording ? "bg-red-500/15 text-red-300" : "text-white/70 hover:bg-white/10"}`} aria-label={recording ? t(S.stopRec, lang) : t(S.startRec, lang)}>{recording ? <Square className="h-4 w-4" /> : <Mic className="h-[18px] w-[18px]" />}</button>
           </div>
